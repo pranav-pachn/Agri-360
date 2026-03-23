@@ -1,4 +1,8 @@
 node_modules/
 dist/
 .env
+<<<<<<< HEAD
 .env.example
+=======
+.env.example
+>>>>>>> 6e172ab (first commit)
