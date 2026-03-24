@@ -4,7 +4,13 @@
 
 *From Crop Health to Credit Wealth.*
 
+<<<<<<< HEAD
 
+=======
+[![Hackathon](https://img.shields.io/badge/Hackathon-24%20Hours-red)](https://github.com/agrimitra-360)
+[![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+[![Status](https://img.shields.io/badge/Status-Hackathon%20MVP-blue)](https://github.com/agrimitra-360)
+>>>>>>> 8313c4e (fird)
 
 > **An AI-powered bridge between agriculture intelligence and financial credit for Indian farmers**
 

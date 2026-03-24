@@ -1,15 +1,8 @@
-require("dotenv").config();
-const express = require("express");
-const cors = require("cors");
-const analyzeRoute = require("./routes/analyze.js");
+require('dotenv').config({ path: '../.env' });
+const app = require('./app');
 
-const app = express();
-app.use(cors());
-app.use(express.json());
-app.use("/api/analyze", analyzeRoute);
+const PORT = process.env.PORT || 5000;
 
-app.get("/", (req, res) => {
-  res.send("AgriMitra API running 🚀");
+app.listen(PORT, () => {
+  console.log(`Server is running on port ${PORT}`);
 });
-
-app.listen(5000, () => console.log("Server running on port 5000"));
