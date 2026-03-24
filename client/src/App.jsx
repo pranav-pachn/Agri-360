@@ -1,31 +1,55 @@
-import { useState } from "react";
-import API from "./services/api";
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { AuthProvider, useAuth } from './context/AuthContext';
 
-function App() {
-  const [result, setResult] = useState(null);
+import Login from './pages/Login';
+import Dashboard from './pages/Dashboard';
+import UploadImage from './pages/UploadImage';
+import Result from './pages/Result';
 
-  const analyze = async () => {
-    const res = await API.post("/analyze", {
-      crop: "Rice",
-      location: "Andhra Pradesh",
-    });
-    setResult(res.data);
-  };
+// Protect routes component
+const ProtectedRoute = ({ children }) => {
+  const { user } = useAuth();
+  if (!user) return <Navigate to="/login" replace />;
+  return children;
+};
+
+function AppRoutes() {
+  const { user } = useAuth();
 
   return (
-    <div>
-      <h1>AgriMitra 360</h1>
-      <button onClick={analyze}>Analyze</button>
+    <Router>
+      <Routes>
+        <Route path="/login" element={user ? <Navigate to="/dashboard" /> : <Login />} />
+        
+        <Route path="/" element={<ProtectedRoute><Navigate to="/dashboard" /></ProtectedRoute>} />
+        
+        <Route path="/dashboard" element={
+          <ProtectedRoute>
+            <Dashboard />
+          </ProtectedRoute>
+        } />
+        
+        <Route path="/upload" element={
+          <ProtectedRoute>
+            <UploadImage />
+          </ProtectedRoute>
+        } />
+        
+        <Route path="/result/:id" element={
+          <ProtectedRoute>
+            <Result />
+          </ProtectedRoute>
+        } />
+      </Routes>
+    </Router>
+  );
+}
 
-      {result && (
-        <div>
-          <p>Health: {result.health}%</p>
-          <p>Risk: {result.risk}</p>
-          <p>Yield: {result.yield}</p>
-          <h2>Trust Score: {result.trustScore}</h2>
-        </div>
-      )}
-    </div>
+function App() {
+  return (
+    <AuthProvider>
+      <AppRoutes />
+    </AuthProvider>
   );
 }
 

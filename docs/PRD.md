@@ -146,7 +146,7 @@ modules:
     name: "Crop Intelligence Engine"
     type: ai_inference
     tech: "MobileNetV2 PRETRAINED (TensorFlow.js — FREE from TF Hub)"
-    depends_on: [AUTH, DATABASE, FILE_STORAGE]
+    depends_on: [DATABASE, FILE_STORAGE]
     spec_section: "§6.1"
     api_endpoints: ["/api/v1/crop/diagnose", "/api/v1/crop/history/:farmerId"]
     model_input: "224×224×3 RGB image"
@@ -232,7 +232,7 @@ modules:
 
 ```
 BUILD ORDER (implement in this sequence):
-  1. DATABASE        → Schema creation, Sequelize models
+  1. DATABASE        → Schema creation, Supabase models
   2. AUTH            → JWT auth middleware, user registration
   3. FILE_STORAGE    → Image upload (Multer)
   4. CROP_INTEL      → MobileNetV2 training + inference API
@@ -267,7 +267,7 @@ DATA FLOW (how information moves through the bridge):
 
 | # | Decision | Rationale | Alternatives Rejected | Cost |
 |---|----------|-----------|----------------------|------|
-| D1 | MobileNetV2 **pretrained** (no custom training) | Lightweight (~14MB), pretrained weights available FREE on TF Hub + Kaggle PlantVillage. Zero training time = fits 24hr hackathon | ResNet50 (too heavy), custom CNN (needs training time), paid APIs (costs money) | FREE |
+| D1 | Supabase (PostgreSQL) over MySQL | FREE tier with auto-generated REST API, built-in auth, storage — saves hours of backend boilerplate | MySQL (needs separate hosting), Firebase (vendor lock-in), PlanetScale (rate limits) | FREE |
 | D2 | Supabase (PostgreSQL) over MySQL | FREE tier with auto-generated REST API, built-in auth, storage — saves hours of backend boilerplate | MySQL (needs separate hosting), Firebase (vendor lock-in), PlanetScale (rate limits) | FREE |
 | D3 | Trust Score range 300–900 | Mirrors CIBIL score range for bank familiarity | 0–100 (too simple), 0–1000 (unfamiliar) | N/A |
 | D4 | Rule-based yield prediction (hackathon MVP) | No ML training needed; formula-based approach demo-able in hours. Post-hackathon upgrade to XGBoost | XGBoost (needs training data + time), LSTM (complex for 24hrs) | FREE |
@@ -816,12 +816,11 @@ Every score, prediction, and recommendation produced by AgriMitra 360 comes with
 │                          DATA LAYER                                         │
 │                                                                             │
 │  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐   │
-│  │   MySQL       │  │   Redis      │  │ File Storage │  │ External APIs│   │
-│  │  (Primary DB) │  │  (Cache)     │  │ (Images)     │  │ (Weather,    │   │
-│  │               │  │              │  │              │  │  Soil, Govt) │   │
+│  │   Supabase   │  │   Supabase   │  │   Supabase   │  │               │   │
+│  │  (PostgreSQL)│  │  (Auth)      │  │  (Storage)   │  │               │   │
+│  │               │  │              │  │              │  │               │   │
 │  └──────────────┘  └──────────────┘  └──────────────┘  └──────────────┘   │
 └─────────────────────────────────────────────────────────────────────────────┘
-```
 
 ### 7.2 Microservice Decomposition (Phase 2)
 
@@ -844,7 +843,7 @@ Every score, prediction, and recommendation produced by AgriMitra 360 comes with
 |-------|------------|------|---------------|
 | **Frontend** | React.js 18+ (Vite) | 🆓 FREE | Fastest setup, hot reload, massive ecosystem |
 | **Backend** | Node.js 20 LTS + Express.js 4.x | 🆓 FREE | Non-blocking I/O, JS full-stack |
-| **Database** | Supabase (PostgreSQL) | 🆓 FREE tier | Auto-generated REST API, built-in auth, 500MB storage |
+| **Database** | Supabase (PostgreSQL) | 🆓 FREE tier | Auto-generated REST API, built-in auth, 500MB storage, 3 tables: farmers, crop_reports, credit_scores |
 | **AI Model** | MobileNetV2 pretrained (TensorFlow.js) | 🆓 FREE | Pretrained weights from TF Hub + Kaggle. No training needed |
 | **Charts** | Chart.js 4.x | 🆓 FREE | Simple, beautiful data visualizations |
 | **Frontend Hosting** | Vercel | 🆓 FREE tier | Instant deploy from GitHub, SSL auto |
@@ -881,48 +880,49 @@ Every score, prediction, and recommendation produced by AgriMitra 360 comes with
 
 ### 9.1 Database Schema (Key Tables)
 
+**Supabase Implementation** - Three core tables with precise data types and practical indexes:
+
 ```sql
--- Core entities
-farmers (
-  id, aadhaar_hash, name, phone, location_district, location_state,
-  land_area_hectares, irrigation_type, created_at, updated_at
-)
+-- Farmers Table (User Registration & Profile)
+CREATE TABLE farmers (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    name TEXT NOT NULL,
+    location TEXT NOT NULL,
+    language TEXT DEFAULT 'en',
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+-- Index: location (for filtering)
 
--- Crop Intelligence
-crop_diagnoses (
-  id, farmer_id, image_path, crop_type, disease_detected,
-  confidence_score, health_score, severity, season, diagnosed_at
-)
+-- Crop Reports Table (Disease Analysis)
+CREATE TABLE crop_reports (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    farmer_id UUID NOT NULL REFERENCES farmers(id) ON DELETE CASCADE,
+    image_url TEXT,
+    disease TEXT,
+    confidence DECIMAL(5,4), -- AI precision: 0.9234
+    risk_score DECIMAL(5,4),
+    crop_type TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+-- Indexes: farmer_id, created_at, location, crop_type
 
--- Yield Predictions
-yield_predictions (
-  id, farmer_id, crop_type, season, predicted_yield,
-  confidence_interval_low, confidence_interval_high,
-  actual_yield, prediction_accuracy, predicted_at
-)
-
--- Sustainability
-sustainability_scores (
-  id, farmer_id, season, pesticide_score, water_efficiency_score,
-  crop_rotation_score, organic_input_score, soil_health_score,
-  carbon_footprint_score, composite_index, assessed_at
-)
-
--- AgriCredit Engine (THE BRIDGE TABLE)
-trust_scores (
-  id, farmer_id, season, crop_health_component, yield_component,
-  sustainability_component, historical_compliance_component,
-  behavioral_component, external_verification_component,
-  raw_score, trust_score, credit_rating, computed_at,
-  model_version, explainability_report_json
-)
-
--- Bank Integration
-credit_applications (
-  id, farmer_id, trust_score_id, bank_id, requested_amount,
-  approved_amount, interest_rate, status, applied_at, decided_at
-)
+-- Credit Scores Table (Financial Data)
+CREATE TABLE credit_scores (
+    farmer_id UUID NOT NULL REFERENCES farmers(id) ON DELETE CASCADE PRIMARY KEY,
+    trust_score INTEGER NOT NULL CHECK (trust_score >= 300 AND trust_score <= 900),
+    credit_grade TEXT,
+    loan_amount DECIMAL(12,2), -- Financial precision
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+-- Indexes: farmer_id, created_at
 ```
+
+**Key Features:**
+- **DECIMAL(5,4)** for AI confidence scores (high precision)
+- **DECIMAL(12,2)** for financial amounts (no FLOAT errors)
+- **Foreign Key Relationships** with CASCADE DELETE
+- **Practical Indexes** on frequently filtered fields
+- **No over-engineering** - intentional, practical design
 
 ### 9.2 Data Flow Pipeline
 
@@ -1114,13 +1114,22 @@ credit_applications (
 
 ### 14.3 Caching Strategy
 
-| Data | Cache Duration | Technology |
-|------|----------------|------------|
-| Weather data | 1 hour | Redis |
-| Yield predictions | 24 hours (invalidated on new data) | Redis |
-| Trust scores | Until recalculation trigger | Redis |
-| Static model metadata | 7 days | In-memory |
-| Dashboard aggregations | 15 minutes | Redis |
+**Supabase Native Caching** - Leveraging built-in PostgreSQL and Supabase capabilities:
+
+| Data | Cache Duration | Technology | Notes |
+|------|----------------|------------|-------|
+| Weather data | 1 hour | Supabase Edge Functions | Cached at API level |
+| Yield predictions | 24 hours (invalidated on new data) | Supabase Realtime | Realtime updates |
+| Trust scores | Until recalculation trigger | Supabase Cache | Built-in query cache |
+| Static model metadata | 7 days | Supabase Storage | Delivered via CDN |
+| Dashboard aggregations | 15 minutes | PostgreSQL Query Cache | Automatic result caching |
+
+**Supabase-Specific Optimizations:**
+- **Realtime Subscriptions** for live data updates
+- **Edge Functions** for distributed caching
+- **PostgreSQL Query Planner** for automatic optimization
+- **CDN Delivery** for static assets via Supabase Storage
+- **Connection Pooling** handled automatically
 
 ---
 
@@ -1173,7 +1182,7 @@ credit_applications (
 |-----------|------|-----------|---------------|
 | **Frontend** | Vercel | Unlimited deploys, custom domain, SSL | `git push` → auto-deploy |
 | **Backend API** | Render | 750 hrs/month free, auto-sleep after 15min inactivity | `git push` → auto-deploy |
-| **Database** | Supabase | 500MB, 50K reads/month, 2 projects | Dashboard setup (5 min) |
+| **Database** | Supabase | 500MB storage, 50K reads/month, 2 projects, 3 tables (farmers, crop_reports, credit_scores) | Dashboard setup (5 min) | Auto-generated REST API, built-in auth, PostgreSQL with DECIMAL(5,4) & DECIMAL(12,2) precision |
 | **File Storage** | Supabase Storage | 1GB free | Same Supabase project |
 | **AI Model** | Bundled with frontend (TF.js) | N/A — runs in browser | Deployed with frontend |
 

@@ -1,9 +1,10 @@
 const express = require('express');
 const router = express.Router();
 const analysisController = require('../controllers/analysisController');
+const upload = require('../middlewares/upload.middleware');
 
 // POST /api/analyze
-router.post('/analyze', analysisController.analyzeCrop);
+router.post('/analyze', upload.single('image'), analysisController.analyzeCrop);
 
 // GET /api/analysis
 router.get('/analysis', analysisController.getAllAnalyses);

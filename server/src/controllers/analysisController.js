@@ -1,23 +1,82 @@
 const analysisService = require('../services/analysisService');
+const storageService = require('../services/storage.service');
 const logger = require('../utils/logger');
 
-const analyzeCrop = async (req, res, next) => {
-  try {
-    const { crop, location } = req.body;
-
-    // STEP 6: Simple Validation
-    if (!crop || !location) {
-      return res.status(400).json({ error: 'Missing fields: crop and location are required' });
-    }
-
-    logger.info(`Analyzing crop: ${crop} in location: ${location}`);
-    const result = await analysisService.generateAnalysis(crop, location);
+// Enhanced file validation function
+const isValidImageFile = (file) => {
+    if (!file) return false;
     
-    // STEP 9: Optimize API Response is handled by the service structure natively for the presentation layer 
-    return res.status(201).json(result);
-  } catch (error) {
-    next(error);
-  }
+    const maxSize = 5 * 1024 * 1024; // 5MB limit
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
+    
+    return file.buffer.length <= maxSize && allowedTypes.includes(file.mimetype);
+};
+
+const analyzeCrop = async (req, res, next) => {
+    try {
+        console.error("DIAGNOSTICS - CONTENT-TYPE:", req.headers['content-type']);
+        console.error("DIAGNOSTICS - REQ.BODY:", req.body);
+        console.error("DIAGNOSTICS - REQ.FILE:", req.file);
+
+        if (!req.body) {
+             throw new Error("req.body is entirely missing! Multer did not parse!");
+        }
+
+        const { crop, location } = req.body;
+        
+        // Enhanced validation
+        if (!crop || !location) {
+            return res.status(400).json({ 
+                error: 'Missing required fields: crop and location' 
+            });
+        }
+        
+        // Simple validation: ensure crop is a non‑empty string
+        if (!crop || typeof crop !== 'string' || crop.trim().length === 0) {
+            return res.status(400).json({
+                error: 'Invalid crop type. Must be a non‑empty string.'
+            });
+        }
+        
+        // Validate location
+        if (location.trim().length < 2) {
+            return res.status(400).json({ 
+                error: 'Invalid location. Must be at least 2 characters long' 
+            });
+        }
+        
+        let imageUrl = null;
+        if (req.file) {
+            // Enhanced file validation
+            if (!isValidImageFile(req.file)) {
+                return res.status(400).json({
+                    error: 'Invalid file. Must be JPEG, PNG, or WebP under 5MB'
+                });
+            }
+            
+            logger.info(`Uploading image for ${crop} analysis...`);
+            imageUrl = await storageService.uploadCropImage(
+                req.file.buffer, 
+                req.file.originalname, 
+                req.file.mimetype
+            );
+            logger.info(`Image uploaded successfully: ${imageUrl}`);
+        } else {
+            logger.info('No image provided, proceeding with text-only analysis.');
+        }
+        
+        logger.info(`Analyzing crop: ${crop} in location: ${location}`);
+        const result = await analysisService.generateAnalysis(crop, location, imageUrl);
+        
+        return res.status(201).json({
+            success: true,
+            message: 'Analysis completed successfully',
+            data: result
+        });
+    } catch (error) {
+        logger.error('Analysis error:', error);
+        next(error);
+    }
 };
 
 const getTrustScore = async (req, res, next) => {
