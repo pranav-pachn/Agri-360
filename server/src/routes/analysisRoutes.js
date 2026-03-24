@@ -5,7 +5,16 @@ const analysisController = require('../controllers/analysisController');
 // POST /api/analyze
 router.post('/analyze', analysisController.analyzeCrop);
 
-// GET /api/trust-score/:id
+// GET /api/analysis
+router.get('/analysis', analysisController.getAllAnalyses);
+
+// GET /api/analysis/:id
+router.get('/analysis/:id', analysisController.getTrustScore);
+
+// GET /api/trust-score/:id (Keeping for backwards compatibility with roadmap / existing logic)
 router.get('/trust-score/:id', analysisController.getTrustScore);
+
+// GET /api/trust-score/:id/explain
+router.get('/trust-score/:id/explain', analysisController.getExplainability);
 
 module.exports = router;
