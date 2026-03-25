@@ -1,15 +1,19 @@
 require('dotenv').config({ path: '../.env' });
 const app = require('./app');
 const aiService = require('./services/ai.service');
+const tensorflowService = require('../../ai/crop-intelligence/tensorflow-service');
 
 const PORT = process.env.PORT || 5000;
 
-// Initialize TensorFlow if enabled
+// Initialize TensorFlow service directly
 async function initializeServices() {
   try {
+    console.log('🧠 Pre-loading MobileNet model into memory (Cold Start Prevention)...');
+    await tensorflowService.loadModel();
+    
+    // Sync wrapper
     if (process.env.USE_TENSORFLOW === 'true') {
-      console.log('🧠 Initializing TensorFlow service...');
-      await aiService.initializeTensorFlow();
+      aiService.tensorflowReady = true;
     }
     
     app.listen(PORT, () => {

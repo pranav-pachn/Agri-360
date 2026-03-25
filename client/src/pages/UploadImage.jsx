@@ -12,6 +12,7 @@ export default function UploadImage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [step, setStep] = useState(1); // 1: Image upload, 2: Details, 3: Processing
+  const [fertilizerLevel, setFertilizerLevel] = useState('medium'); // NEW: Fertilizer level input
 
   // Common crop suggestions — user can still type any custom crop
   const CROP_SUGGESTIONS = [
@@ -49,6 +50,7 @@ export default function UploadImage() {
       formData.append('image', selectedImage.file);
       formData.append('crop', crop);
       formData.append('location', location);
+      formData.append('fertilizerLevel', fertilizerLevel); // NEW: Include fertilizer level
       formData.append('farmer_id', 'demo-user'); // Would come from auth context
 
       // Upload image and get analysis
@@ -182,7 +184,7 @@ export default function UploadImage() {
             <div style={{ marginBottom: '32px' }}>
               <h3 className="heading-md" style={{ marginBottom: '16px' }}>Crop Information</h3>
               
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '24px' }}>
                 <div>
                   <label className="input-label">Crop Type</label>
                   <div style={{ position: 'relative' }}>
@@ -230,6 +232,22 @@ export default function UploadImage() {
                       transform: 'translateY(-50%)', 
                       color: 'var(--text-muted)' 
                     }} />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="input-label">Fertilizer Usage Level</label>
+                  <div style={{ position: 'relative' }}>
+                    <select
+                      className="input-field"
+                      value={fertilizerLevel}
+                      onChange={e => setFertilizerLevel(e.target.value)}
+                      style={{ paddingLeft: '16px' }}
+                    >
+                      <option value="low">🟢 Low (Sustainable)</option>
+                      <option value="medium">🟡 Medium (Standard)</option>
+                      <option value="high">🔴 High (Intensive)</option>
+                    </select>
                   </div>
                 </div>
               </div>

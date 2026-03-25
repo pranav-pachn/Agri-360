@@ -5,7 +5,18 @@
 
 const tf = require('@tensorflow/tfjs');
 const mobilenet = require('@tensorflow-models/mobilenet');
-const { runInference } = require('./inference');
+const sharp = require('sharp');
+const axios = require('axios');
+const { runInference, runTensorflow } = require('./inference');
+
+const FALLBACK_ESTIMATED_LOSS_BY_SEVERITY = {
+    None: '< 5%',
+    Low: '5–10%',
+    Medium: '10–20%',
+    High: '25–40%',
+    Critical: '40–70%',
+    Unknown: '10–20%'
+};
 
 class TensorFlowService {
     constructor() {
@@ -16,26 +27,52 @@ class TensorFlowService {
     }
 
     /**
-     * Load MobileNet model for image classification
+     * Load MobileNet model for image classification (Iterative version)
      */
     async loadModel() {
-        try {
-            console.log('🧠 Loading MobileNet model...');
-            this.model = await mobilenet.load();
-            this.isLoaded = true;
-            console.log('✅ MobileNet model loaded successfully');
-            return true;
-        } catch (error) {
-            console.error('❌ Failed to load MobileNet model:', error);
-            this.loadAttempts++;
-            
-            if (this.loadAttempts < this.maxLoadAttempts) {
-                console.log(`🔄 Retrying model load... Attempt ${this.loadAttempts + 1}`);
-                return await this.loadModel();
+        for (let i = 0; i < this.maxLoadAttempts; i++) {
+            try {
+                console.log(`🧠 Loading MobileNet model... Attempt ${i + 1}`);
+                this.model = await mobilenet.load();
+                this.isLoaded = true;
+                console.log('✅ MobileNet model loaded successfully');
+                return true;
+            } catch (error) {
+                console.error(`❌ Failed to load MobileNet model (Attempt ${i + 1}):`, error.message);
+                console.log("Retrying...");
             }
+        }
+        
+        console.log('⚠️ Falling back to enhanced mock service');
+        return false;
+    }
+
+    /**
+     * Download and process image into a tensor (Pure JS version, no native bindings needed)
+     */
+    async loadImageAsTensor(imageUrl) {
+        console.log(`📥 Downloading image: ${imageUrl}`);
+        try {
+            // First, get the raw image buffer
+            const response = await axios.get(imageUrl, { responseType: 'arraybuffer' });
+            const imageBuffer = Buffer.from(response.data);
+
+            // Process with sharp: resize to 224x224 and extract RAW RGB pixel data
+            const { data, info } = await sharp(imageBuffer)
+                .resize(224, 224)
+                .removeAlpha() // Ensure 3 channels (RGB), drop alpha
+                .raw()
+                .toBuffer({ resolveWithObject: true });
+
+            // Create a 3D tensor using pure tfjs from the raw Uint8Array
+            const tensor = tf.tensor3d(new Uint8Array(data), [224, 224, 3], 'int32')
+                .expandDims(0)
+                .toFloat();
             
-            console.log('⚠️ Falling back to enhanced mock service');
-            return false;
+            return tensor;
+        } catch (error) {
+            console.error('❌ Failed to load or process image for tensor:', error.message);
+            throw error;
         }
     }
 
@@ -55,15 +92,20 @@ class TensorFlowService {
             }
         }
 
+        let imageTensor = null;
+
         try {
-            // Simulate image processing (in real implementation, would load actual image)
-            console.log('📸 Processing image with TensorFlow...');
+            console.log('📸 Processing real image with TensorFlow & sharp...');
             
-            // Create a dummy tensor for demonstration
-            const dummyImage = tf.zeros([224, 224, 3]);
+            if (!imageUrl) {
+                throw new Error("No image URL provided");
+            }
+
+            // Convert actual image to tensor
+            imageTensor = await this.loadImageAsTensor(imageUrl);
             
             // Get predictions from MobileNet
-            const predictions = await this.model.classify(dummyImage);
+            const predictions = await this.model.classify(imageTensor);
             console.log('🔍 TensorFlow predictions:', predictions);
             
             // Convert TensorFlow predictions to agricultural analysis
@@ -73,17 +115,20 @@ class TensorFlowService {
                 location
             );
             
-            // Clean up tensors
-            dummyImage.dispose();
-            
             return agriculturalAnalysis;
             
         } catch (error) {
             console.error('❌ TensorFlow analysis error:', error);
-            
+
             // Fallback to enhanced mock service
             const enhancedMockAI = require('./enhanced-mock-service');
             return await enhancedMockAI.analyzeCropImage(imageUrl, cropType, location);
+        } finally {
+            // Clean up tensor memory guaranteed
+            if (imageTensor) {
+                imageTensor.dispose();
+                console.log('🧹 Tensor memory cleaned up');
+            }
         }
     }
 
@@ -92,29 +137,34 @@ class TensorFlowService {
      */
     convertPredictionsToAnalysis(predictions, cropType, location) {
         console.log('🧠 Running AI Inference Engine on raw TensorFlow predictions...');
+
+        // Step 1: Raw AI
+        const rawAI = runTensorflow(predictions);
         
-        // Pass raw predictions through the full inference pipeline
+        // Step 2 + 3: Agricultural AI + Decision AI
         const inferred = runInference(predictions, cropType, location);
 
         console.log(`✅ Inference result: ${inferred.disease} (${(inferred.confidence * 100).toFixed(1)}%) — ${inferred.severity} severity`);
 
         const actualCrop = inferred.crop;
+        const normalizedSeverity = inferred.severity || 'Unknown';
+        const estimatedLoss = inferred.estimatedLoss || FALLBACK_ESTIMATED_LOSS_BY_SEVERITY[normalizedSeverity] || FALLBACK_ESTIMATED_LOSS_BY_SEVERITY.Unknown;
         
         return {
             diagnosis: {
                 disease: inferred.disease,
-                confidence: (inferred.confidence * 100).toFixed(1),
+                confidence: Number(inferred.confidence.toFixed(4)),
                 severity: inferred.severity,
                 health_score: inferred.health_score,
-                tensorflow_prediction: inferred.raw_label,
-                tensorflow_confidence: inferred.raw_probability,
+                tensorflow_prediction: rawAI.label || inferred.raw_label,
+                tensorflow_confidence: Number((rawAI.probability || inferred.raw_probability || 0).toFixed(4)),
                 advice: inferred.advice,
                 treatment: inferred.treatment
             },
             yield_prediction: {
                 predicted_yield: this.calculateYieldFromHealth(inferred.health_score, actualCrop),
                 unit: 'tons/hectare',
-                confidence: inferred.confidence
+                confidence: Number(inferred.confidence.toFixed(4))
             },
             sustainability_score: this.calculateSustainability(inferred.health_score, location),
             risk_assessment: this.calculateRisk(inferred.health_score),
@@ -132,17 +182,29 @@ class TensorFlowService {
             health_trend: this.generateHealthTrend(inferred.health_score),
             location_analysis: {
                 location: location,
-                tensorflow_detected: inferred.raw_label,
+                tensorflow_detected: rawAI.label || inferred.raw_label,
                 agricultural_interpretation: inferred.disease,
                 source: inferred.source
             },
+            decision_intelligence: {
+                severity: normalizedSeverity,
+                risk_factor: inferred.riskFactor || null,
+                primary_threat: inferred.primaryThreat || null,
+                estimated_loss: estimatedLoss,
+                urgency: inferred.urgency || null,
+                crop_advisory: inferred.cropAdvisory || null,
+                recommended_action: inferred.recommendedAction || inferred.advice
+            },
+            pipeline: inferred.pipeline,
             metadata: {
                 analysis_timestamp: new Date().toISOString(),
                 crop_type: actualCrop,
                 ai_version: 'TensorFlow.js + AI Inference Engine v1.0',
                 processing_time_ms: 0,
                 model_used: 'MobileNetV2',
-                fallback_used: false
+                fallback_used: false,
+                ai_source: "tensorflow",
+                pipeline_flow: 'Raw AI -> Agricultural AI -> Decision AI'
             }
         };
     }
@@ -164,9 +226,9 @@ class TensorFlowService {
 
         const baseYield = cropBaseYields[cropType] || 20.0;
         const healthFactor = healthScore / 100;
-        const randomVariation = 0.9 + Math.random() * 0.2; // 0.9 to 1.1
+        const deterministicVariation = 0.95 + (healthScore / 2000); // 0.95 to 1.0 based on health
 
-        return parseFloat((baseYield * healthFactor * randomVariation).toFixed(1));
+        return parseFloat((baseYield * healthFactor * deterministicVariation).toFixed(1));
     }
 
     /**
@@ -194,7 +256,7 @@ class TensorFlowService {
         const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'];
         return months.map((month, index) => ({
             date: `2024-${String(index + 1).padStart(2, '0')}`,
-            score: Math.max(0, Math.min(100, currentHealth + (Math.random() - 0.5) * 10)),
+            score: Math.max(0, Math.min(100, currentHealth + (currentHealth > 80 ? 2 : currentHealth > 60 ? 0 : -3) - (index * 2))),
             label: month,
             prediction: index > 3 ? 'Projected' : 'Actual'
         }));

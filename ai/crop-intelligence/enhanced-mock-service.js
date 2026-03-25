@@ -68,9 +68,6 @@ class EnhancedMockAIService {
     async analyzeCropImage(imageUrl, cropType, location) {
         console.log(`🌾 Enhanced AI Analysis for ${cropType} in ${location}`);
         
-        // Simulate processing delay for realism
-        await this.simulateProcessing(1500);
-        
         const profile = this.cropProfiles[cropType] || this.cropProfiles['Tomato'];
         const locationData = this.getLocationData(location);
         
@@ -108,7 +105,9 @@ class EnhancedMockAIService {
                 analysis_timestamp: new Date().toISOString(),
                 crop_type: cropType,
                 ai_version: 'Enhanced Mock v2.0',
-                processing_time_ms: 1500
+                processing_time_ms: 10,
+                fallback_used: true,
+                ai_source: "mock"
             }
         };
     }
@@ -116,9 +115,9 @@ class EnhancedMockAIService {
     calculateHealthScore(profile, locationData) {
         const baseHealth = profile.baseHealth;
         const locationFactor = locationData.factor * 10; // Convert to health points
-        const randomVariation = (Math.random() - 0.5) * 20 - 10; // -10 to +10
+        const deterministicVariation = (baseHealth > 80 ? 5 : baseHealth > 60 ? 0 : -5); // Deterministic based on health
         
-        return Math.max(0, Math.min(100, baseHealth + locationFactor + randomVariation));
+        return Math.max(0, Math.min(100, baseHealth + locationFactor + deterministicVariation));
     }
 
     detectDisease(profile, healthScore) {
@@ -127,18 +126,19 @@ class EnhancedMockAIService {
         if (isHealthy) {
             return {
                 name: 'None Detected',
-                confidence: (97 + Math.random() * 2).toFixed(1),
+                confidence: Number((0.97 + (healthScore > 85 ? 0.02 : 0)).toFixed(4)),
                 severity: 'None',
                 treatment_priority: 'Low'
             };
         }
         
-        const disease = profile.diseases[Math.floor(Math.random() * profile.diseases.length)];
+        const diseaseIndex = Math.floor((100 - healthScore) / 25) % profile.diseases.length;
+        const disease = profile.diseases[diseaseIndex];
         const severity = healthScore > 60 ? 'Mild' : healthScore > 40 ? 'Moderate' : 'Severe';
         
         return {
             name: disease,
-            confidence: (85 + Math.random() * 10).toFixed(1),
+            confidence: Number((0.85 + (100 - healthScore) / 200).toFixed(4)),
             severity,
             treatment_priority: severity === 'Severe' ? 'Immediate' : severity === 'Moderate' ? 'High' : 'Medium'
         };
@@ -148,26 +148,29 @@ class EnhancedMockAIService {
         const baseYield = profile.avgYield;
         const healthFactor = healthScore / 100;
         const locationFactor = 1 + locationData.factor;
-        const randomVariation = 0.9 + Math.random() * 0.2; // 0.9 to 1.1
+        const deterministicVariation = 0.95 + (healthScore / 1000); // 0.95 to 1.05 based on health
         
-        const predictedYield = baseYield * healthFactor * locationFactor * randomVariation;
+        const predictedYield = baseYield * healthFactor * locationFactor * deterministicVariation;
         return parseFloat(predictedYield.toFixed(1));
     }
 
     calculateSustainability(profile, locationData) {
-        const baseSustainability = profile.sustainabilityBase;
-        const locationBonus = locationData.factor > 0 ? 5 : -2;
-        const randomVariation = (Math.random() - 0.5) * 10;
+        // Use enhanced sustainability service for data-driven scoring
+        const sustainabilityService = require('../../server/src/services/sustainability.service');
+        const result = sustainabilityService.calculateSustainability(
+            Object.keys(this.cropProfiles).find(key => this.cropProfiles[key].baseHealth === profile.baseHealth) || 'Tomato',
+            locationData.location || 'Unknown'
+        );
         
-        return Math.max(0, Math.min(100, baseSustainability + locationBonus + randomVariation));
+        return result.score || 70; // Fallback to base sustainability
     }
 
     assessRisk(healthScore, locationData) {
         const healthRisk = (100 - healthScore) / 100;
         const locationRisk = Math.abs(locationData.factor);
-        const randomRisk = Math.random() * 0.2;
+        const deterministicRisk = (100 - healthScore) / 500; // Deterministic risk based on health
         
-        return parseFloat((healthRisk + locationRisk + randomRisk).toFixed(2));
+        return parseFloat((healthRisk + locationRisk + deterministicRisk).toFixed(2));
     }
 
     generateRecommendations(disease, cropType, healthScore) {
@@ -240,9 +243,9 @@ class EnhancedMockAIService {
         const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'];
         return months.map((month, index) => {
             const trendFactor = 1 - (index * 0.05); // Gradual decline if untreated
-            const randomVariation = (Math.random() - 0.5) * 10;
+            const deterministicVariation = (currentHealth > 80 ? 2 : currentHealth > 60 ? 0 : -3);
             const score = Math.max(0, Math.min(100, 
-                currentHealth * trendFactor + randomVariation));
+                currentHealth * trendFactor + deterministicVariation));
             
             return {
                 date: `2024-${String(index + 1).padStart(2, '0')}`,
@@ -288,7 +291,10 @@ class EnhancedMockAIService {
         // Adjust for location data availability
         if (locationFactor !== 0) baseConfidence += 0.05;
         
-        return Math.min(0.99, baseConfidence + (Math.random() - 0.5) * 0.1);
+        // Deterministic adjustment based on health score
+        const deterministicAdjustment = (healthScore - 50) / 1000;
+        
+        return Math.min(0.99, baseConfidence + deterministicAdjustment);
     }
 
     getHealthLevel(healthScore) {

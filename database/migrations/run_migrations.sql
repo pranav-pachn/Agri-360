@@ -10,6 +10,7 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 \i 002_create_analytics.sql
 \i 003_enhance_credit_scores.sql
 \i 004_create_chat_logs.sql
+\i 006_create_predictions.sql
 \i 005_sample_data.sql
 
 -- Verify tables were created
@@ -20,13 +21,13 @@ BEGIN
     SELECT COUNT(*) INTO table_count 
     FROM information_schema.tables 
     WHERE table_schema = 'public' 
-    AND table_name IN ('farmers', 'crop_reports', 'credit_scores', 'analytics', 'chat_logs');
+    AND table_name IN ('farmers', 'crop_reports', 'credit_scores', 'analytics', 'chat_logs', 'predictions');
     
-    IF table_count = 5 THEN
+    IF table_count = 6 THEN
         RAISE NOTICE 'All migrations completed successfully!';
-        RAISE NOTICE 'Tables created: farmers, crop_reports, credit_scores, analytics, chat_logs';
+        RAISE NOTICE 'Tables created: farmers, crop_reports, credit_scores, analytics, chat_logs, predictions';
     ELSE
-        RAISE WARNING 'Migration incomplete. Expected 5 tables, found %', table_count;
+        RAISE WARNING 'Migration incomplete. Expected 6 tables, found %', table_count;
     END IF;
 END $$;
 

@@ -68,7 +68,7 @@ const CROP_MAPPING = {
     treatment: null
   },
 
-  // ─── Tomato-specific diseases ─────────────────────────────────────────────────
+  // ─── Specific Crops ─────────────────────────────────────────────────────────────
   "tomato": {
     crop: "Tomato",
     disease: "Under Assessment",
@@ -77,6 +77,42 @@ const CROP_MAPPING = {
     severity: "Low",
     health_score: 72,
     treatment: "Visual inspection recommended."
+  },
+  "corn": {
+    crop: "Maize",
+    disease: "Healthy",
+    confidence_boost: 0.05,
+    advice: "Maize detected. Maintain regular watering.",
+    severity: "None",
+    health_score: 85,
+    treatment: null
+  },
+  "rice": {
+    crop: "Rice",
+    disease: "Healthy",
+    confidence_boost: 0.05,
+    advice: "Rice crop detected. Ensure optimal field flooding.",
+    severity: "None",
+    health_score: 85,
+    treatment: null
+  },
+  "wheat": {
+    crop: "Wheat",
+    disease: "Healthy",
+    confidence_boost: 0.05,
+    advice: "Wheat detected. Monitor for rust during heading stage.",
+    severity: "None",
+    health_score: 85,
+    treatment: null
+  },
+  "sugarcane": {
+    crop: "Sugarcane",
+    disease: "Healthy",
+    confidence_boost: 0.05,
+    advice: "Sugarcane crop detected. Maintain optimal soil moisture.",
+    severity: "None",
+    health_score: 85,
+    treatment: null
   },
 
   // ─── Fungal / Mould Pathogens ────────────────────────────────────────────────
@@ -164,7 +200,16 @@ const CROP_MAPPING = {
     treatment: "Insecticide (Thiamethoxam 25% WG) for vector control — ₹700/hectare"
   },
 
-  // ─── Physical / Abiotic Stress ───────────────────────────────────────────────
+  // ─── Physical / Abiotic Stress & Specific Pathogens ──────────────────────────
+  "red rot": {
+    crop: "Sugarcane",
+    disease: "Red Rot",
+    confidence_boost: 0.0,
+    advice: "Uproot and burn affected plants immediately. Practice crop rotation and avoid ratooning.",
+    severity: "Critical",
+    health_score: 25,
+    treatment: "Use disease-free setts for the next cycle. Apply Carbendazim 0.1% for sett treatment."
+  },
   "rot": {
     crop: "Identified Crop",
     disease: "Root / Stem Rot",
@@ -260,9 +305,25 @@ const CROP_MAPPING = {
 };
 
 /**
+ * Priority order for partial substring matching.
+ * Specific pathogens and severe symptoms must be matched BEFORE generic plant terms.
+ */
+const PRIORITY_KEYS = [
+  // 1. Specific Pathogens & Pests
+  "red rot", "blight", "rust", "rot", "wilt", "mosaic", "spore", "fungus", 
+  "mold", "mould", "aphid", "caterpillar", "insect", "mushroom", "decay",
+  // 2. Visible Symptoms
+  "spot", "yellow", "brown", "pale", "dry",
+  // 3. Specific Crops
+  "tomato", "corn", "rice", "wheat", "sugarcane",
+  // 4. Generic Plant Morphology
+  "leaf", "flower", "herb", "grass", "tree", "plant"
+];
+
+/**
  * Look up a MobileNet class label in the disease knowledge base.
- * Performs partial substring matching to handle multi-word class strings
- * like "leatherleaf fern" or "stinkhorn, carrion fungus".
+ * Performs partial substring matching using a priority list to ensure
+ * severe conditions (like "blight") match before generic terms ("leaf").
  *
  * @param {string} label - Raw className from TensorFlow prediction
  * @returns {CropDiagnosis} Structured agricultural diagnosis
@@ -275,10 +336,10 @@ const mapToCropDisease = (label) => {
   // Exact key match first (fastest)
   if (CROP_MAPPING[lowerLabel]) return CROP_MAPPING[lowerLabel];
 
-  // Partial substring match for multi-token ImageNet class strings
-  for (const [key, value] of Object.entries(CROP_MAPPING)) {
-    if (lowerLabel.includes(key)) {
-      return value;
+  // Partial substring match following priority rules
+  for (const key of PRIORITY_KEYS) {
+    if (lowerLabel.includes(key) && CROP_MAPPING[key]) {
+      return CROP_MAPPING[key];
     }
   }
 
@@ -299,8 +360,8 @@ const _getFallback = () => ({
   disease: "Unclassified Condition",
   confidence_boost: 0.0,
   advice: "Image could not be classified precisely. Please retake the photo of the affected leaf/stem up close, or consult your nearest agricultural extension officer.",
-  severity: "Medium",
-  health_score: 60,
+  severity: "Unknown",
+  health_score: null,
   treatment: "Consult expert"
 });
 

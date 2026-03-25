@@ -1,41 +1,29 @@
 const express = require("express");
-const supabase = require("../config/supabase.js");
+const analysisService = require("../services/analysisService");
 
 const router = express.Router();
 
 router.post("/", async (req, res) => {
-  const { crop, location } = req.body;
+  try {
+    const { crop, location, imageUrl = null } = req.body;
 
-  // Mock logic
-  const health = Math.floor(Math.random() * 40) + 60;
-  const risk = Math.random() * 0.5;
-  const yieldPred = (Math.random() * 2 + 2).toFixed(1);
+    if (!crop || !location) {
+      return res.status(400).json({
+        error: "Missing required fields: crop and location"
+      });
+    }
 
-  const trustScore = Math.floor(
-    health * 0.4 + (1 - risk) * 30 + yieldPred * 10
-  );
-
-  const { data, error } = await supabase
-    .from("farm_analysis")
-    .insert([
-      {
-        crop,
-        location,
-        health,
-        risk,
-        yield: yieldPred,
-        trust_score: trustScore,
-      },
-    ]);
-
-  if (error) return res.status(500).json(error);
-
-  res.json({
-    health,
-    risk,
-    yield: yieldPred,
-    trustScore,
-  });
+    const result = await analysisService.generateAnalysis(crop, location, imageUrl);
+    return res.status(201).json({
+      success: true,
+      message: "Analysis completed successfully",
+      data: result
+    });
+  } catch (error) {
+    return res.status(500).json({
+      error: error.message || "Analysis failed"
+    });
+  }
 });
 
 module.exports = router;

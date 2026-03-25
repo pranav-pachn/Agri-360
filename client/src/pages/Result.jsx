@@ -1,346 +1,178 @@
-import { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { api } from '../services/api';
-import { ArrowLeft, CheckCircle, ShieldAlert, BadgeInfo, TrendingUp, AlertTriangle, Leaf, Camera } from 'lucide-react';
-import TrustScoreGauge from '../components/ui/TrustScoreGauge';
-import ScoreBreakdown from '../components/charts/ScoreBreakdown';
-import HealthTrend from '../components/charts/HealthTrend';
-import HealthIndicator from '../components/ui/HealthIndicator';
+import React, { useEffect, useState } from 'react';
+import { useLocation, useParams, useNavigate } from 'react-router-dom';
+import ImagePanel from '../components/result/ImagePanel';
+import DiseaseCard from '../components/result/DiseaseCard';
+import RiskCard from '../components/result/RiskCard';
+import YieldCard from '../components/result/YieldCard';
+import LoanCard from '../components/result/LoanCard';
+import RecommendationBox from '../components/result/RecommendationBox';
+import ExplainabilityBox from '../components/result/ExplainabilityBox';
+import SustainabilityCard from '../components/result/SustainabilityCard';
+import { buildFallbackResultPayload, normalizeResultPayload } from '../services/resultDataMapper';
 
-export default function Result() {
+const Result = () => {
   const { id } = useParams();
+  const location = useLocation();
   const navigate = useNavigate();
   const [data, setData] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
 
   useEffect(() => {
-    const fetchExplainability = async () => {
-      try {
-        // Mock data for demonstration - in real app this would come from API
-        const mockResult = {
-          id: id,
-          score: 742,
-          credit_rating: 'Good',
-          timestamp: '2026-03-24T10:30:00Z',
-          crop: 'Tomato',
-          location: 'Punjab, India',
-          image_url: '/api/images/tomato-sample.jpg',
-          diagnosis: {
-            disease: 'Early Blight',
-            confidence: 94.7,
-            severity: 'Moderate',
-            health_score: 62
-          },
-          yield_prediction: {
-            predicted_yield: 18.5,
-            unit: 'tons/hectare',
-            confidence: 0.78
-          },
-          sustainability_index: 72,
-          breakdown: {
-            crop_health: { raw: 62, weighted: 18.6 },
-            yield_performance: { raw: 78, weighted: 19.5 },
-            sustainability: { raw: 72, weighted: 14.4 },
-            historical_compliance: { raw: 90, weighted: 9.0 },
-            behavioral_patterns: { raw: 65, weighted: 6.5 },
-            external_verification: { raw: 80, weighted: 4.0 }
-          },
-          recommendations: [
-            {
-              type: 'Fungicide',
-              product: 'Mancozeb 75% WP',
-              dosage: '2.5g/L water',
-              frequency: 'Every 7 days for 3 weeks',
-              urgency: 'High'
-            },
-            {
-              type: 'Cultural Practice',
-              action: 'Remove infected lower leaves',
-              urgency: 'Immediate'
-            }
-          ],
-          health_trend: [
-            { date: '2024-01', score: 68, label: 'Jan' },
-            { date: '2024-02', score: 70, label: 'Feb' },
-            { date: '2024-03', score: 65, label: 'Mar' },
-            { date: '2024-04', score: 62, label: 'Apr' }
-          ]
-        };
-        
-        setData(mockResult);
-      } catch (err) {
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
-    };
-    
-    setTimeout(() => {
-      fetchExplainability();
-    }, 1500); // Simulate loading time
-  }, [id]);
+    let isMounted = true;
 
-  if (loading) {
+    // Check if we received data from router navigation (e.g. from upload page)
+    if (location.state?.analysisData) {
+      setData(normalizeResultPayload(location.state.analysisData));
+    } else {
+      const fetchAnalysis = async () => {
+        try {
+          const response = await fetch(`/api/analysis/${id}`);
+          if (!response.ok) {
+            throw new Error(`Failed to load analysis: ${response.status}`);
+          }
+
+          const analysis = await response.json();
+          if (isMounted) {
+            setData(normalizeResultPayload(analysis));
+          }
+        } catch (error) {
+          console.error('Failed to fetch analysis by id, using fallback:', error);
+          if (isMounted) {
+            setData(
+              buildFallbackResultPayload({
+                id: id || 'mock-analysis',
+                dataMode: {
+                  source: 'frontend-mock',
+                  fallbackUsed: true,
+                },
+              })
+            );
+          }
+        }
+      };
+
+      fetchAnalysis();
+    }
+
+    return () => {
+      isMounted = false;
+    };
+  }, [id, location.state]);
+
+  if (!data) {
     return (
-      <div className="container animate-fade" style={{ maxWidth: '900px' }}>
-        <div className="glass-panel text-center" style={{ padding: '60px 20px' }}>
-          <div className="animate-pulse" style={{ marginBottom: '24px' }}>
-            <div style={{ 
-              width: '80px', 
-              height: '80px', 
-              border: '4px solid var(--primary)',
-              borderTopColor: 'transparent',
-              borderRadius: '50%',
-              margin: '0 auto',
-              animation: 'spin 1s linear infinite'
-            }} />
-          </div>
-          
-          <h3 className="heading-md" style={{ marginBottom: '12px' }}>AI Analysis in Progress</h3>
-          <p className="text-body">Generating comprehensive crop intelligence and trust score...</p>
-        </div>
+      <div className="min-h-screen bg-slate-900 flex flex-col items-center justify-center">
+        <div className="w-16 h-16 border-4 border-indigo-500/20 border-t-indigo-500 rounded-full animate-spin"></div>
+        <p className="mt-4 text-indigo-400 font-medium animate-pulse">Loading analysis report...</p>
       </div>
     );
   }
-  
-  if (error) return <div className="container text-center" style={{ color: 'var(--danger)', padding: '40px' }}>Error: {error}</div>;
-  if (!data) return null;
-
-  const getCreditRecommendation = (score) => {
-    if (score >= 750) return { max: 500000, rate: '7.5%', term: '24 months', category: 'Low' };
-    if (score >= 650) return { max: 350000, rate: '8.5%', term: '18 months', category: 'Low-Medium' };
-    if (score >= 550) return { max: 200000, rate: '10.5%', term: '12 months', category: 'Medium' };
-    if (score >= 450) return { max: 100000, rate: '12.5%', term: '9 months', category: 'High' };
-    return { max: 50000, rate: '15%', term: '6 months', category: 'Very High' };
-  };
-
-  const creditRec = getCreditRecommendation(data.score);
 
   return (
-    <div className="container animate-fade" style={{ maxWidth: '1200px' }}>
-      <button 
-        onClick={() => navigate('/dashboard')} 
-        className="btn-primary" 
-        style={{ background: 'transparent', padding: '0', color: 'var(--text-muted)', marginBottom: '32px' }}
-      >
-        <ArrowLeft size={20} /> Back to Dashboard
-      </button>
-
-      {/* Header with Trust Score */}
-      <div style={{ 
-        display: 'grid', 
-        gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', 
-        gap: '32px', 
-        marginBottom: '40px' 
-      }}>
-        {/* Trust Score Gauge */}
-        <div className="glass-panel" style={{ textAlign: 'center' }}>
-          <h3 className="heading-md" style={{ marginBottom: '24px' }}>AgriCredit Trust Score</h3>
-          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '16px' }}>
-            <TrustScoreGauge score={data.score} size={200} showLabel={true} />
-          </div>
-          
-          <div style={{ 
-            padding: '16px',
-            background: data.score >= 650 ? 'rgba(46, 125, 50, 0.1)' : 'rgba(255, 143, 0, 0.1)',
-            border: `1px solid ${data.score >= 650 ? 'rgba(46, 125, 50, 0.2)' : 'rgba(255, 143, 0, 0.2)'}`,
-            borderRadius: 'var(--radius-md)',
-            marginBottom: '16px'
-          }}>
-            <div style={{ fontSize: '1.125rem', fontWeight: 600, marginBottom: '8px' }}>
-              Credit Rating: <span style={{ color: data.score >= 650 ? 'var(--success)' : 'var(--warning)' }}>
-                {data.credit_rating}
+    <div className="min-h-[calc(100vh-4rem)] bg-slate-900 py-8 px-4 sm:px-6 lg:px-8 animate-in fade-in duration-500">
+      <div className="max-w-7xl mx-auto">
+        
+        {/* Header Section */}
+        <div className="mb-8 flex flex-col sm:flex-row sm:items-end justify-between gap-4 border-b border-slate-800 pb-6">
+          <div>
+            <div className="flex items-center space-x-2 text-indigo-400 mb-2">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+              </svg>
+              <span className="text-sm font-bold tracking-wider uppercase">Analysis Complete</span>
+              <span className="rounded-full border border-indigo-400/30 bg-indigo-500/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-indigo-200">
+                {data?.dataMode?.fallbackUsed ? 'Fallback Data' : 'Real Data'}
               </span>
             </div>
-            <div className="text-sm">
-              Max Loan: ₹{creditRec.max.toLocaleString('en-IN')} • Rate: {creditRec.rate}
-            </div>
+            <h1 className="text-3xl font-extrabold text-white tracking-tight sm:text-4xl">
+              Crop Assessment Report
+            </h1>
+            <p className="text-slate-400 mt-2 max-w-2xl">
+              Comprehensive breakdown of crop health, risk factors, and financial eligibility based on your recent scan.
+            </p>
           </div>
-        </div>
-
-        {/* Analysis Summary */}
-        <div className="glass-panel">
-          <h3 className="heading-md" style={{ marginBottom: '20px' }}>Analysis Summary</h3>
-          
-          <div style={{ display: 'grid', gap: '16px' }}>
-            <div className="flex-between">
-              <span className="text-sm">Crop</span>
-              <span style={{ fontWeight: 600 }}>{data.crop}</span>
-            </div>
-            <div className="flex-between">
-              <span className="text-sm">Location</span>
-              <span style={{ fontWeight: 600 }}>{data.location}</span>
-            </div>
-            <div className="flex-between">
-              <span className="text-sm">Analysis Date</span>
-              <span style={{ fontWeight: 600 }}>
-                {new Date(data.timestamp).toLocaleDateString()}
-              </span>
-            </div>
-            
-            <div style={{ 
-              padding: '12px',
-              background: 'rgba(21, 101, 192, 0.1)',
-              border: '1px solid rgba(21, 101, 192, 0.2)',
-              borderRadius: 'var(--radius-md)',
-              marginTop: '8px'
-            }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
-                <BadgeInfo size={16} style={{ color: 'var(--info)' }} />
-                <span style={{ fontWeight: 600, fontSize: '0.875rem' }}>AI Diagnosis</span>
-              </div>
-              <div style={{ fontSize: '0.875rem', marginBottom: '4px' }}>
-                <strong>{data.diagnosis.disease}</strong> detected with {data.diagnosis.confidence}% confidence
-              </div>
-              <div style={{ fontSize: '0.875rem', color: 'var(--text-muted)' }}>
-                Severity: {data.diagnosis.severity} • Health Score: {data.diagnosis.health_score}/100
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Health Indicators */}
-      <div style={{ marginBottom: '40px' }}>
-        <h3 className="heading-md" style={{ marginBottom: '20px' }}>Health Indicators</h3>
-        <div style={{ 
-          display: 'grid', 
-          gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', 
-          gap: '16px' 
-        }}>
-          <HealthIndicator
-            title="Crop Health"
-            value={data.diagnosis.health_score}
-            trend="down"
-            icon={<Leaf size={20} />}
-          />
-          <HealthIndicator
-            title="Yield Prediction"
-            value={data.yield_prediction.confidence * 100}
-            maxValue={100}
-            trend="stable"
-            icon={<TrendingUp size={20} />}
-          />
-          <HealthIndicator
-            title="Sustainability"
-            value={data.sustainability_index}
-            trend="up"
-            icon={<CheckCircle size={20} />}
-          />
-        </div>
-      </div>
-
-      {/* Score Breakdown and Health Trend */}
-      <div style={{ 
-        display: 'grid', 
-        gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', 
-        gap: '32px', 
-        marginBottom: '40px' 
-      }}>
-        <ScoreBreakdown scoreData={data.breakdown} />
-        <HealthTrend 
-          healthData={data.health_trend} 
-          title="Health Score Trend"
-          timeRange="4 months"
-        />
-      </div>
-
-      {/* Recommendations */}
-      <div className="glass-panel" style={{ marginBottom: '40px' }}>
-        <h3 className="heading-md" style={{ marginBottom: '20px' }}>AI Recommendations</h3>
-        
-        <div style={{ display: 'grid', gap: '16px' }}>
-          {data.recommendations.map((rec, index) => (
-            <div 
-              key={index}
-              className="health-card"
-              style={{ 
-                borderLeft: `4px solid ${rec.urgency === 'High' ? 'var(--danger)' : rec.urgency === 'Immediate' ? 'var(--danger)' : 'var(--warning)'}`
-              }}
-            >
-              <div className="flex-between" style={{ marginBottom: '12px' }}>
-                <div>
-                  <div style={{ fontWeight: 600, marginBottom: '4px' }}>
-                    {rec.type}: {rec.product || rec.action}
-                  </div>
-                  {rec.dosage && (
-                    <div className="text-sm" style={{ marginBottom: '4px' }}>
-                      Dosage: {rec.dosage}
-                    </div>
-                  )}
-                  {rec.frequency && (
-                    <div className="text-sm" style={{ marginBottom: '4px' }}>
-                      Frequency: {rec.frequency}
-                    </div>
-                  )}
-                </div>
-                <div style={{ textAlign: 'right' }}>
-                  <span className={`badge badge-${rec.urgency === 'High' || rec.urgency === 'Immediate' ? 'danger' : 'warning'}`}>
-                    {rec.urgency} Priority
-                  </span>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Credit Information */}
-      <div className="glass-panel">
-        <h3 className="heading-md" style={{ marginBottom: '20px' }}>Credit Opportunity</h3>
-        
-        <div style={{ 
-          display: 'grid', 
-          gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', 
-          gap: '20px',
-          marginBottom: '24px'
-        }}>
-          <div style={{ textAlign: 'center', padding: '20px', background: 'rgba(46, 125, 50, 0.05)', borderRadius: 'var(--radius-md)' }}>
-            <div style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--success)', marginBottom: '8px' }}>
-              ₹{creditRec.max.toLocaleString('en-IN')}
-            </div>
-            <div className="text-sm">Maximum Loan Amount</div>
-          </div>
-          
-          <div style={{ textAlign: 'center', padding: '20px', background: 'rgba(21, 101, 192, 0.05)', borderRadius: 'var(--radius-md)' }}>
-            <div style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--info)', marginBottom: '8px' }}>
-              {creditRec.rate}
-            </div>
-            <div className="text-sm">Interest Rate</div>
-          </div>
-          
-          <div style={{ textAlign: 'center', padding: '20px', background: 'rgba(255, 143, 0, 0.05)', borderRadius: 'var(--radius-md)' }}>
-            <div style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--accent)', marginBottom: '8px' }}>
-              {creditRec.term}
-            </div>
-            <div className="text-sm">Repayment Term</div>
-          </div>
-          
-          <div style={{ textAlign: 'center', padding: '20px', background: 'rgba(156, 39, 176, 0.05)', borderRadius: 'var(--radius-md)' }}>
-            <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#9C27B0', marginBottom: '8px' }}>
-              {creditRec.category}
-            </div>
-            <div className="text-sm">Risk Category</div>
-          </div>
-        </div>
-        
-        <div style={{ display: 'flex', gap: '12px' }}>
           <button 
-            className="btn-primary bridge-gradient"
-            onClick={() => alert('Loan application flow coming soon!')}
-          >
-            Apply for Loan
-          </button>
-          <button 
-            className="btn-primary"
-            style={{ background: 'transparent', border: '1px solid var(--primary)', color: 'var(--primary)' }}
             onClick={() => navigate('/upload')}
+            className="flex items-center px-5 py-2.5 bg-slate-800 text-white font-medium rounded-xl border border-slate-700 hover:bg-slate-700 hover:border-slate-500 transition-all shadow-sm"
           >
+            <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+            </svg>
             New Analysis
           </button>
         </div>
+
+        {/* Main Content Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          
+          {/* LEFT SIDE: Image panel */}
+          <div className="space-y-6 flex flex-col">
+            <ImagePanel imageUrl={data.image} />
+            
+            {/* Optional context box that fits nicely under the image */}
+            <div className="bg-slate-800/40 rounded-2xl p-5 border border-slate-800 text-sm text-slate-400">
+              <p className="flex items-start">
+                <svg className="w-5 h-5 text-indigo-400 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                This report is generated using advanced AI analysis. Results are estimates and should be verified with local agricultural experts for critical decisions.
+              </p>
+            </div>
+          </div>
+
+          {/* RIGHT SIDE: Information Cards */}
+          <div className="space-y-5 flex flex-col">
+            
+            {/* MOST IMPORTANT: Loan / Trust Score */}
+            <LoanCard 
+              trustScore={data.trustScore} 
+              eligibility={data.eligibility} 
+              rating={data.rating} 
+            />
+
+            {/* Disease Detection */}
+            <DiseaseCard 
+              disease={data.disease} 
+              confidence={data.confidence} 
+            />
+
+            {/* Risk & Yield: Side-by-side on mobile, or responsive */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+              <RiskCard 
+                riskLevel={data.riskLevel} 
+                riskScore={data.riskScore} 
+              />
+              <YieldCard 
+                projectedYield={data.projectedYield} 
+                estimatedLoss={data.estimatedLoss} 
+              />
+            </div>
+
+            {/* Recommended Actions */}
+            <RecommendationBox 
+              recommendations={data.recommendations} 
+            />
+
+            {/* Sustainability */}
+            <SustainabilityCard 
+              sustainabilityScore={data.sustainabilityScore} 
+              breakdown={data.sustainabilityBreakdown} 
+            />
+
+            {/* Explainability AI Text */}
+            <ExplainabilityBox
+              disease={data.disease}
+              confidence={data.confidence}
+              severity={data.severity}
+              riskScore={data.riskScore}
+              explanationText={data.explainabilityText}
+            />
+            
+          </div>
+        </div>
+        
       </div>
     </div>
   );
-}
+};
+
+export default Result;

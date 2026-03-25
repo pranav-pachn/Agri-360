@@ -17,6 +17,51 @@
 const { mapToCropDisease } = require('./cropMapping');
 const { enhancePrediction } = require('./agriEnhancer');
 
+const AGRI_KEYWORDS = [
+  "plant", "leaf", "crop", "tree", "flower", "corn", "wheat", "rice", "sugarcane",
+  "tomato", "potato", "soybean", "herb", "grass", "seed", "fruit",
+  "fungus", "mushroom", "mold", "mould", "spore", "rust", "blight",
+  "rot", "wilt", "decay", "spot", "insect", "aphid", "caterpillar"
+];
+
+const isAgricultural = (predictions) => {
+  if (!predictions || predictions.length === 0) return false;
+  return predictions.some(p =>
+    AGRI_KEYWORDS.some(k => p.className.toLowerCase().includes(k))
+  );
+};
+
+/**
+ * Step 1: Raw AI
+ * Normalize top TensorFlow/MobileNet predictions into a stable raw payload.
+ *
+ * @param {Array<{className: string, probability: number}>} predictions
+ * @returns {{label: string|null, probability: number, alternatives: Array<{label:string, probability:number}>, model: string, source: string}}
+ */
+const runTensorflow = (predictions) => {
+  if (!predictions || predictions.length === 0) {
+    return {
+      label: null,
+      probability: 0,
+      alternatives: [],
+      model: 'MobileNetV2',
+      source: 'tensorflow'
+    };
+  }
+
+  const top = predictions[0];
+  return {
+    label: top.className,
+    probability: Number(top.probability.toFixed(4)),
+    alternatives: predictions.slice(1, 3).map((p) => ({
+      label: p.className,
+      probability: Number(p.probability.toFixed(4))
+    })),
+    model: 'MobileNetV2',
+    source: 'tensorflow'
+  };
+};
+
 /**
  * Run inference on a set of raw MobileNet predictions.
  *
@@ -30,28 +75,46 @@ const { enhancePrediction } = require('./agriEnhancer');
  * @returns {InferenceResult|EnhancedResult}
  */
 const runInference = (predictions, cropTypeOverride = null, location = null) => {
-  if (!predictions || predictions.length === 0) {
+  // ── Step 0: Non-Agricultural Validation Gate ──────────────────────────────
+  if (!isAgricultural(predictions)) {
+    return {
+      error: "NON_AGRICULTURAL_IMAGE",
+      message: "This image does not appear to be related to agriculture or plants. Please upload a specific photo of a crop, leaf, or field condition.",
+      source: "tensorflow-gate"
+    };
+  }
+
+  // ── Step 1: Raw AI ────────────────────────────────────────────────────────
+  const rawAI = runTensorflow(predictions);
+
+  if (!rawAI.label) {
     return _fallbackResult(cropTypeOverride);
   }
 
-  // ── 1. Extract the top prediction ──────────────────────────────────────────
-  const top = predictions[0];
-  const rawProbability = Number(top.probability.toFixed(4));
+  // ── Step 1.5: Low Confidence Validation Gate ──────────────────────────────
+  if (rawAI.probability < 0.3) {
+    return {
+      error: "LOW_CONFIDENCE",
+      message: "Image unclear, please retake",
+      confidence: Number(rawAI.probability.toFixed(4)),
+      source: "tensorflow-gate"
+    };
+  }
 
-  // ── 2. Send the raw label through our Crop Intelligence Mapping Layer ──────
-  const mapped = mapToCropDisease(top.className);
+  // ── Step 2: Agricultural AI (semantic disease mapping) ────────────────────
+  const mapped = mapToCropDisease(rawAI.label);
 
   // Apply any confidence boost the mapping provides (for known disease labels)
-  const finalConfidence = Math.min(0.99, rawProbability + (mapped.confidence_boost || 0));
+  const finalConfidence = Math.min(0.99, rawAI.probability + (mapped.confidence_boost || 0));
 
-  // ── 3. Determine severity level using confidence thresholds ────────────────
-  const severity = _computeSeverity(rawProbability, mapped.severity);
+  // ── Step 2b: Determine severity level using confidence thresholds ──────────
+  const severity = _computeSeverity(rawAI.probability, mapped.severity);
 
-  // ── 4. Allow the user-provided crop type to override the generic mapped crop
+  // ── Step 2c: Allow user crop override ──────────────────────────────────────
   const crop = cropTypeOverride || mapped.crop;
 
-  // ── 5. Build the structured diagnostic result ──────────────────────────────
-  const baseResult = {
+  // ── Step 2d: Agricultural AI output ────────────────────────────────────────
+  const agriculturalResult = {
     // Core diagnostic fields consumed by the frontend
     crop,
     disease: mapped.disease,
@@ -65,22 +128,40 @@ const runInference = (predictions, cropTypeOverride = null, location = null) => 
 
     // Provenance — always log what the raw model actually saw
     source: "tensorflow",
-    raw_label: top.className,
-    raw_probability: rawProbability,
+    raw_label: rawAI.label,
+    raw_probability: rawAI.probability,
 
     // Alt predictions for debugging / explainability panel
-    alternatives: predictions.slice(1, 3).map(p => ({
-      label: p.className,
-      probability: Number(p.probability.toFixed(4))
-    }))
+    alternatives: rawAI.alternatives
   };
 
-  // ── 6. Auto-enhance with geo-contextual intelligence if location provided ───
-  if (location) {
-    return enhancePrediction(baseResult, location, crop);
-  }
+  // ── Step 3: Decision AI (geo-contextual enhancement) ───────────────────────
+  const decisionResult = location
+    ? enhancePrediction(agriculturalResult, location, crop)
+    : { ...agriculturalResult, enhanced: false };
 
-  return baseResult;
+  return {
+    ...decisionResult,
+    pipeline: {
+      raw_ai: rawAI,
+      agricultural_ai: {
+        mapped_from_label: rawAI.label,
+        crop,
+        disease: mapped.disease,
+        severity,
+        health_score: mapped.health_score,
+        confidence_boost: mapped.confidence_boost || 0
+      },
+      decision_ai: {
+        enhanced: Boolean(location),
+        location: location || null,
+        riskFactor: decisionResult.riskFactor || null,
+        primaryThreat: decisionResult.primaryThreat || null,
+        estimatedLoss: decisionResult.estimatedLoss || null,
+        urgency: decisionResult.urgency || null
+      }
+    }
+  };
 };
 
 /**
@@ -116,15 +197,34 @@ const _fallbackResult = (cropTypeOverride) => ({
   disease: "Unclassified",
   confidence: 0.0,
   severity: "Unknown",
-  health_score: 60,
+  health_score: null,
   advice: "No predictions generated. Please upload a clearer image of the crop leaf or stem.",
   treatment: null,
   source: "tensorflow-fallback",
   raw_label: null,
   raw_probability: 0.0,
-  alternatives: []
+  alternatives: [],
+  pipeline: {
+    raw_ai: {
+      label: null,
+      probability: 0,
+      alternatives: [],
+      model: 'MobileNetV2',
+      source: 'tensorflow'
+    },
+    agricultural_ai: null,
+    decision_ai: {
+      enhanced: false,
+      location: null,
+      riskFactor: null,
+      primaryThreat: null,
+      estimatedLoss: null,
+      urgency: null
+    }
+  }
 });
 
 module.exports = {
-  runInference
+  runInference,
+  runTensorflow
 };

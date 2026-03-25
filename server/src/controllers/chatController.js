@@ -1,6 +1,13 @@
 const chatService = require('../services/chatService');
 const logger = require('../utils/logger');
 
+const normalizeChatContext = (context = {}) => ({
+    disease: context.disease || context?.diagnosis?.disease || null,
+    riskLevel: context.riskLevel || context?.risk?.level || context?.risk_assessment?.level || null,
+    projectedYield: context.projectedYield || context?.yield?.projectedYield || context?.yield_prediction?.predicted_yield || null,
+    trustScore: context.trustScore || context?.trust?.score || context?.score || context?.trust_score || null
+});
+
 const createConversation = async (req, res, next) => {
     try {
         const { farmerId } = req.body;
@@ -22,7 +29,8 @@ const createConversation = async (req, res, next) => {
 
 const sendMessage = async (req, res, next) => {
     try {
-        const { conversationId, message, language = 'en' } = req.body;
+        const { conversationId, message, language = 'en', context = {} } = req.body;
+        const normalizedContext = normalizeChatContext(context);
         
         if (!conversationId || !message) {
             return res.status(400).json({ 
@@ -56,7 +64,8 @@ const sendMessage = async (req, res, next) => {
             conversationId, 
             farmerId, 
             message, 
-            language
+            language,
+            normalizedContext
         );
         
         return res.status(201).json({ 
@@ -65,6 +74,35 @@ const sendMessage = async (req, res, next) => {
         });
     } catch (error) {
         logger.error('Send message error:', error);
+        next(error);
+    }
+};
+
+const quickChat = async (req, res, next) => {
+    try {
+        const { message, language = 'en', context = {}, contextData = {} } = req.body;
+
+        if (!message) {
+            return res.status(400).json({
+                error: 'Missing field: message is required'
+            });
+        }
+
+        const normalizedContext = normalizeChatContext({ ...contextData, ...context, ...(req.contextData || {}) });
+        logger.info(`Processing quick chat request: ${message.substring(0, 50)}...`);
+
+        const response = await chatService.generateAIResponse(message, language, normalizedContext);
+
+        return res.status(200).json({
+            success: true,
+            data: {
+                reply: response.message,
+                original: response.metadata?.original_english || response.message,
+                context: normalizedContext
+            }
+        });
+    } catch (error) {
+        logger.error('Quick chat error:', error);
         next(error);
     }
 };
@@ -130,6 +168,7 @@ const getConversationStats = async (req, res, next) => {
 
 module.exports = {
     createConversation,
+    quickChat,
     sendMessage,
     getConversationHistory,
     getFarmerConversations,

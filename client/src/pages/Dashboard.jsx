@@ -1,283 +1,213 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { api } from '../services/api';
 import { supabase } from '../lib/supabase';
-import { Plus, LogOut, Activity, TrendingUp, AlertTriangle, CheckCircle } from 'lucide-react';
-import TrustScoreGauge from '../components/ui/TrustScoreGauge';
-import HealthIndicator from '../components/ui/HealthIndicator';
+import { LogOut } from 'lucide-react';
+
+// Import dashboard components
+import TrustCard from '../components/dashboard/TrustCard';
+import RiskCard from '../components/dashboard/RiskCard';
+import YieldCard from '../components/dashboard/YieldCard';
+import AIInsightPanel from '../components/dashboard/AIInsightPanel';
+import RecentReports from '../components/dashboard/RecentReports';
+import QuickActions from '../components/dashboard/QuickActions';
+import LoanPreCheckPanel from '../components/dashboard/LoanPreCheckPanel';
+import { getLoanPrecheckData } from '../services/loanPrecheckService';
+import { getDashboardData } from '../services/dashboardDataService';
 
 export default function Dashboard() {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
   const [analyses, setAnalyses] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [trustScore, setTrustScore] = useState(742); // Mock data - would come from API
-  const [healthData, setHealthData] = useState({
-    cropHealth: 78,
-    yieldPerformance: 85,
-    sustainability: 72
-  });
+  const [trustScore, setTrustScore] = useState(0);
+  const [riskScore, setRiskScore] = useState(0);
+  const [riskLevel, setRiskLevel] = useState('Low Risk');
+  const [yieldData, setYieldData] = useState({});
+  const [yieldDelta, setYieldDelta] = useState(0);
+  const [dashboardDataMode, setDashboardDataMode] = useState(null);
+  const [showLoanPanel, setShowLoanPanel] = useState(false);
+  const [loanPanelStatus, setLoanPanelStatus] = useState('idle');
+  const [loanPanelData, setLoanPanelData] = useState(null);
+  const [loanPanelError, setLoanPanelError] = useState('');
 
   useEffect(() => {
-    loadAnalyses();
-    loadTrustScore();
+    if (!user?.id) {
+      setLoading(false);
+      return;
+    }
 
-    // 🚀 WINNING FEATURE: Supabase Realtime Subscription
-    // Subscribe to any insert/update on crop_reports so the dashboard auto-updates
+    loadDashboardData(user.id);
+    
+    // Listen for new reports and refresh only for the active farmer.
     const subscription = supabase
       .channel('schema-db-changes')
       .on(
         'postgres_changes',
-        { event: '*', schema: 'public', table: 'crop_reports' },
+        { event: 'INSERT', schema: 'public', table: 'crop_reports' },
         (payload) => {
-          console.log('Realtime Update Received:', payload);
-          // Auto-refresh the dashboard data
-          loadAnalyses();
+          if (payload.new?.farmer_id === user.id) {
+            console.log('New crop report detected:', payload.new);
+            loadDashboardData(user.id);
+          }
         }
       )
       .subscribe();
 
-    // Cleanup subscription on unmount
-    return () => {
-      supabase.removeChannel(subscription);
-    };
-  }, []);
+    return () => subscription.unsubscribe();
+  }, [user?.id]);
 
-  const loadAnalyses = async () => {
+  const loadDashboardData = async (farmerId) => {
     try {
-      const data = await api.get('/analysis');
-      setAnalyses(data || []);
-    } catch (err) {
-      console.error("Failed to load analyses:", err);
+      const data = await getDashboardData({ farmerId, user });
+      setAnalyses(data.analyses);
+      setTrustScore(data.trustScore);
+      setRiskScore(data.riskScore);
+      setRiskLevel(data.riskLevel);
+      setYieldData({ predictedYield: data.yieldValue });
+      setYieldDelta(data.yieldDelta);
+      setDashboardDataMode(data.dataMode);
+    } catch (error) {
+      console.error('Failed to load analyses:', error);
+      const fallback = {
+        analyses: [],
+        trustScore: 742,
+        riskScore: 0.35,
+        riskLevel: 'Medium Risk',
+        yieldValue: 2.8,
+        yieldDelta: -12,
+      };
+
+      setAnalyses(fallback.analyses);
+      setTrustScore(fallback.trustScore);
+      setRiskScore(fallback.riskScore);
+      setRiskLevel(fallback.riskLevel);
+      setYieldData({ predictedYield: fallback.yieldValue });
+      setYieldDelta(fallback.yieldDelta);
+      setDashboardDataMode({ source: 'dashboard-mock', fallbackUsed: true, label: 'Using local dashboard fallback data' });
     } finally {
       setLoading(false);
     }
   };
 
-  const loadTrustScore = async () => {
+  const handleSignOut = () => {
+    signOut();
+    navigate('/login');
+  };
+
+  const openLoanPanel = async () => {
+    setShowLoanPanel(true);
+    setLoanPanelStatus('loading');
+    setLoanPanelError('');
+
     try {
-      // Mock data - in real app this would come from API
-      const mockTrustScore = {
-        score: 742,
-        breakdown: {
-          crop_health: { raw: 78, weighted: 23.4 },
-          yield_performance: { raw: 85, weighted: 21.25 },
-          sustainability: { raw: 72, weighted: 14.4 },
-          historical_compliance: { raw: 90, weighted: 9.0 },
-          behavioral_patterns: { raw: 65, weighted: 6.5 },
-          external_verification: { raw: 80, weighted: 4.0 }
-        }
-      };
-      setTrustScore(mockTrustScore.score);
-    } catch (err) {
-      console.error("Failed to load trust score:", err);
+      const data = await getLoanPrecheckData({
+        user,
+        dashboardSnapshot: {
+          trustScore,
+          riskScore,
+          yieldValue: yieldData?.predictedYield,
+          cropType: analyses?.[0]?.crop,
+        },
+      });
+
+      setLoanPanelData(data);
+      setLoanPanelStatus('ready');
+    } catch (error) {
+      setLoanPanelError(error.message || 'Unable to prepare loan pre-check.');
+      setLoanPanelStatus('error');
     }
   };
 
-  const getRecentHealthTrend = () => {
-    // Mock trend data
-    return Math.random() > 0.5 ? 'up' : Math.random() > 0.5 ? 'down' : 'stable';
+  const closeLoanPanel = () => {
+    setShowLoanPanel(false);
+    setLoanPanelStatus('idle');
+    setLoanPanelError('');
   };
 
+  const proceedLoanApplication = () => {
+    setLoanPanelStatus('preApproved');
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full animate-pulse"></div>
+          <p className="mt-4 text-lg font-semibold text-gray-700">Loading Agricultural Intelligence...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="container animate-fade">
-      <header className="flex-between" style={{ marginBottom: '40px' }}>
-        <div>
-          <h1 className="heading-xl bridge-gradient-text">AgriMitra Dashboard</h1>
-          <p className="text-body" style={{ marginTop: '8px' }}>
-            Welcome back, {user?.email}
-          </p>
-        </div>
-        <div style={{ display: 'flex', gap: '16px' }}>
-          <button onClick={() => navigate('/upload')} className="btn-primary bridge-gradient">
-            <Plus size={20} /> New Analysis
-          </button>
-          <button 
-            onClick={() => signOut()} 
-            className="btn-primary" 
-            style={{ background: 'transparent', border: '1px solid var(--border-color)', color: 'var(--text-muted)' }}
-          >
-            <LogOut size={20} />
-          </button>
-        </div>
-      </header>
-
-      {/* Trust Score Summary */}
-      <div style={{ 
-        display: 'grid', 
-        gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', 
-        gap: '24px', 
-        marginBottom: '40px' 
-      }}>
-        <div className="glass-panel" style={{ textAlign: 'center' }}>
-          <h3 className="heading-md" style={{ marginBottom: '24px' }}>Your Trust Score</h3>
-          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '16px' }}>
-            <TrustScoreGauge score={trustScore} size={180} showLabel={true} />
-          </div>
-          <div style={{ 
-            padding: '12px 16px',
-            background: trustScore >= 650 ? 'rgba(46, 125, 50, 0.1)' : 'rgba(255, 143, 0, 0.1)',
-            border: `1px solid ${trustScore >= 650 ? 'rgba(46, 125, 50, 0.2)' : 'rgba(255, 143, 0, 0.2)'}`,
-            borderRadius: 'var(--radius-md)',
-            color: trustScore >= 650 ? 'var(--success)' : 'var(--warning)',
-            fontSize: '0.875rem',
-            fontWeight: 500
-          }}>
-            {trustScore >= 750 ? 'Excellent - Eligible for premium loans' :
-             trustScore >= 650 ? 'Good - Standard loan terms available' :
-             trustScore >= 550 ? 'Fair - Some restrictions may apply' :
-             trustScore >= 450 ? 'Below Average - Limited options' :
-             'Poor - Financial improvement needed'}
-          </div>
-        </div>
-
-        <div>
-          <h3 className="heading-md" style={{ marginBottom: '16px' }}>Health Indicators</h3>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            <HealthIndicator
-              title="Crop Health"
-              value={healthData.cropHealth}
-              trend={getRecentHealthTrend()}
-              icon={<Activity size={20} />}
-            />
-            <HealthIndicator
-              title="Yield Performance"
-              value={healthData.yieldPerformance}
-              trend="up"
-              icon={<TrendingUp size={20} />}
-            />
-            <HealthIndicator
-              title="Sustainability"
-              value={healthData.sustainability}
-              trend="stable"
-              icon={<CheckCircle size={20} />}
-            />
-          </div>
-        </div>
-      </div>
-
-      {/* Recent Analyses */}
-      <div>
-        <div className="flex-between" style={{ marginBottom: '24px' }}>
-          <h2 className="heading-md">Recent Analyses</h2>
-          <button 
-            onClick={() => navigate('/upload')}
-            className="btn-primary"
-            style={{ background: 'transparent', border: '1px solid var(--primary)', color: 'var(--primary)', padding: '8px 16px', fontSize: '0.875rem' }}
-          >
-            View All
-          </button>
-        </div>
-        
-        {loading ? (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '20px' }}>
-            {[1, 2, 3].map(i => (
-              <div key={i} className="glass-panel loading-skeleton" style={{ height: '180px' }} />
-            ))}
-          </div>
-        ) : analyses.length === 0 ? (
-          <div className="glass-panel text-center" style={{ padding: '60px 20px' }}>
-            <Activity size={48} style={{ color: 'var(--text-muted)', margin: '0 auto 16px' }} />
-            <h3 className="heading-md" style={{ marginBottom: '8px' }}>No Analyses Yet</h3>
-            <p className="text-body" style={{ marginBottom: '24px' }}>Upload your first crop image to generate a Trust Score.</p>
-            <button onClick={() => navigate('/upload')} className="btn-primary">
-              <Plus size={20} /> Start Your First Analysis
-            </button>
-          </div>
-        ) : (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '20px' }}>
-            {analyses.map(record => (
-              <div 
-                key={record.id} 
-                className="glass-panel interactive" 
-                style={{ cursor: 'pointer' }}
-                onClick={() => navigate(`/result/${record.id}`)}
-              >
-                <div className="flex-between" style={{ marginBottom: '16px' }}>
-                  <span style={{ fontWeight: 600, color: 'var(--text-main)' }}>{record.crop}</span>
-                  <span style={{ 
-                    fontSize: '0.875rem', 
-                    padding: '4px 12px', 
-                    borderRadius: '20px', 
-                    background: record.trust_score >= 650 ? 'rgba(46, 125, 50, 0.1)' : 'rgba(255, 143, 0, 0.1)',
-                    color: record.trust_score >= 650 ? 'var(--success)' : 'var(--warning)'
-                  }}>
-                    {record.trust_score} Score
-                  </span>
-                </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                  <div className="flex-between">
-                    <span className="text-sm">Location</span>
-                    <span className="text-sm" style={{ color: 'var(--text-main)' }}>{record.location}</span>
-                  </div>
-                  <div className="flex-between">
-                    <span className="text-sm">Health Index</span>
-                    <span className="text-sm" style={{ color: 'var(--text-main)' }}>{record.health}/100</span>
-                  </div>
-                  <div className="flex-between">
-                    <span className="text-sm">Yield</span>
-                    <span className="text-sm" style={{ color: 'var(--text-main)' }}>{record.yield} t/ha</span>
-                  </div>
-                </div>
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 to-blue-900 text-white p-6">
+      <div className="max-w-7xl mx-auto space-y-6">
+        {/* Header */}
+        <header className="border-b border-white/20 bg-white/10 backdrop-blur-xl rounded-2xl px-6 py-4">
+          <div className="flex justify-between items-center">
+            <div className="flex items-center">
+              <div className="w-10 h-10 bg-gradient-to-r from-green-400 to-green-600 rounded-xl flex items-center justify-center shadow-md">
+                <span className="text-white font-bold text-xl">🌾</span>
               </div>
-            ))}
+              <h1 className="ml-3 text-2xl font-bold text-white">AgriMitra 360</h1>
+              <span className="ml-2 text-sm text-gray-300">Agricultural Intelligence Platform</span>
+              {dashboardDataMode?.fallbackUsed && (
+                <span className="ml-3 rounded-full border border-amber-300/40 bg-amber-500/15 px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-amber-200">
+                  Demo Mode
+                </span>
+              )}
+            </div>
+            
+            <div className="flex items-center gap-4">
+              <span className="text-sm text-gray-300">Welcome back,</span>
+              <span className="font-semibold text-white">{user?.name || 'Farmer'}</span>
+              <button
+                onClick={handleSignOut}
+                className="flex items-center gap-2 text-sm text-red-400 hover:text-red-300 transition-colors"
+              >
+                <LogOut className="w-4 h-4" />
+                Sign Out
+              </button>
+            </div>
           </div>
-        )}
+        </header>
+
+      {/* Top Metrics Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+          <div className="lg:col-span-3">
+            <TrustCard score={trustScore} />
+          </div>
+
+          <div className="lg:col-span-2 grid grid-cols-1 gap-6">
+            <RiskCard risk={riskScore} />
+            <YieldCard yieldValue={yieldData.predictedYield ?? 0} trendDelta={yieldDelta} />
+          </div>
+        </div>
+
+        <AIInsightPanel
+          riskLevel={riskLevel}
+          riskScore={riskScore}
+          yieldValue={yieldData.predictedYield ?? 0}
+          yieldDelta={yieldDelta}
+        />
+
+        {/* Second Section */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <RecentReports reports={analyses} />
+          <QuickActions onApplyLoan={openLoanPanel} />
+        </div>
+
       </div>
 
-      {/* Quick Actions */}
-      <div style={{ marginTop: '40px' }}>
-        <h3 className="heading-md" style={{ marginBottom: '16px' }}>Quick Actions</h3>
-        <div style={{ 
-          display: 'grid', 
-          gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', 
-          gap: '16px' 
-        }}>
-          <button 
-            onClick={() => navigate('/upload')}
-            className="glass-panel interactive"
-            style={{ 
-              padding: '20px', 
-              textAlign: 'center', 
-              border: '1px solid var(--primary)',
-              background: 'rgba(46, 125, 50, 0.05)'
-            }}
-          >
-            <Plus size={24} style={{ color: 'var(--primary)', marginBottom: '8px' }} />
-            <div style={{ fontWeight: 600, color: 'var(--text-main)' }}>New Analysis</div>
-            <div className="text-sm">Upload crop image</div>
-          </button>
-          
-          <button 
-            className="glass-panel interactive"
-            style={{ 
-              padding: '20px', 
-              textAlign: 'center',
-              cursor: 'pointer'
-            }}
-            onClick={() => alert('Trust Score details coming soon!')}
-          >
-            <TrendingUp size={24} style={{ color: 'var(--secondary)', marginBottom: '8px' }} />
-            <div style={{ fontWeight: 600, color: 'var(--text-main)' }}>View Score Details</div>
-            <div className="text-sm">Breakdown & trends</div>
-          </button>
-          
-          <button 
-            className="glass-panel interactive"
-            style={{ 
-              padding: '20px', 
-              textAlign: 'center',
-              cursor: 'pointer'
-            }}
-            onClick={() => alert('Loan application coming soon!')}
-          >
-            <AlertTriangle size={24} style={{ color: 'var(--accent)', marginBottom: '8px' }} />
-            <div style={{ fontWeight: 600, color: 'var(--text-main)' }}>Apply for Loan</div>
-            <div className="text-sm">Use your trust score</div>
-          </button>
-        </div>
-      </div>
+      <LoanPreCheckPanel
+        isOpen={showLoanPanel}
+        status={loanPanelStatus}
+        data={loanPanelData}
+        error={loanPanelError}
+        onClose={closeLoanPanel}
+        onProceed={proceedLoanApplication}
+      />
     </div>
   );
 }

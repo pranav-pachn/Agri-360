@@ -39,4 +39,21 @@ export const api = {
       body: body instanceof FormData ? body : JSON.stringify(body)
     });
   },
+  chat: ({ message, language = 'en', aiResult = {}, risk = {}, yieldData = {}, trust = {}, context = {} }) => {
+    const derivedContext = {
+      disease: aiResult.disease || context.disease,
+      riskLevel: risk.level || context.riskLevel,
+      projectedYield: yieldData.projectedYield || context.projectedYield,
+      trustScore: trust.score || context.trustScore
+    };
+
+    return fetchApi('/v1/chat', {
+      method: 'POST',
+      body: JSON.stringify({
+        message,
+        language,
+        context: derivedContext
+      })
+    });
+  },
 };

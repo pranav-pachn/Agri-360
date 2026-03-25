@@ -3,6 +3,7 @@ const cors = require('cors');
 const analysisRoutes = require('./routes/analysisRoutes');
 const analyticsRoutes = require('./routes/analytics.routes');
 const chatRoutes = require('./routes/chat.routes');
+const farmerRoutes = require('./routes/farmer.routes');
 const errorHandler = require('./middlewares/error.middleware');
 const logger = require('./utils/logger');
 
@@ -21,6 +22,7 @@ app.use((req, res, next) => {
 app.use('/api', analysisRoutes);
 app.use('/api/v1/analytics', analyticsRoutes);
 app.use('/api/v1/chat', chatRoutes);
+app.use('/api/v1/farmers', farmerRoutes);
 
 // Root route - Welcome page
 app.get('/', (req, res) => {
@@ -53,11 +55,35 @@ app.get('/', (req, res) => {
         }
       },
       chat: {
+        quickChat: '/api/v1/chat',
         createConversation: '/api/v1/chat/conversations',
         sendMessage: '/api/v1/chat/messages',
         getConversation: '/api/v1/chat/conversations/:conversationId',
         farmerConversations: '/api/v1/chat/farmers/:farmerId/conversations',
         conversationStats: '/api/v1/chat/conversations/:conversationId/stats'
+      },
+      farmers: {
+        createOrSync: {
+          path: '/api/v1/farmers',
+          method: 'POST',
+          description: 'Create or sync farmer profile after authentication',
+          body: { userId, email, name, location }
+        },
+        getProfile: {
+          path: '/api/v1/farmers/:farmerId',
+          method: 'GET',
+          description: 'Get farmer profile by ID'
+        },
+        getProfileWithDetails: {
+          path: '/api/v1/farmers/:farmerId/details',
+          method: 'GET',
+          description: 'Get farmer profile with crop reports and credit scores'
+        },
+        updateProfile: {
+          path: '/api/v1/farmers/:farmerId',
+          method: 'PUT',
+          description: 'Update farmer profile fields'
+        }
       }
     },
     ai_service: process.env.USE_TENSORFLOW === 'true' ? 'TensorFlow + Enhanced Mock' : 'Enhanced Mock',

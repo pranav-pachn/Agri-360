@@ -14,15 +14,13 @@ const isValidImageFile = (file) => {
 
 const analyzeCrop = async (req, res, next) => {
     try {
-        console.error("DIAGNOSTICS - CONTENT-TYPE:", req.headers['content-type']);
-        console.error("DIAGNOSTICS - REQ.BODY:", req.body);
-        console.error("DIAGNOSTICS - REQ.FILE:", req.file);
-
         if (!req.body) {
-             throw new Error("req.body is entirely missing! Multer did not parse!");
+            return res.status(400).json({
+                error: 'Invalid request payload'
+            });
         }
 
-        const { crop, location } = req.body;
+        const { crop, location, fertilizerUsage, farmerId } = req.body;
         
         // Enhanced validation
         if (!crop || !location) {
@@ -65,8 +63,8 @@ const analyzeCrop = async (req, res, next) => {
             logger.info('No image provided, proceeding with text-only analysis.');
         }
         
-        logger.info(`Analyzing crop: ${crop} in location: ${location}`);
-        const result = await analysisService.generateAnalysis(crop, location, imageUrl);
+        logger.info(`Analyzing crop: ${crop} in location: ${location} with fertilizer: ${fertilizerUsage || 'medium'}`);
+        const result = await analysisService.generateAnalysis(crop, location, imageUrl, fertilizerUsage, farmerId || null);
         
         return res.status(201).json({
             success: true,

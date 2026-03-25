@@ -1,6 +1,7 @@
 const supabase = require('../config/supabase');
 const logger = require('../utils/logger');
 const { v4: uuidv4 } = require('uuid');
+const { processChat } = require('../../../ai/chatbot/chatEngine');
 
 // Chat Service Functions
 const createConversation = async (farmerId) => {
@@ -178,60 +179,32 @@ const getFarmerConversations = async (farmerId, limit = 20) => {
     }
 };
 
-// AI Response Generation (Rule-based)
-const generateAIResponse = async (message, language = 'en') => {
+// AI Response Generation — powered by chatEngine (intent detection + translation)
+/**
+ * @param {string} message   - Raw user message
+ * @param {string} language  - Language code: 'en' | 'hi' | 'te'
+ * @param {object} context   - Optional farm context: { disease, riskLevel, projectedYield, trustScore }
+ */
+const generateAIResponse = async (message, language = 'en', context = {}) => {
     try {
-        logger.info(`Generating AI response for message: ${message.substring(0, 50)}...`);
-        
-        const lowerMessage = message.toLowerCase();
-        
-        // Rule-based response patterns
-        if (lowerMessage.includes('hello') || lowerMessage.includes('hi')) {
-            return {
-                message_type: 'ai',
-                message: language === 'hi' ? 'नमस्ते! मैं आपके लिएा हुआं। आज मैं आपकी कृषि कर सकता हूँ।' : 'Hello! I am here to help you with your farming needs. How can I assist you today?',
-                language: language,
-                metadata: {
-                    response_type: 'greeting',
-                    confidence: 0.95
-                }
-            };
-        }
-        
-        if (lowerMessage.includes('disease') || lowerMessage.includes('sick') || lowerMessage.includes('yellow leaves')) {
-            return {
-                message_type: 'ai',
-                message: language === 'hi' ? 'पीले पीले पीले होने के लिए हैं यहा है। यह एक पोषिकल रोग की समस्या हो सकती है।' : 'Yellow leaves on your crops could indicate several issues: nutrient deficiency, overwatering, or disease. Could you describe the symptoms and how many plants are affected?',
-                language: language,
-                metadata: {
-                    response_type: 'diagnosis_inquiry',
-                    confidence: 0.87,
-                    possible_causes: ['nitrogen_deficiency', 'overwatering', 'fungal_infection']
-                }
-            };
-        }
-        
-        if (lowerMessage.includes('fungicide') || lowerMessage.includes('treatment')) {
-            return {
-                message_type: 'ai',
-                message: language === 'hi' ? 'फंगइसाइड के लिए उपयोग करने के लिए, मैं सिफारिश फंजाइड और कॉपर आधारित उपयोग करें।' : 'For fungal infections, I recommend copper-based fungicides. Apply according to the label instructions, typically every 7-10 days. Ensure good coverage and avoid spraying during flowering time.',
-                language: language,
-                metadata: {
-                    response_type: 'treatment_recommendation',
-                    confidence: 0.92,
-                    product_types: ['copper_fungicide', 'organic_treatment']
-                }
-            };
-        }
-        
-        // Default response
+        logger.info(`Generating AI response via chatEngine for: ${message.substring(0, 50)}...`);
+
+        const { reply, original, metadata: engineMetadata = {} } = await processChat({ message, language, context });
+
         return {
             message_type: 'ai',
-            message: language === 'hi' ? 'मैं आपकी लिएा हुआं। कृषि विस्तारित उत्तराव देख सकता हूँ।' : 'I understand you need assistance with farming. Could you please provide more details about your crop or the specific issue you are facing?',
-            language: language,
+            message: reply,
+            language,
             metadata: {
-                response_type: 'general_inquiry',
-                confidence: 0.75
+                original_english: original,
+                response_type: 'intent_based',
+                engine: engineMetadata.engine || 'chatEngine_v1',
+                used_llm: Boolean(engineMetadata.used_llm),
+                fallback_used: Boolean(engineMetadata.fallback_used),
+                fallback_reason: engineMetadata.fallback_reason || null,
+                provider: engineMetadata.provider || null,
+                model: engineMetadata.model || null,
+                generated_at: new Date().toISOString()
             }
         };
     } catch (error) {
@@ -240,11 +213,11 @@ const generateAIResponse = async (message, language = 'en') => {
     }
 };
 
-const addAIResponse = async (conversationId, farmerId, userMessage, language = 'en') => {
+const addAIResponse = async (conversationId, farmerId, userMessage, language = 'en', context = {}) => {
     try {
         logger.info(`Adding AI response to conversation: ${conversationId}`);
         
-        const aiResponse = await generateAIResponse(userMessage, language);
+        const aiResponse = await generateAIResponse(userMessage, language, context);
         
         const messageData = {
             conversation_id: conversationId,

@@ -1,11 +1,15 @@
 {
   "name": "agrimitra-360-monorepo",
   "private": true,
+  "scripts": {
+    "validate:result-contract": "node result-contract-validation.js"
+  },
   "dependencies": {
     "@tensorflow-models/mobilenet": "^2.1.1",
     "@tensorflow/tfjs": "^4.22.0",
     "axios": "^1.13.6",
     "dotenv": "^17.3.1",
-    "react-router-dom": "^7.13.1"
+    "react-router-dom": "^7.13.1",
+    "sharp": "^0.34.5"
   }
 }

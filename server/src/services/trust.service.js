@@ -2,7 +2,32 @@
  * Trust Score Engine
  */
 
-const calculateTrustScore = (health, normalizedYield, sustainability, behavior = 80, compliance = 85, external = 75) => {
+const clampTrustScore = (score) => Math.max(300, Math.min(900, Math.round(score)));
+
+const getSeverityMultiplier = (severity = 'Unknown') => {
+  if (!severity || typeof severity !== 'string') return 1.0;
+  
+  const s = String(severity).toLowerCase().trim();
+  if (s === 'medium') return 0.9;
+  if (s === 'high') return 0.8;
+  if (['critical', 'severe'].includes(s)) return 0.65;
+  return 1.0;
+};
+
+const calculateTrustScore = (
+  health,
+  normalizedYield,
+  sustainability,
+  behavior = 80,
+  compliance = 85,
+  external = 75,
+  options = {}
+) => {
+  const severity = options.severity || 'Unknown';
+  const multiplier = Number.isFinite(options.severityMultiplier)
+    ? options.severityMultiplier
+    : getSeverityMultiplier(severity);
+
   const cropHealthComponent = 0.30 * health;
   const yieldComponent = 0.25 * normalizedYield;
   const sustainabilityComponent = 0.20 * sustainability;
@@ -11,8 +36,9 @@ const calculateTrustScore = (health, normalizedYield, sustainability, behavior =
   const externalComponent = 0.05 * external;
 
   const rawScore = cropHealthComponent + yieldComponent + sustainabilityComponent + behaviorComponent + complianceComponent + externalComponent;
-  
-  const trustScore = Math.round(300 + (rawScore * 6));
+  const trustScoreBeforePenalty = clampTrustScore(300 + (rawScore * 6));
+  const trustScore = clampTrustScore(trustScoreBeforePenalty * multiplier);
+  const customPenalty = trustScoreBeforePenalty - trustScore;
   
   let rating = "Fair";
   if (trustScore >= 750) rating = "Excellent";
@@ -25,6 +51,9 @@ const calculateTrustScore = (health, normalizedYield, sustainability, behavior =
     trustScore,
     rating,
     loanEligible,
+    severity_penalty: customPenalty,
+    trust_score_before_penalty: trustScoreBeforePenalty,
+    trust_score_after_penalty: trustScore,
     breakdown: {
       crop_health: Number(cropHealthComponent.toFixed(1)),
       yield: Number(yieldComponent.toFixed(1)),
@@ -55,5 +84,7 @@ const getExplainabilityReason = (rating) => {
 
 module.exports = {
   calculateTrustScore,
-  getExplainabilityReason
+  getExplainabilityReason,
+  getSeverityMultiplier,
+  clampTrustScore
 };
