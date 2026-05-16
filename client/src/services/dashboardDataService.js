@@ -98,7 +98,6 @@ export const getDashboardData = async ({ farmerId, user } = {}) => {
     const details = json.data || {};
     return buildFromFarmerDetails(details, user);
   } catch (error) {
-    console.warn('Dashboard real data unavailable, using fallback mock data.', error);
     return buildMockDashboardData(user);
   }
 };

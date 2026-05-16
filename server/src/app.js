@@ -4,6 +4,7 @@ const analysisRoutes = require('./routes/analysisRoutes');
 const analyticsRoutes = require('./routes/analytics.routes');
 const chatRoutes = require('./routes/chat.routes');
 const farmerRoutes = require('./routes/farmer.routes');
+const riskRoutes = require('./routes/risk.routes');
 const errorHandler = require('./middlewares/error.middleware');
 const logger = require('./utils/logger');
 
@@ -23,6 +24,7 @@ app.use('/api', analysisRoutes);
 app.use('/api/v1/analytics', analyticsRoutes);
 app.use('/api/v1/chat', chatRoutes);
 app.use('/api/v1/farmers', farmerRoutes);
+app.use('/api/v1/risk', riskRoutes);
 
 // Root route - Welcome page
 app.get('/', (req, res) => {

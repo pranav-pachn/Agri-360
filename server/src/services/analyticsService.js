@@ -179,48 +179,77 @@ const updateStateAnalytics = async (state, updateData) => {
     }
 };
 
+const buildEmptyDashboardAnalytics = () => ({
+    districts: [],
+    states: [],
+    national: {
+        avg_risk_score: 0,
+        total_reports: 0,
+        healthy_reports: 0,
+        avg_trust_score: 0
+    },
+    summary: {
+        total_districts: 0,
+        total_states: 0,
+        national_avg_risk: 0,
+        national_avg_trust: 0
+    }
+});
+
 // Aggregate analytics data for dashboard
 const getDashboardAnalytics = async () => {
     try {
         logger.info('Fetching dashboard analytics summary');
-        
-        const { data: districts, error: districtsError } = await supabase
-            .from('analytics')
-            .select('district, avg_risk_score, total_reports, healthy_reports')
-            .eq('level', 'district');
-        
-        const { data: states, error: statesError } = await supabase
-            .from('analytics')
-            .select('state, avg_risk_score, avg_trust_score, total_reports, healthy_reports, last_updated')
-            .eq('level', 'state');
-        
-        const { data: national, error: nationalError } = await supabase
-            .from('analytics')
-            .select('avg_risk_score, total_reports, healthy_reports, avg_trust_score')
-            .eq('level', 'national')
-            .single();
-        
-        if (districtsError || statesError || nationalError) {
-            throw new Error('Failed to fetch dashboard analytics');
+
+        const [{ data: districts, error: districtsError }, { data: states, error: statesError }, { data: national, error: nationalError }] = await Promise.all([
+            supabase
+                .from('analytics')
+                .select('district, avg_risk_score, total_reports, healthy_reports')
+                .eq('level', 'district'),
+            supabase
+                .from('analytics')
+                .select('state, avg_risk_score, avg_trust_score, total_reports, healthy_reports, last_updated')
+                .eq('level', 'state'),
+            supabase
+                .from('analytics')
+                .select('avg_risk_score, total_reports, healthy_reports, avg_trust_score')
+                .eq('level', 'national')
+                .maybeSingle()
+        ]);
+
+        if (districtsError) {
+            logger.warn('Dashboard district analytics unavailable, using empty list:', districtsError);
         }
-        
+
+        if (statesError) {
+            logger.warn('Dashboard state analytics unavailable, using empty list:', statesError);
+        }
+
+        if (nationalError) {
+            logger.warn('Dashboard national analytics unavailable, using empty summary:', nationalError);
+        }
+
+        const safeDistricts = Array.isArray(districts) ? districts : [];
+        const safeStates = Array.isArray(states) ? states : [];
+        const safeNational = national || buildEmptyDashboardAnalytics().national;
+
         const dashboardData = {
-            districts: districts || [],
-            states: states || [],
-            national: national,
+            districts: safeDistricts,
+            states: safeStates,
+            national: safeNational,
             summary: {
-                total_districts: districts?.length || 0,
-                total_states: states?.length || 0,
-                national_avg_risk: national?.avg_risk_score || 0,
-                national_avg_trust: national?.avg_trust_score || 0
+                total_districts: safeDistricts.length,
+                total_states: safeStates.length,
+                national_avg_risk: safeNational?.avg_risk_score || 0,
+                national_avg_trust: safeNational?.avg_trust_score || 0
             }
         };
-        
+
         logger.info('Dashboard analytics retrieved successfully');
         return dashboardData;
     } catch (error) {
         logger.error('Dashboard analytics error:', error);
-        throw error;
+        return buildEmptyDashboardAnalytics();
     }
 };
 

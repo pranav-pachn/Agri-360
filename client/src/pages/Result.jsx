@@ -3,6 +3,7 @@ import { useLocation, useParams, useNavigate } from 'react-router-dom';
 import ImagePanel from '../components/result/ImagePanel';
 import DiseaseCard from '../components/result/DiseaseCard';
 import RiskCard from '../components/result/RiskCard';
+import RiskBreakdown from '../components/result/RiskBreakdown';
 import YieldCard from '../components/result/YieldCard';
 import LoanCard from '../components/result/LoanCard';
 import RecommendationBox from '../components/result/RecommendationBox';
@@ -140,6 +141,15 @@ const Result = () => {
               <RiskCard 
                 riskLevel={data.riskLevel} 
                 riskScore={data.riskScore} 
+              />
+              <RiskBreakdown
+                data={{
+                  riskScore: data.riskScore ?? 0,
+                  riskCategory: data.riskLevel ?? data.riskCategory,
+                  confidence: data.riskConfidence ?? data.confidence ?? 0.75,
+                  breakdown: data.riskBreakdown ?? data.breakdown ?? [],
+                  explanation: data.riskExplanation ?? data.explanation ?? ''
+                }}
               />
               <YieldCard 
                 projectedYield={data.projectedYield} 

@@ -9,7 +9,73 @@ import LoanPreCheckPanel from '../components/dashboard/LoanPreCheckPanel';
 import { getLoanPrecheckData } from '../services/loanPrecheckService';
 import { getDashboardData } from '../services/dashboardDataService';
 import { getPendingApplicationsRequest } from '../services/farmersApi';
-import { API_URL } from '../services/api';
+
+const buildAnalyticsSnapshot = (dashboardData = {}) => {
+  const reports = Array.isArray(dashboardData.analyses) ? dashboardData.analyses : [];
+  const districtBuckets = new Map();
+  const stateBuckets = new Map();
+
+  const upsertBucket = (bucketMap, key, seed) => {
+    if (!bucketMap.has(key)) {
+      bucketMap.set(key, {
+        ...seed,
+        total_reports: 0,
+        healthy_reports: 0,
+        avg_risk_score_sum: 0,
+        avg_health_score_sum: 0,
+      });
+    }
+
+    return bucketMap.get(key);
+  };
+
+  reports.forEach((report, index) => {
+    const location = String(report?.location || '').trim();
+    const parts = location.split(',').map((part) => part.trim()).filter(Boolean);
+    const district = parts[0] || report?.crop || `District ${index + 1}`;
+    const state = parts[1] || 'Unknown State';
+    const riskScore = Number(report?.risk ?? 0);
+    const healthScore = Math.max(0, Math.min(100, Math.round((1 - Math.min(1, Math.max(0, riskScore))) * 100)));
+    const isHealthy = String(report?.disease || '').toLowerCase().includes('healthy');
+
+    const districtBucket = upsertBucket(districtBuckets, `${district}::${state}`, {
+      district,
+      state,
+    });
+
+    districtBucket.total_reports += 1;
+    districtBucket.healthy_reports += isHealthy ? 1 : 0;
+    districtBucket.avg_risk_score_sum += riskScore;
+    districtBucket.avg_health_score_sum += healthScore;
+
+    const stateBucket = upsertBucket(stateBuckets, state, {
+      state,
+    });
+
+    stateBucket.total_reports += 1;
+    stateBucket.healthy_reports += isHealthy ? 1 : 0;
+    stateBucket.avg_risk_score_sum += riskScore;
+    stateBucket.avg_health_score_sum += healthScore;
+  });
+
+  return {
+    states: Array.from(stateBuckets.values()).map((bucket) => ({
+      state: bucket.state,
+      avg_risk_score: bucket.total_reports ? bucket.avg_risk_score_sum / bucket.total_reports : 0,
+      avg_health_score: bucket.total_reports ? bucket.avg_health_score_sum / bucket.total_reports : 0,
+      total_reports: bucket.total_reports,
+      healthy_reports: bucket.healthy_reports,
+    })),
+    districts: Array.from(districtBuckets.values()).map((bucket) => ({
+      district: bucket.district,
+      state: bucket.state,
+      avg_risk_score: bucket.total_reports ? bucket.avg_risk_score_sum / bucket.total_reports : 0,
+      avg_health_score: bucket.total_reports ? bucket.avg_health_score_sum / bucket.total_reports : 0,
+      total_reports: bucket.total_reports,
+      healthy_reports: bucket.healthy_reports,
+    })),
+  };
+};
 
 export default function Dashboard() {
   const { user } = useAuth();
@@ -32,35 +98,6 @@ export default function Dashboard() {
   const [selectedIntelState, setSelectedIntelState] = useState('All');
   const [selectedIntelDistrict, setSelectedIntelDistrict] = useState('All');
   const loadRequestIdRef = useRef(0);
-
-  useEffect(() => {
-    let mounted = true;
-
-    const loadDistrictIntelligence = async () => {
-      try {
-        const response = await fetch(`${API_URL}/v1/analytics/dashboard`);
-        if (!response.ok) return;
-
-        const payload = await response.json();
-        if (!mounted) return;
-
-        setAnalyticsSnapshot({
-          states: Array.isArray(payload?.states) ? payload.states : [],
-          districts: Array.isArray(payload?.districts) ? payload.districts : [],
-        });
-      } catch (error) {
-        console.warn('District intelligence snapshot unavailable on dashboard:', error);
-      }
-    };
-
-    loadDistrictIntelligence();
-    const timer = setInterval(loadDistrictIntelligence, 30000);
-
-    return () => {
-      mounted = false;
-      clearInterval(timer);
-    };
-  }, []);
 
   useEffect(() => {
     if (!user?.id) {
@@ -117,6 +154,7 @@ export default function Dashboard() {
       setYieldData({ predictedYield: data.yieldValue });
       setYieldDelta(data.yieldDelta);
       setDashboardDataMode(data.dataMode);
+      setAnalyticsSnapshot(buildAnalyticsSnapshot(data));
 
       if (applicationsResponse?.ok) {
         try {
@@ -131,7 +169,7 @@ export default function Dashboard() {
         setPendingApplications([]);
       }
     } catch (error) {
-      console.error('Failed to load analyses:', error);
+      console.info('Dashboard data unavailable, using local fallback payload.');
       if (requestId !== loadRequestIdRef.current) {
         return;
       }
@@ -152,6 +190,7 @@ export default function Dashboard() {
       setYieldData({ predictedYield: fallback.yieldValue });
       setYieldDelta(fallback.yieldDelta);
       setDashboardDataMode({ source: 'dashboard-mock', fallbackUsed: true, label: 'Using local dashboard fallback data' });
+      setAnalyticsSnapshot(buildAnalyticsSnapshot({ analyses: fallback.analyses }));
       setPendingApplications([]);
     } finally {
       if (requestId === loadRequestIdRef.current) {
