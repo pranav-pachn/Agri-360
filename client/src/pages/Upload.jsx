@@ -88,6 +88,7 @@ const Upload = () => {
       }
 
       const resultId = analysisData.id || Date.now().toString();
+      window.dispatchEvent(new Event('agri:analysis-created'));
       navigate(`/result/${resultId}`, { state: { analysisData } });
     } catch (error) {
       console.error('Analysis failed:', error);

@@ -64,6 +64,24 @@ CREATE INDEX IF NOT EXISTS idx_credit_scores_risk_category ON credit_scores(risk
 CREATE INDEX IF NOT EXISTS idx_credit_scores_eligibility ON credit_scores(loan_eligibility);
 CREATE INDEX IF NOT EXISTS idx_credit_scores_archived ON credit_scores(is_archived);
 
+-- 3.1 loan_applications Table (Workflow Tracking)
+CREATE TABLE IF NOT EXISTS loan_applications (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    farmer_id UUID NOT NULL REFERENCES farmers(id) ON DELETE CASCADE,
+    crop_report_id UUID REFERENCES crop_reports(id) ON DELETE SET NULL,
+    requested_amount DECIMAL(12,2),
+    status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'approved', 'rejected')),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_loan_applications_crop_report_id
+    ON loan_applications(crop_report_id)
+    WHERE crop_report_id IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_loan_applications_farmer_id ON loan_applications(farmer_id);
+CREATE INDEX IF NOT EXISTS idx_loan_applications_status ON loan_applications(status);
+CREATE INDEX IF NOT EXISTS idx_loan_applications_created_at ON loan_applications(created_at);
+
 -- 4. analytics Table (Multi-Level Aggregation)
 CREATE TABLE IF NOT EXISTS analytics (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
@@ -110,6 +128,7 @@ CREATE INDEX IF NOT EXISTS idx_chat_metadata ON chat_logs USING GIN(metadata);
 COMMENT ON TABLE farmers IS 'User registration and profile data';
 COMMENT ON TABLE crop_reports IS 'Enhanced crop disease analysis with health and sustainability metrics';
 COMMENT ON TABLE credit_scores IS 'Financial trust scores with loan eligibility and risk assessment';
+COMMENT ON TABLE loan_applications IS 'Loan workflow records with explicit pending/approved/rejected status';
 COMMENT ON TABLE analytics IS 'Multi-level analytics aggregation for district, state, and national views';
 COMMENT ON TABLE chat_logs IS 'AI assistant conversation logs with threading and metadata tracking';
 
@@ -122,6 +141,7 @@ COMMENT ON COLUMN credit_scores.interest_rate IS 'Loan interest rate as percenta
 COMMENT ON COLUMN credit_scores.repayment_term IS 'Loan repayment term in months';
 COMMENT ON COLUMN credit_scores.risk_category IS 'Risk classification: low, medium, high';
 COMMENT ON COLUMN credit_scores.loan_eligibility IS 'Automatic loan eligibility determination';
+COMMENT ON COLUMN loan_applications.status IS 'Workflow status: pending, approved, rejected';
 COMMENT ON COLUMN analytics.level IS 'Aggregation level: district, state, national';
 COMMENT ON COLUMN analytics.district IS 'District name (NULL for state/national level)';
 COMMENT ON COLUMN analytics.state IS 'State name (NULL for national level)';
@@ -197,13 +217,13 @@ BEGIN
     SELECT COUNT(*) INTO table_count 
     FROM information_schema.tables 
     WHERE table_schema = 'public' 
-    AND table_name IN ('farmers', 'crop_reports', 'credit_scores', 'analytics', 'chat_logs');
+    AND table_name IN ('farmers', 'crop_reports', 'credit_scores', 'loan_applications', 'analytics', 'chat_logs');
     
-    IF table_count = 5 THEN
+    IF table_count = 6 THEN
         RAISE NOTICE 'AgriMitra 360 database setup completed successfully!';
-        RAISE NOTICE 'Tables: farmers, crop_reports, credit_scores, analytics, chat_logs';
+        RAISE NOTICE 'Tables: farmers, crop_reports, credit_scores, loan_applications, analytics, chat_logs';
         RAISE NOTICE 'Sample data inserted for development and testing';
     ELSE
-        RAISE WARNING 'Database setup incomplete. Expected 5 tables, found %', table_count;
+        RAISE WARNING 'Database setup incomplete. Expected 6 tables, found %', table_count;
     END IF;
 END $$;

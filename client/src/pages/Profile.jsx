@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { Edit2, Check, X, Leaf, MapPin, Globe } from 'lucide-react';
+import { getFarmerProfileRequest, updateFarmerProfileRequest } from '../services/farmersApi';
 
 function Profile() {
   const { user, signOut } = useAuth();
@@ -24,7 +25,7 @@ function Profile() {
   const fetchProfile = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`/api/v1/farmers/${user.id}`);
+      const response = await getFarmerProfileRequest(user.id);
       
       if (!response.ok) {
         throw new Error('Failed to fetch profile');
@@ -54,11 +55,7 @@ function Profile() {
 
   const handleSave = async () => {
     try {
-      const response = await fetch(`/api/v1/farmers/${user.id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(editData),
-      });
+      const response = await updateFarmerProfileRequest(user.id, editData);
 
       if (!response.ok) {
         throw new Error('Failed to update profile');

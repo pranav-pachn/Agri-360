@@ -3,6 +3,7 @@ const cropService = require('./crop.service');
 const yieldService = require('./yield.service');
 const sustainabilityService = require('./sustainability.service');
 const aiService = require('./ai.service');
+const weatherService = require('./weather.service');
 const logger = require('../utils/logger');
 const { calculateRisk } = require('../../../ai/risk-engine/riskCalculator');
 const {
@@ -166,7 +167,7 @@ const buildResultPayload = (analysis, options = {}) => {
             fallbackUsed: Boolean(options.fallbackUsed),
         },
         raw: {
-            crop: analysis?.crop || null,
+            crop: analysis?.crop || analysis?.crop_type || null,
             location: analysis?.location || null,
             timestamp: analysis?.created_at || null,
         },
@@ -190,7 +191,13 @@ const generateAnalysis = async (crop, location, imageUrl = null, fertilizerLevel
         recommended_action: aiResults.diagnosis?.advice || null
     };
 
-    const weather = aiResults?.location_analysis?.weather || 'normal';
+    // Get weather from AI results, or fetch from weather service if not available
+    let weather = aiResults?.location_analysis?.weather;
+    if (!weather || weather === 'normal') {
+      const fetchedWeather = await weatherService.getWeatherByLocation(location);
+      weather = fetchedWeather || 'normal';
+    }
+
     const riskComputation = calculateRisk({
         confidence: aiResults?.diagnosis?.confidence,
         severity,
@@ -297,21 +304,15 @@ const generateAnalysis = async (crop, location, imageUrl = null, fertilizerLevel
     // 5. Enhanced analysis result with new database fields
     const analysisResult = {
         farmer_id: farmerId,
-        crop,
-        location,
-        health,
-        risk,
-        yield: adjustedYield,
-        trust_score: finalTrustScore,
-        credit_rating: finalCreditRating,
+        crop_type: crop,
+        disease: aiResults.diagnosis?.disease || null,
+        confidence: normalizeConfidenceToDecimal(aiResults.diagnosis?.confidence),
+        risk_score: Number(riskComputation.riskScore.toFixed(4)),
+        health_score: Number.isFinite(Number(health)) ? Math.round(Number(health)) : null,
+        yield_prediction: adjustedYield,
         image_url: imageUrl,
-        
-        // NEW FIELDS FROM ENHANCED SCHEMA
         severity,
         sustainability_index: sustainability,
-        confidence: aiResults.diagnosis.confidence,
-        
-        // Enhanced timestamp
         created_at: new Date().toISOString()
     };
     
@@ -321,17 +322,15 @@ const generateAnalysis = async (crop, location, imageUrl = null, fertilizerLevel
         .insert([analysisResult])
         .select(`
             id,
-            crop,
-            location,
-            health,
-            risk,
-            yield,
-            trust_score,
-            credit_rating,
+            crop_type,
+            disease,
+            confidence,
+            health_score,
+            risk_score,
+            yield_prediction,
             image_url,
             severity,
             sustainability_index,
-            confidence,
             created_at
         `)
         .single();
@@ -372,12 +371,36 @@ const generateAnalysis = async (crop, location, imageUrl = null, fertilizerLevel
     } catch (metadataError) {
         logger.warn('AI metadata insert threw error (continuing analysis response):', metadataError.message);
     }
-    
-    // 8. Enhanced response format for frontend compatibility
+
+    // 8. Keep latest trust/credit snapshot aligned with new analysis results.
+    if (farmerId) {
+        try {
+            const creditPayload = {
+                farmer_id: farmerId,
+                trust_score: scaledTrustScore,
+                credit_grade: finalCreditRating,
+                risk_category: String(riskComputation.riskLevel || 'low').toLowerCase(),
+                loan_eligibility: loanEligible,
+                created_at: new Date().toISOString(),
+            };
+
+            const creditUpsert = await supabase
+                .from('credit_scores')
+                .upsert(creditPayload, { onConflict: 'farmer_id' });
+
+            if (creditUpsert.error) {
+                logger.warn('Credit score upsert failed (continuing analysis response):', creditUpsert.error.message);
+            }
+        } catch (creditError) {
+            logger.warn('Credit score upsert threw error (continuing analysis response):', creditError.message);
+        }
+    }
+
+    // 9. Enhanced response format for frontend compatibility
     return {
         id: insertResult.data.id,
         prediction_id: predictionId,
-        crop: insertResult.data.crop,
+        crop: insertResult.data.crop_type,
         disease: aiResults.diagnosis.disease,
         confidence: normalizeConfidenceToDecimal(aiResults.diagnosis.confidence),
         severity,
@@ -396,7 +419,7 @@ const generateAnalysis = async (crop, location, imageUrl = null, fertilizerLevel
             projectedYield: yieldResult.projectedYield,
             lossPercent: yieldResult.yieldLossPercent
         },
-        location: insertResult.data.location,
+        location,
         timestamp: insertResult.data.created_at,
         score: finalTrustScore,
         scaled_trust_score: scaledTrustScore,

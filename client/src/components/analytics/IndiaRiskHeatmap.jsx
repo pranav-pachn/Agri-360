@@ -1,9 +1,9 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { ComposableMap, Geographies, Geography } from 'react-simple-maps';
 import { scaleThreshold } from 'd3-scale';
+import { API_URL } from '../../services/api';
 
-const INDIA_STATES_GEOJSON_URL =
-  'https://raw.githubusercontent.com/geohacker/india/master/state/india_state.geojson';
+const INDIA_STATES_GEOJSON_PATH = '/india_state.geojson';
 
 const STATE_RISK_DATA = [
   { state: 'Punjab', risk: 0.7 },
@@ -21,6 +21,8 @@ const STATE_RISK_DATA = [
   { state: 'West Bengal', risk: 0.61 },
 ];
 
+const HEATMAP_REFRESH_MS = 30000;
+
 const riskColorScale = scaleThreshold().domain([0.4, 0.7]).range(['#22c55e', '#facc15', '#ef4444']);
 
 const normalizeState = (value = '') => value.trim().toLowerCase();
@@ -36,13 +38,31 @@ const statusLabel = (risk) => {
   return 'Low Risk';
 };
 
-export default function IndiaRiskHeatmap() {
+const noop = () => {};
+
+export default function IndiaRiskHeatmap({
+  selectedState = 'All',
+  onStateSelect = noop,
+  selectedDistrict = 'All',
+  onDistrictSelect = noop,
+  districtRows = [],
+}) {
   const [activeState, setActiveState] = useState(null);
+  const [geoData, setGeoData] = useState(null);
+  const [geoError, setGeoError] = useState('');
+  const [liveRiskRows, setLiveRiskRows] = useState([]);
+  const [lastLiveUpdate, setLastLiveUpdate] = useState(null);
+  const [dataMode, setDataMode] = useState('fallback');
+
+  const riskRows = useMemo(
+    () => (liveRiskRows.length ? liveRiskRows : STATE_RISK_DATA),
+    [liveRiskRows]
+  );
 
   const riskLookup = useMemo(() => {
-    const entries = STATE_RISK_DATA.map((row) => [normalizeState(row.state), row.risk]);
+    const entries = riskRows.map((row) => [normalizeState(row.state), row.risk]);
     return new Map(entries);
-  }, []);
+  }, [riskRows]);
 
   const getRisk = (name) => riskLookup.get(normalizeState(name));
 
@@ -51,6 +71,96 @@ export default function IndiaRiskHeatmap() {
     return typeof risk === 'number' ? riskColorScale(risk) : '#334155';
   };
 
+  const stateContext = selectedState !== 'All'
+    ? selectedState
+    : (activeState?.name || 'All');
+
+  const visibleDistricts = useMemo(() => {
+    if (!Array.isArray(districtRows)) return [];
+    if (!stateContext || stateContext === 'All') return districtRows;
+    return districtRows.filter((row) => row?.state === stateContext);
+  }, [districtRows, stateContext]);
+
+  const districtRecord = useMemo(() => {
+    if (!visibleDistricts.length) return null;
+    if (selectedDistrict !== 'All') {
+      return visibleDistricts.find((row) => row?.district === selectedDistrict) || null;
+    }
+    return visibleDistricts[0];
+  }, [selectedDistrict, visibleDistricts]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadGeographies = async () => {
+      try {
+        const response = await fetch(INDIA_STATES_GEOJSON_PATH);
+        if (!response.ok) {
+          throw new Error(`Failed to load map data (${response.status})`);
+        }
+
+        const json = await response.json();
+        if (!cancelled) {
+          setGeoData(json);
+          setGeoError('');
+        }
+      } catch (error) {
+        if (!cancelled) {
+          setGeoError('Unable to load India map boundaries.');
+        }
+        console.error('Failed to load India GeoJSON:', error);
+      }
+    };
+
+    loadGeographies();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const fetchLiveRisk = async () => {
+      try {
+        const response = await fetch(`${API_URL}/v1/analytics/dashboard`);
+        if (!response.ok) {
+          throw new Error(`Failed to fetch analytics (${response.status})`);
+        }
+
+        const payload = await response.json();
+        const states = Array.isArray(payload?.states) ? payload.states : [];
+
+        const mapped = states
+          .filter((row) => row?.state && Number.isFinite(Number(row?.avg_risk_score)))
+          .map((row) => ({
+            state: String(row.state).trim(),
+            risk: Number(row.avg_risk_score),
+          }));
+
+        if (!cancelled && mapped.length) {
+          setLiveRiskRows(mapped);
+          setLastLiveUpdate(new Date());
+          setDataMode('live');
+        }
+      } catch (error) {
+        if (!cancelled) {
+          setDataMode('fallback');
+        }
+        console.warn('Live state risk unavailable, using fallback heatmap data.', error);
+      }
+    };
+
+    fetchLiveRisk();
+    const timer = setInterval(fetchLiveRisk, HEATMAP_REFRESH_MS);
+
+    return () => {
+      cancelled = true;
+      clearInterval(timer);
+    };
+  }, []);
+
   return (
     <section className="bg-slate-800 rounded-xl border border-slate-700 p-5 shadow-md">
       <div className="mb-4">
@@ -58,58 +168,69 @@ export default function IndiaRiskHeatmap() {
         <p className="text-sm text-slate-400 mt-1">
           States are colored by risk level: red (high), yellow (medium), green (low).
         </p>
+        <p className="text-xs text-slate-500 mt-2">
+          Data source: {dataMode === 'live' ? 'Live analytics (auto-refresh 30s)' : 'Fallback demo data'}
+          {lastLiveUpdate ? ` • Last update ${lastLiveUpdate.toLocaleTimeString()}` : ''}
+        </p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-4">
         <div className="rounded-lg border border-slate-700 bg-slate-900/40 p-3">
-          <ComposableMap
-            projection="geoMercator"
-            projectionConfig={{ center: [82, 22], scale: 900 }}
-            width={800}
-            height={520}
-            style={{ width: '100%', height: 'auto' }}
-          >
-            <Geographies geography={INDIA_STATES_GEOJSON_URL}>
-              {({ geographies }) =>
-                geographies.map((geo) => {
-                  const name = featureName(geo);
-                  const risk = getRisk(name);
-                  return (
-                    <Geography
-                      key={geo.rsmKey}
-                      geography={geo}
-                      onMouseEnter={() => {
-                        setActiveState({
-                          name,
-                          risk,
-                        });
-                      }}
-                      onMouseLeave={() => setActiveState(null)}
-                      style={{
-                        default: {
-                          fill: getColor(name),
-                          stroke: '#0f172a',
-                          strokeWidth: 0.7,
-                          outline: 'none',
-                        },
-                        hover: {
-                          fill: '#38bdf8',
-                          stroke: '#e2e8f0',
-                          strokeWidth: 0.9,
-                          outline: 'none',
-                          cursor: 'pointer',
-                        },
-                        pressed: {
-                          fill: '#0ea5e9',
-                          outline: 'none',
-                        },
-                      }}
-                    />
-                  );
-                })
-              }
-            </Geographies>
-          </ComposableMap>
+          {!geoData && !geoError && (
+            <p className="text-sm text-slate-400 p-4">Loading India map boundaries...</p>
+          )}
+          {geoError && <p className="text-sm text-red-300 p-4">{geoError}</p>}
+          {geoData && (
+            <ComposableMap
+              projection="geoMercator"
+              projectionConfig={{ center: [82, 22], scale: 900 }}
+              width={800}
+              height={520}
+              style={{ width: '100%', height: 'auto' }}
+            >
+              <Geographies geography={geoData}>
+                {({ geographies }) =>
+                  geographies.map((geo) => {
+                    const name = featureName(geo);
+                    const risk = getRisk(name);
+                    return (
+                      <Geography
+                        key={geo.rsmKey}
+                        geography={geo}
+                        onMouseEnter={() => {
+                          setActiveState({
+                            name,
+                            risk,
+                          });
+                        }}
+                        onClick={() => onStateSelect(name || 'All')}
+                        onMouseLeave={() => setActiveState(null)}
+                        style={{
+                          default: {
+                            fill: getColor(name),
+                            stroke: '#0f172a',
+                            strokeWidth: 0.7,
+                            outline: 'none',
+                          },
+                          hover: {
+                            fill: '#38bdf8',
+                            stroke: '#e2e8f0',
+                            strokeWidth: 0.9,
+                            outline: 'none',
+                            cursor: 'pointer',
+                          },
+                          pressed: {
+                            fill: '#0ea5e9',
+                            outline: 'none',
+                          },
+                        }}
+                      />
+                    );
+                  })
+                }
+              </Geographies>
+            </ComposableMap>
+          )}
         </div>
 
         <aside className="rounded-lg border border-slate-700 bg-slate-900/40 p-4 flex flex-col gap-4">
@@ -138,7 +259,7 @@ export default function IndiaRiskHeatmap() {
           <div className="rounded-lg border border-slate-700 bg-slate-800 p-3 min-h-[120px]">
             <h4 className="text-sm font-semibold text-slate-300">State Details</h4>
             {!activeState && (
-              <p className="mt-2 text-sm text-slate-400">Hover a state on the map to inspect its risk score.</p>
+              <p className="mt-2 text-sm text-slate-400">Hover a state to inspect risk. Click a state to filter district intelligence.</p>
             )}
             {activeState && (
               <div className="mt-2 text-sm space-y-1">
@@ -155,8 +276,41 @@ export default function IndiaRiskHeatmap() {
             )}
           </div>
 
+          <div className="rounded-lg border border-slate-700 bg-slate-800 p-3 min-h-[140px]">
+            <h4 className="text-sm font-semibold text-slate-300">District Intelligence</h4>
+            <p className="mt-1 text-xs text-slate-400">Scope: {stateContext || 'All States'}</p>
+
+            {visibleDistricts.length > 0 && (
+              <select
+                value={selectedDistrict}
+                onChange={(event) => onDistrictSelect(event.target.value)}
+                className="mt-2 w-full rounded-md border border-slate-600 bg-slate-900 px-2 py-1.5 text-xs text-slate-100"
+              >
+                <option value="All">All Districts</option>
+                {visibleDistricts.map((row) => (
+                  <option key={`${row.state}-${row.district}`} value={row.district}>
+                    {row.district}
+                  </option>
+                ))}
+              </select>
+            )}
+
+            {!visibleDistricts.length && (
+              <p className="mt-2 text-sm text-slate-400">No district data in this scope.</p>
+            )}
+
+            {districtRecord && (
+              <div className="mt-3 text-xs space-y-1 text-slate-200">
+                <p className="font-semibold text-white">{districtRecord.district}</p>
+                <p>Risk: {Number(districtRecord.avg_risk_score || 0).toFixed(2)}</p>
+                <p>Reports: {Number(districtRecord.total_reports || 0)}</p>
+                <p>Healthy: {Number(districtRecord.healthy_reports || 0)}</p>
+              </div>
+            )}
+          </div>
+
           <p className="text-xs text-slate-400 leading-5">
-            Hackathon mode: map uses demo state-level risk values. Connect backend state risk API next.
+            Live mode reads backend analytics every 30 seconds. Fallback data appears only when API is unavailable.
           </p>
         </aside>
       </div>

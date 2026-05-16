@@ -127,11 +127,43 @@ const updateStateAnalytics = async (req, res, next) => {
     }
 };
 
+const listDistrictAnalytics = async (req, res, next) => {
+    try {
+        const { state } = req.query;
+        logger.info(`Fetching district analytics list${state ? ` for state ${state}` : ''}`);
+        const rows = await analyticsService.listDistrictAnalytics({ state });
+        return res.status(200).json({
+            data: rows,
+            count: rows.length
+        });
+    } catch (error) {
+        logger.error('District list error:', error);
+        next(error);
+    }
+};
+
+const recomputeAnalyticsFromReports = async (req, res, next) => {
+    try {
+        logger.info('Recompute analytics endpoint called');
+        const summary = await analyticsService.recomputeAnalyticsFromReports();
+        return res.status(200).json({
+            success: true,
+            message: 'Analytics recomputed from crop reports',
+            summary
+        });
+    } catch (error) {
+        logger.error('Recompute analytics error:', error);
+        next(error);
+    }
+};
+
 module.exports = {
     getDistrictAnalytics,
     getStateAnalytics,
     getNationalAnalytics,
     getDashboardAnalytics,
     updateDistrictAnalytics,
-    updateStateAnalytics
+    updateStateAnalytics,
+    listDistrictAnalytics,
+    recomputeAnalyticsFromReports
 };

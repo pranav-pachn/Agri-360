@@ -1,16 +1,15 @@
 import React from 'react';
 
-const getRiskLabel = (risk) => {
-  if (risk > 0.7) return 'High';
-  if (risk > 0.4) return 'Medium';
-  return 'Low';
+const readRisk = (row = {}) => {
+  const value = Number(row.risk ?? row.avg_risk_score ?? 0);
+  return Number.isFinite(value) ? value : 0;
 };
 
 const SummaryCards = ({ data }) => {
   const totalDistricts = data.length;
-  const highRiskCount = data.filter(d => d.risk > 0.7).length;
+  const highRiskCount = data.filter((d) => readRisk(d) > 0.7).length;
   const avgRisk = data.length > 0
-    ? (data.reduce((sum, d) => sum + d.risk, 0) / data.length).toFixed(2)
+    ? (data.reduce((sum, d) => sum + readRisk(d), 0) / data.length).toFixed(2)
     : '0.00';
 
   const cards = [

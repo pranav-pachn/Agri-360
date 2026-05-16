@@ -1,35 +1,104 @@
-import React, { useState, useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import SummaryCards from '../components/analytics/SummaryCards';
 import FilterBar from '../components/analytics/FilterBar';
 import RiskTable from '../components/analytics/RiskTable';
 import IndiaRiskHeatmap from '../components/analytics/IndiaRiskHeatmap';
+import { API_URL } from '../services/api';
 
-const DISTRICT_DATA = [
-  { district: 'Guntur',       crop: 'Tomato',  risk: 0.82 },
-  { district: 'Nellore',      crop: 'Rice',    risk: 0.67 },
-  { district: 'Kurnool',      crop: 'Wheat',   risk: 0.21 },
-  { district: 'Krishna',      crop: 'Rice',    risk: 0.75 },
-  { district: 'Vizianagaram', crop: 'Maize',   risk: 0.44 },
-  { district: 'Chittoor',     crop: 'Tomato',  risk: 0.91 },
-  { district: 'Prakasam',     crop: 'Wheat',   risk: 0.33 },
-  { district: 'Srikakulam',   crop: 'Rice',    risk: 0.58 },
-  { district: 'West Godavari',crop: 'Rice',    risk: 0.39 },
-  { district: 'East Godavari',crop: 'Maize',   risk: 0.77 },
-  { district: 'Anantapur',    crop: 'Potato',  risk: 0.15 },
-  { district: 'Kadapa',       crop: 'Potato',  risk: 0.62 },
-];
+const readRisk = (row = {}) => {
+  const value = Number(row.risk ?? row.avg_risk_score ?? 0);
+  return Number.isFinite(value) ? value : 0;
+};
 
 const Analytics = () => {
+  const [districtRows, setDistrictRows] = useState([]);
+  const [loadingRows, setLoadingRows] = useState(true);
+  const [error, setError] = useState('');
+  const [refreshing, setRefreshing] = useState(false);
   const [selectedCrop, setSelectedCrop] = useState('All');
+  const [selectedState, setSelectedState] = useState('All');
+  const [selectedDistrict, setSelectedDistrict] = useState('All');
   const [sortAsc, setSortAsc] = useState(false);
 
-  const filteredData = useMemo(() => {
-    let data = selectedCrop === 'All'
-      ? [...DISTRICT_DATA]
-      : DISTRICT_DATA.filter(d => d.crop === selectedCrop);
+  const loadDistrictRows = async (stateFilter = selectedState) => {
+    setLoadingRows(true);
+    setError('');
+    try {
+      const query = stateFilter && stateFilter !== 'All'
+        ? `?state=${encodeURIComponent(stateFilter)}`
+        : '';
+      const response = await fetch(`${API_URL}/v1/analytics/districts/list${query}`);
+      if (!response.ok) {
+        throw new Error(`Failed to fetch district intelligence (${response.status})`);
+      }
 
-    return data.sort((a, b) => sortAsc ? a.risk - b.risk : b.risk - a.risk);
-  }, [selectedCrop, sortAsc]);
+      const payload = await response.json();
+      const rows = Array.isArray(payload?.data) ? payload.data : [];
+      setDistrictRows(rows);
+    } catch (fetchError) {
+      setError(fetchError.message || 'District intelligence is unavailable right now.');
+      setDistrictRows([]);
+    } finally {
+      setLoadingRows(false);
+    }
+  };
+
+  useEffect(() => {
+    loadDistrictRows(selectedState);
+  }, [selectedState]);
+
+  const stateOptions = useMemo(() => {
+    const names = districtRows.map((row) => row.state).filter(Boolean);
+    return Array.from(new Set(names)).sort((a, b) => a.localeCompare(b));
+  }, [districtRows]);
+
+  const districtOptions = useMemo(() => {
+    const scoped = selectedState === 'All'
+      ? districtRows
+      : districtRows.filter((row) => row.state === selectedState);
+    const names = scoped.map((row) => row.district).filter(Boolean);
+    return Array.from(new Set(names)).sort((a, b) => a.localeCompare(b));
+  }, [districtRows, selectedState]);
+
+  useEffect(() => {
+    if (selectedDistrict !== 'All' && !districtOptions.includes(selectedDistrict)) {
+      setSelectedDistrict('All');
+    }
+  }, [districtOptions, selectedDistrict]);
+
+  const filteredData = useMemo(() => {
+    let data = [...districtRows];
+
+    if (selectedDistrict !== 'All') {
+      data = data.filter((row) => row.district === selectedDistrict);
+    }
+
+    if (selectedCrop !== 'All') {
+      data = data.filter((row) => (row.crop || row.crop_type) === selectedCrop);
+    }
+
+    return data.sort((a, b) => sortAsc ? readRisk(a) - readRisk(b) : readRisk(b) - readRisk(a));
+  }, [districtRows, selectedDistrict, selectedCrop, sortAsc]);
+
+  const handleRecompute = async () => {
+    setRefreshing(true);
+    setError('');
+    try {
+      const response = await fetch(`${API_URL}/v1/analytics/recompute`, {
+        method: 'POST',
+      });
+
+      if (!response.ok) {
+        throw new Error(`Recompute failed (${response.status})`);
+      }
+
+      await loadDistrictRows(selectedState);
+    } catch (recomputeError) {
+      setError(recomputeError.message || 'Failed to recompute analytics.');
+    } finally {
+      setRefreshing(false);
+    }
+  };
 
   return (
     <div className="min-h-[calc(100vh-4rem)] bg-slate-900 text-white p-6">
@@ -56,11 +125,42 @@ const Analytics = () => {
         <FilterBar
           selectedCrop={selectedCrop}
           onCropChange={setSelectedCrop}
+          selectedState={selectedState}
+          onStateChange={setSelectedState}
+          selectedDistrict={selectedDistrict}
+          onDistrictChange={setSelectedDistrict}
+          states={stateOptions}
+          districts={districtOptions}
           onSort={() => setSortAsc(prev => !prev)}
           sortAsc={sortAsc}
         />
 
-        <IndiaRiskHeatmap />
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-700 bg-slate-800/60 px-4 py-3">
+          <p className="text-xs text-slate-300">
+            {loadingRows ? 'Loading live district intelligence...' : `Loaded ${districtRows.length} district records`}
+          </p>
+          <button
+            onClick={handleRecompute}
+            disabled={refreshing}
+            className="rounded-lg border border-green-500/40 bg-green-500/10 px-3 py-1.5 text-xs font-semibold text-green-300 transition hover:bg-green-500/20 disabled:cursor-not-allowed disabled:opacity-70"
+          >
+            {refreshing ? 'Refreshing...' : 'Refresh Real Data'}
+          </button>
+        </div>
+
+        {error && (
+          <div className="rounded-xl border border-red-400/40 bg-red-500/10 px-4 py-3 text-sm text-red-200">
+            {error}
+          </div>
+        )}
+
+        <IndiaRiskHeatmap
+          selectedState={selectedState}
+          onStateSelect={setSelectedState}
+          selectedDistrict={selectedDistrict}
+          onDistrictSelect={setSelectedDistrict}
+          districtRows={districtRows}
+        />
 
         {/* Risk Table */}
         <RiskTable data={filteredData} />

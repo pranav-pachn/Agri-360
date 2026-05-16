@@ -1,6 +1,65 @@
 const FarmerModel = require('../models/farmer.model');
 
 class AuthController {
+  // Get loan applications list with status filter, pagination and search.
+  static async getLoanApplications(req, res) {
+    try {
+      const { status = '', page = 1, pageSize = 10, search = '' } = req.query;
+      const data = await FarmerModel.getLoanApplications({ status, page, pageSize, search });
+
+      res.status(200).json({
+        success: true,
+        data,
+      });
+    } catch (error) {
+      console.error('Error in getLoanApplications:', error);
+      res.status(500).json({ error: error.message });
+    }
+  }
+
+  // Update a loan application workflow status.
+  static async updateLoanApplicationStatus(req, res) {
+    try {
+      const { applicationId } = req.params;
+      const { status } = req.body || {};
+
+      const allowed = ['pending', 'approved', 'rejected'];
+      if (!allowed.includes(String(status || '').toLowerCase())) {
+        return res.status(400).json({ error: 'status must be one of: pending, approved, rejected' });
+      }
+
+      if (!applicationId) {
+        return res.status(400).json({ error: 'applicationId is required' });
+      }
+
+      const updated = await FarmerModel.updateLoanApplicationStatus(applicationId, status);
+
+      res.status(200).json({
+        success: true,
+        data: updated,
+      });
+    } catch (error) {
+      console.error('Error in updateLoanApplicationStatus:', error);
+      res.status(500).json({ error: error.message });
+    }
+  }
+
+  // Get pending loan applications feed
+  static async getPendingApplications(req, res) {
+    try {
+      const { limit } = req.query;
+      const applications = await FarmerModel.getPendingApplications(limit);
+
+      res.status(200).json({
+        success: true,
+        data: applications,
+      });
+    } catch (error) {
+      console.error('Error in getPendingApplications:', error);
+      res.status(500).json({ error: error.message });
+    }
+  }
+
   // Create or sync farmer profile after authentication
   static async createOrSyncFarmerProfile(req, res) {
     try {

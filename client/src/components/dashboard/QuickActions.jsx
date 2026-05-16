@@ -21,7 +21,7 @@ export default function QuickActions({ onApplyLoan }) {
       micro: 'Credit overview',
       icon: TrendingUp,
       gradient: 'from-blue-500 to-cyan-600',
-      onClick: () => navigate('/dashboard'),
+      onClick: () => navigate('/trust-score'),
     },
     {
       title: 'Apply for Loan',

@@ -1,31 +1,19 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { ThemeProvider } from './context/ThemeContext';
+import ProtectedLayout from './components/layout/ProtectedLayout';
 
 import Login from './pages/Login';
 import Landing from './pages/Landing';
 import Signup from './pages/Signup';
 import Dashboard from './pages/Dashboard';
-import Upload from './pages/Upload';
+import CropDiagnosis from './pages/CropDiagnosis';
 import Result from './pages/Result';
+import TrustScore from './pages/TrustScore';
 import Chatbot from './pages/Chatbot';
 import Analytics from './pages/Analytics';
 import Profile from './pages/Profile';
-import Navbar from './components/layout/Navbar';
-
-// Protect routes component wrapping layout
-const ProtectedLayout = ({ children }) => {
-  const { user } = useAuth();
-  if (!user) return <Navigate to="/login" replace />;
-  
-  return (
-    <div className="flex flex-col min-h-screen bg-slate-900">
-      <Navbar />
-      <div className="flex-1 flex flex-col">
-        {children}
-      </div>
-    </div>
-  );
-};
+import PendingApplications from './pages/PendingApplications';
 
 function AppRoutes() {
   const { user } = useAuth();
@@ -45,13 +33,25 @@ function AppRoutes() {
         
         <Route path="/upload" element={
           <ProtectedLayout>
-            <Upload />
+            <CropDiagnosis />
+          </ProtectedLayout>
+        } />
+
+        <Route path="/diagnosis" element={
+          <ProtectedLayout>
+            <CropDiagnosis />
           </ProtectedLayout>
         } />
         
         <Route path="/result/:id" element={
           <ProtectedLayout>
             <Result />
+          </ProtectedLayout>
+        } />
+
+        <Route path="/trust-score" element={
+          <ProtectedLayout>
+            <TrustScore />
           </ProtectedLayout>
         } />
         
@@ -73,6 +73,12 @@ function AppRoutes() {
           </ProtectedLayout>
         } />
 
+        <Route path="/applications" element={
+          <ProtectedLayout>
+            <PendingApplications />
+          </ProtectedLayout>
+        } />
+
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Router>
@@ -81,9 +87,11 @@ function AppRoutes() {
 
 function App() {
   return (
-    <AuthProvider>
-      <AppRoutes />
-    </AuthProvider>
+    <ThemeProvider>
+      <AuthProvider>
+        <AppRoutes />
+      </AuthProvider>
+    </ThemeProvider>
   );
 }
 

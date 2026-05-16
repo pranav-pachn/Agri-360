@@ -1,5 +1,14 @@
 import React from 'react';
 
+const readRisk = (row = {}) => {
+  const value = Number(row.risk ?? row.avg_risk_score ?? 0);
+  return Number.isFinite(value) ? value : 0;
+};
+
+const readDistrict = (row = {}) => row.district || 'Unknown District';
+
+const readCrop = (row = {}) => row.crop || row.crop_type || 'Mixed';
+
 const getRiskMeta = (risk) => {
   if (risk > 0.7) return { label: 'High', badge: 'bg-red-500/20 text-red-400 border-red-500/30', row: 'bg-red-500/5' };
   if (risk > 0.4) return { label: 'Medium', badge: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30', row: 'bg-yellow-500/5' };
@@ -29,21 +38,22 @@ const RiskTable = ({ data }) => {
         </thead>
         <tbody className="divide-y divide-slate-700/50">
           {data.map((row, idx) => {
-            const meta = getRiskMeta(row.risk);
+            const risk = readRisk(row);
+            const meta = getRiskMeta(risk);
             return (
               <tr
                 key={idx}
                 className={`${meta.row} hover:bg-slate-700/40 transition-colors duration-200 cursor-default`}
               >
-                <td className="px-6 py-4 font-semibold text-white">{row.district}</td>
-                <td className="px-6 py-4 text-slate-300">{row.crop}</td>
+                <td className="px-6 py-4 font-semibold text-white">{readDistrict(row)}</td>
+                <td className="px-6 py-4 text-slate-300">{readCrop(row)}</td>
                 <td className="px-6 py-4">
                   <div className="flex items-center space-x-3">
-                    <span className="text-white font-bold">{row.risk.toFixed(2)}</span>
+                    <span className="text-white font-bold">{risk.toFixed(2)}</span>
                     <div className="flex-1 max-w-[100px] h-1.5 bg-slate-700 rounded-full overflow-hidden">
                       <div
                         className={`h-full rounded-full ${meta.label === 'High' ? 'bg-red-400' : meta.label === 'Medium' ? 'bg-yellow-400' : 'bg-green-400'}`}
-                        style={{ width: `${row.risk * 100}%` }}
+                        style={{ width: `${Math.min(100, Math.max(0, risk * 100))}%` }}
                       />
                     </div>
                   </div>

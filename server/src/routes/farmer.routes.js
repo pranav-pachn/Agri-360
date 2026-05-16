@@ -3,6 +3,15 @@ const AuthController = require('../controllers/auth.controller');
 
 const router = express.Router();
 
+// Loan applications list with pagination/filtering/search
+router.get('/loan-applications', AuthController.getLoanApplications);
+
+// Loan application status workflow update
+router.patch('/loan-applications/:applicationId/status', AuthController.updateLoanApplicationStatus);
+
+// Pending applications feed for loan officer dashboard
+router.get('/pending-applications', AuthController.getPendingApplications);
+
 // Create or sync farmer profile after authentication
 router.post('/', AuthController.createOrSyncFarmerProfile);
 

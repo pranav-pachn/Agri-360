@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
+import { syncFarmerProfileRequest } from '../services/farmersApi';
 
 const AuthContext = createContext();
 
@@ -12,15 +13,11 @@ export function AuthProvider({ children }) {
     if (!authUser) return;
 
     try {
-      const response = await fetch('/api/v1/farmers', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          userId: authUser.id,
-          email: authUser.email,
-          name: authUser.user_metadata?.name || authUser.email.split('@')[0],
-          location: authUser.user_metadata?.location || null,
-        }),
+      const response = await syncFarmerProfileRequest({
+        userId: authUser.id,
+        email: authUser.email,
+        name: authUser.user_metadata?.name || authUser.email.split('@')[0],
+        location: authUser.user_metadata?.location || null,
       });
 
       if (!response.ok) {

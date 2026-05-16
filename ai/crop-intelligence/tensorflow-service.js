@@ -9,6 +9,20 @@ const sharp = require('sharp');
 const axios = require('axios');
 const { runInference, runTensorflow } = require('./inference');
 
+// Lazy-load weather service (to avoid circular dependencies)
+let weatherService = null;
+const getWeatherService = () => {
+  if (!weatherService) {
+    try {
+      weatherService = require('../../server/src/services/weather.service');
+    } catch (err) {
+      console.warn('⚠️ Weather service not available, weather will default to "normal"');
+      weatherService = { getWeatherByLocation: async () => 'normal' };
+    }
+  }
+  return weatherService;
+};
+
 const FALLBACK_ESTIMATED_LOSS_BY_SEVERITY = {
     None: '< 5%',
     Low: '5–10%',
@@ -109,7 +123,7 @@ class TensorFlowService {
             console.log('🔍 TensorFlow predictions:', predictions);
             
             // Convert TensorFlow predictions to agricultural analysis
-            const agriculturalAnalysis = this.convertPredictionsToAnalysis(
+            const agriculturalAnalysis = await this.convertPredictionsToAnalysis(
                 predictions, 
                 cropType, 
                 location
@@ -135,7 +149,7 @@ class TensorFlowService {
     /**
      * Convert TensorFlow predictions to agricultural analysis using the AI Inference Engine
      */
-    convertPredictionsToAnalysis(predictions, cropType, location) {
+    async convertPredictionsToAnalysis(predictions, cropType, location) {
         console.log('🧠 Running AI Inference Engine on raw TensorFlow predictions...');
 
         // Step 1: Raw AI
@@ -145,6 +159,10 @@ class TensorFlowService {
         const inferred = runInference(predictions, cropType, location);
 
         console.log(`✅ Inference result: ${inferred.disease} (${(inferred.confidence * 100).toFixed(1)}%) — ${inferred.severity} severity`);
+
+        // Fetch real weather data for the location
+        const weatherService = getWeatherService();
+        const weather = await weatherService.getWeatherByLocation(location);
 
         const actualCrop = inferred.crop;
         const normalizedSeverity = inferred.severity || 'Unknown';
@@ -184,6 +202,7 @@ class TensorFlowService {
                 location: location,
                 tensorflow_detected: rawAI.label || inferred.raw_label,
                 agricultural_interpretation: inferred.disease,
+                weather: weather || 'normal',
                 source: inferred.source
             },
             decision_intelligence: {

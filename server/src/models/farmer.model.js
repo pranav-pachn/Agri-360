@@ -1,6 +1,210 @@
 const supabase = require('../config/supabase');
 
 class FarmerModel {
+  static normalizeApplicationStatus(value = '') {
+    const candidate = String(value || '').toLowerCase();
+    if (candidate === 'approved') return 'approved';
+    if (candidate === 'rejected') return 'rejected';
+    return 'pending';
+  }
+
+  static toTrustScore(scoreRecord = null) {
+    if (!scoreRecord || typeof scoreRecord !== 'object') return 0;
+    const candidates = [scoreRecord.trust_score, scoreRecord.score];
+    for (const value of candidates) {
+      const num = Number(value);
+      if (Number.isFinite(num)) return num;
+    }
+    return 0;
+  }
+
+  static toRiskCategory(scoreRecord = null, trustScore = 0) {
+    const raw = String(scoreRecord?.risk_category || '').toLowerCase();
+    if (raw === 'low' || raw === 'medium' || raw === 'high') return raw;
+    if (trustScore >= 700) return 'low';
+    if (trustScore >= 550) return 'medium';
+    return 'high';
+  }
+
+  // Seed pending loan applications from recent crop reports when table exists but has no rows.
+  static async bootstrapLoanApplications(maxSeed = 200) {
+    const safeSeed = Math.max(1, Math.min(Number(maxSeed) || 200, 500));
+
+    const { data: existingRows, error: existingError } = await supabase
+      .from('loan_applications')
+      .select('id')
+      .limit(1);
+
+    if (existingError) throw existingError;
+    if ((existingRows || []).length > 0) return;
+
+    const { data: reports, error: reportsError } = await supabase
+      .from('crop_reports')
+      .select('id,farmer_id,created_at')
+      .not('farmer_id', 'is', null)
+      .order('created_at', { ascending: false })
+      .limit(safeSeed);
+
+    if (reportsError) throw reportsError;
+
+    if (!(reports || []).length) return;
+
+    const seedRows = reports.map((report) => ({
+      farmer_id: report.farmer_id,
+      crop_report_id: report.id,
+      requested_amount: 500000,
+      status: 'pending',
+      created_at: report.created_at || new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    }));
+
+    const { error: seedError } = await supabase
+      .from('loan_applications')
+      .upsert(seedRows, { onConflict: 'crop_report_id' });
+
+    if (seedError) throw seedError;
+  }
+
+  static async buildApplicationsPayload(loanApps = [], page = 1, pageSize = 10, search = '') {
+    const rows = Array.isArray(loanApps) ? loanApps : [];
+    const farmerIds = Array.from(new Set(rows.map((row) => row.farmer_id).filter(Boolean)));
+    const reportIds = Array.from(new Set(rows.map((row) => row.crop_report_id).filter(Boolean)));
+
+    let farmersById = new Map();
+    let reportsById = new Map();
+    let scoresByFarmer = new Map();
+
+    if (farmerIds.length) {
+      const [{ data: farmers, error: farmersError }, { data: scores, error: scoresError }] = await Promise.all([
+        supabase
+          .from('farmers')
+          .select('id,name,location')
+          .in('id', farmerIds),
+        supabase
+          .from('credit_scores')
+          .select('*')
+          .in('farmer_id', farmerIds),
+      ]);
+
+      if (farmersError) throw farmersError;
+      if (scoresError) throw scoresError;
+
+      farmersById = new Map((farmers || []).map((row) => [row.id, row]));
+      (scores || [])
+        .sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0))
+        .forEach((row) => {
+          if (!scoresByFarmer.has(row.farmer_id)) {
+            scoresByFarmer.set(row.farmer_id, row);
+          }
+        });
+    }
+
+    if (reportIds.length) {
+      const { data: reports, error: reportsError } = await supabase
+        .from('crop_reports')
+        .select('*')
+        .in('id', reportIds);
+
+      if (reportsError) throw reportsError;
+      reportsById = new Map((reports || []).map((row) => [row.id, row]));
+    }
+
+    const enriched = rows.map((row) => {
+      const farmer = farmersById.get(row.farmer_id) || {};
+      const report = reportsById.get(row.crop_report_id) || {};
+      const scoreRecord = scoresByFarmer.get(row.farmer_id) || null;
+      const trustScore = this.toTrustScore(scoreRecord);
+      const riskCategory = this.toRiskCategory(scoreRecord, trustScore);
+
+      return {
+        id: row.id,
+        farmerId: row.farmer_id,
+        cropReportId: row.crop_report_id,
+        name: farmer.name || 'Unknown Farmer',
+        location: farmer.location || 'Unknown location',
+        crop: report.crop_type || report.crop || 'Mixed Crop',
+        requestedAmount: Number(row.requested_amount || 0),
+        appliedAt: row.created_at || report.created_at || new Date().toISOString(),
+        updatedAt: row.updated_at || row.created_at || null,
+        status: this.normalizeApplicationStatus(row.status),
+        trustScore,
+        riskCategory,
+      };
+    });
+
+    const normalizedSearch = String(search || '').trim().toLowerCase();
+    const filtered = normalizedSearch
+      ? enriched.filter((item) =>
+          [item.name, item.location, item.crop, item.status]
+            .filter(Boolean)
+            .some((field) => String(field).toLowerCase().includes(normalizedSearch))
+        )
+      : enriched;
+
+    const total = filtered.length;
+    const safePageSize = Math.max(1, Math.min(Number(pageSize) || 10, 100));
+    const safePage = Math.max(1, Number(page) || 1);
+    const start = (safePage - 1) * safePageSize;
+    const items = filtered.slice(start, start + safePageSize);
+
+    return {
+      items,
+      total,
+      page: safePage,
+      pageSize: safePageSize,
+    };
+  }
+
+  static async getLoanApplications({ status = '', page = 1, pageSize = 10, search = '' } = {}) {
+    try {
+      const normalizedStatus = String(status || '').trim().toLowerCase();
+      const isStatusFilter = ['pending', 'approved', 'rejected'].includes(normalizedStatus);
+
+      let query = supabase
+        .from('loan_applications')
+        .select('id,farmer_id,crop_report_id,requested_amount,status,created_at,updated_at')
+        .order('created_at', { ascending: false })
+        .limit(500);
+
+      if (isStatusFilter) {
+        query = query.eq('status', normalizedStatus);
+      }
+
+      let result = await query;
+
+      if (result.error) {
+        const message = String(result.error?.message || '').toLowerCase();
+        const isMissingTable = message.includes('loan_applications') && message.includes('does not exist');
+        if (!isMissingTable) {
+          throw result.error;
+        }
+
+        return {
+          items: [],
+          total: 0,
+          page: Math.max(1, Number(page) || 1),
+          pageSize: Math.max(1, Math.min(Number(pageSize) || 10, 100)),
+        };
+      }
+
+      if (!(result.data || []).length) {
+        try {
+          await this.bootstrapLoanApplications();
+          result = await query;
+        } catch (bootstrapError) {
+          console.warn('Loan application bootstrap skipped:', bootstrapError.message);
+        }
+      }
+
+      if (result.error) throw result.error;
+
+      return await this.buildApplicationsPayload(result.data || [], page, pageSize, search);
+    } catch (error) {
+      console.error('Error fetching loan applications:', error);
+      throw error;
+    }
+  }
+
   // Create or get farmer profile
   static async createOrUpdateFarmer(userId, email, name, location = null) {
     try {
@@ -23,7 +227,6 @@ class FarmerModel {
           .update({
             name: name || existingFarmer.name,
             location: location || existingFarmer.location,
-            updated_at: new Date().toISOString(),
           })
           .eq('id', userId)
           .select()
@@ -77,7 +280,6 @@ class FarmerModel {
         .from('farmers')
         .update({
           ...updates,
-          updated_at: new Date().toISOString(),
         })
         .eq('id', farmerId)
         .select()
@@ -115,7 +317,7 @@ class FarmerModel {
         .from('credit_scores')
         .select('*')
         .eq('farmer_id', farmerId)
-        .order('updated_at', { ascending: false })
+        .order('created_at', { ascending: false })
         .limit(1);
 
       return {
@@ -125,6 +327,46 @@ class FarmerModel {
       };
     } catch (error) {
       console.error('Error fetching farmer with details:', error);
+      throw error;
+    }
+  }
+
+  // Get pending loan applications feed from recent crop reports + trust snapshots
+  static async getPendingApplications(limit = 42) {
+    try {
+      const safeLimit = Math.max(1, Math.min(Number(limit) || 42, 100));
+      const response = await this.getLoanApplications({
+        status: 'pending',
+        page: 1,
+        pageSize: safeLimit,
+        search: '',
+      });
+
+      return response.items;
+    } catch (error) {
+      console.error('Error fetching pending applications:', error);
+      throw error;
+    }
+  }
+
+  static async updateLoanApplicationStatus(applicationId, status) {
+    try {
+      const normalizedStatus = this.normalizeApplicationStatus(status);
+
+      const { data, error } = await supabase
+        .from('loan_applications')
+        .update({
+          status: normalizedStatus,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', applicationId)
+        .select('id,status,updated_at')
+        .single();
+
+      if (error) throw error;
+      return data;
+    } catch (error) {
+      console.error('Error updating loan application status:', error);
       throw error;
     }
   }
