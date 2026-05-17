@@ -4,6 +4,7 @@ const analyticsController = require('../controllers/analyticsController');
 const router = express.Router();
 
 // Public analytics endpoints (no authentication required)
+router.get('/', analyticsController.getSyntheticAnalyticsSummary);
 router.get('/districts/list', analyticsController.listDistrictAnalytics);
 router.get('/district/:district', analyticsController.getDistrictAnalytics);
 router.get('/state/:state', analyticsController.getStateAnalytics);

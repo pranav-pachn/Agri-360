@@ -1,19 +1,12 @@
 import { Link, useLocation } from 'react-router-dom';
-import { Home, Leaf, TrendingUp, User } from 'lucide-react';
+import { protectedBottomNavItems } from './navigation';
 
 export default function BottomNav() {
   const location = useLocation();
 
-  const navItems = [
-    { icon: Home, label: 'Home', path: '/dashboard' },
-    { icon: Leaf, label: 'Crops', path: '/upload' },
-    { icon: TrendingUp, label: 'Finance', path: '/trust-score' },
-    { icon: User, label: 'Profile', path: '/profile' },
-  ];
-
   return (
     <nav className="fixed bottom-0 left-0 w-full z-50 lg:hidden bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl flex justify-around items-center px-4 pb-6 pt-3 shadow-[0_-4px_20px_rgba(0,0,0,0.05)] rounded-t-3xl border-t border-emerald-100 dark:border-slate-800">
-      {navItems.map((item) => {
+      {protectedBottomNavItems.map((item) => {
         const Icon = item.icon;
         const isActive =
           location.pathname === item.path || location.pathname.startsWith(item.path);
@@ -29,7 +22,7 @@ export default function BottomNav() {
             }`}
           >
             <Icon className="w-5 h-5" />
-            <span className="text-[10px] font-bold uppercase mt-1">{item.label}</span>
+            <span className="mt-1 text-[10px] font-bold uppercase">{item.shortLabel}</span>
           </Link>
         );
       })}

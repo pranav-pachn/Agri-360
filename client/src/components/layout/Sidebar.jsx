@@ -1,16 +1,13 @@
 import { Link, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Leaf, TrendingUp, Map, Settings } from 'lucide-react';
+import { Leaf } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
+import LanguageSelector from '../chat/LanguageSelector';
+import { protectedPrimaryNavItems } from './navigation';
 
 export default function Sidebar() {
   const location = useLocation();
-
-  const navItems = [
-    { icon: LayoutDashboard, label: 'Overview', path: '/dashboard' },
-    { icon: Leaf, label: 'Crop Intelligence', path: '/upload' },
-    { icon: TrendingUp, label: 'Credit Pulse', path: '/trust-score' },
-    { icon: Map, label: 'Land Assets', path: '/analytics' },
-    { icon: Settings, label: 'Settings', path: '/profile' },
-  ];
+  const { i18n, t } = useTranslation();
+  const language = i18n.language || 'en';
 
   return (
     <aside className="fixed left-0 top-0 z-50 hidden h-screen w-64 flex-col gap-2 border-r border-emerald-100 bg-emerald-50 py-6 dark:border-slate-800 dark:bg-slate-900 lg:flex">
@@ -27,7 +24,7 @@ export default function Sidebar() {
       </div>
 
       <nav className="flex flex-col gap-1">
-        {navItems.map((item) => {
+        {protectedPrimaryNavItems.map((item) => {
           const Icon = item.icon;
           const isActive = location.pathname === item.path || location.pathname.startsWith(item.path);
 
@@ -48,7 +45,17 @@ export default function Sidebar() {
         })}
       </nav>
 
-      <div className="mt-auto px-4">
+      <div className="mt-auto space-y-4 px-4">
+        <div>
+          <p className="mb-2 px-1 text-[11px] font-bold uppercase tracking-[0.18em] text-emerald-700/60 dark:text-emerald-300/60">
+            {t('language')}
+          </p>
+          <LanguageSelector
+            selected={language}
+            selectClassName="appearance-none w-full rounded-xl border border-emerald-200 bg-white/80 py-2 pl-3 pr-8 text-sm font-semibold text-emerald-900 shadow-sm transition-colors hover:bg-emerald-50 focus:outline-none focus:ring-2 focus:ring-emerald-400/20 dark:border-slate-700 dark:bg-slate-800/80 dark:text-emerald-200 dark:hover:bg-slate-700"
+            iconClassName="text-emerald-700/60 dark:text-emerald-300/70"
+          />
+        </div>
         <Link
           to="/trust-score"
           className="block w-full rounded-full bg-secondary py-3 text-center text-sm font-bold text-on-secondary shadow-md transition-all hover:brightness-110"

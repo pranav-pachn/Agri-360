@@ -20,6 +20,17 @@ const getDistrictAnalytics = async (req, res, next) => {
     }
 };
 
+const getSyntheticAnalyticsSummary = async (req, res, next) => {
+    try {
+        logger.info('Fetching synthetic analytics summary');
+        const summary = await analyticsService.getSyntheticAnalyticsSummary();
+        return res.status(200).json(summary);
+    } catch (error) {
+        logger.error('Synthetic analytics summary error:', error);
+        next(error);
+    }
+};
+
 const getStateAnalytics = async (req, res, next) => {
     try {
         const { state } = req.params;
@@ -158,6 +169,7 @@ const recomputeAnalyticsFromReports = async (req, res, next) => {
 };
 
 module.exports = {
+    getSyntheticAnalyticsSummary,
     getDistrictAnalytics,
     getStateAnalytics,
     getNationalAnalytics,

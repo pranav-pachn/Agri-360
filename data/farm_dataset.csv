@@ -1,0 +1,151 @@
+district,crop,health,yield_pred,actual_yield,risk,weather_volatility,market_fluctuation
+Guntur,Rice,58,3.06,2.82,0.3,0.18,0.12
+Nellore,Wheat,65,2.62,2.48,0.32,0.29,0.25
+Kurnool,Maize,72,3.88,3.85,0.33,0.4,0.38
+Krishna,Tomato,79,4.85,4.84,0.35,0.51,0.51
+Prakasam,Potato,86,4.31,4.4,0.37,0.62,0.64
+Anantapur,Cotton,59,2.05,1.83,0.48,0.73,0.16
+Chittoor,Rice,66,2.91,2.71,0.5,0.84,0.29
+East Godavari,Wheat,73,2.74,2.69,0.3,0.28,0.42
+West Godavari,Maize,80,4.01,4.06,0.32,0.39,0.55
+Kadapa,Tomato,87,4.97,5.04,0.33,0.5,0.68
+Guntur,Potato,60,3.91,3.67,0.44,0.61,0.2
+Nellore,Cotton,67,2.17,2.04,0.46,0.72,0.33
+Kurnool,Rice,74,3.03,2.91,0.48,0.83,0.46
+Krishna,Wheat,81,2.86,2.89,0.28,0.27,0.59
+Prakasam,Maize,88,4.13,4.27,0.3,0.38,0.72
+Anantapur,Tomato,61,4.56,4.3,0.4,0.49,0.24
+Chittoor,Potato,68,4.03,3.87,0.42,0.6,0.37
+East Godavari,Cotton,75,2.29,2.24,0.44,0.71,0.5
+West Godavari,Rice,82,3.15,3.12,0.46,0.82,0.63
+Kadapa,Wheat,89,3.14,3.27,0.17,0.26,0.15
+Guntur,Maize,62,3.72,3.53,0.36,0.37,0.28
+Nellore,Tomato,69,4.69,4.51,0.38,0.48,0.41
+Kurnool,Potato,76,4.15,4.08,0.4,0.59,0.54
+Krishna,Cotton,83,2.41,2.44,0.42,0.7,0.67
+Prakasam,Rice,90,3.43,3.5,0.35,0.81,0.19
+Anantapur,Wheat,63,2.58,2.36,0.32,0.25,0.32
+Chittoor,Maize,70,3.84,3.73,0.34,0.36,0.45
+East Godavari,Tomato,77,4.81,4.72,0.36,0.47,0.58
+West Godavari,Potato,84,4.27,4.28,0.38,0.58,0.71
+Kadapa,Cotton,91,2.69,2.82,0.31,0.69,0.23
+Guntur,Rice,64,2.87,2.59,0.51,0.8,0.36
+Nellore,Wheat,71,2.7,2.57,0.3,0.24,0.49
+Kurnool,Maize,78,3.97,3.94,0.32,0.35,0.62
+Krishna,Tomato,85,5.08,5.08,0.25,0.46,0.14
+Prakasam,Potato,58,3.86,3.94,0.45,0.57,0.27
+Anantapur,Cotton,65,2.13,1.92,0.47,0.68,0.4
+Chittoor,Rice,72,2.99,2.79,0.49,0.79,0.53
+East Godavari,Wheat,79,2.82,2.77,0.28,0.23,0.66
+West Godavari,Maize,86,4.24,4.31,0.21,0.34,0.18
+Kadapa,Tomato,59,4.52,4.58,0.41,0.45,0.31
+Guntur,Potato,66,3.99,3.75,0.43,0.56,0.44
+Nellore,Cotton,73,2.25,2.12,0.45,0.67,0.57
+Kurnool,Rice,80,3.11,3,0.47,0.78,0.7
+Krishna,Wheat,87,3.1,3.15,0.17,0.22,0.22
+Prakasam,Maize,60,3.68,3.8,0.37,0.33,0.35
+Anantapur,Tomato,67,4.64,4.38,0.39,0.44,0.48
+Chittoor,Potato,74,4.11,3.96,0.41,0.55,0.61
+East Godavari,Cotton,81,2.52,2.49,0.34,0.66,0.13
+West Godavari,Rice,88,3.39,3.38,0.36,0.77,0.26
+Kadapa,Wheat,61,2.54,2.64,0.33,0.21,0.39
+Guntur,Maize,68,3.8,3.61,0.35,0.32,0.52
+Nellore,Tomato,75,4.77,4.59,0.37,0.43,0.65
+Kurnool,Potato,82,4.38,4.33,0.3,0.54,0.17
+Krishna,Cotton,89,2.64,2.69,0.32,0.65,0.3
+Prakasam,Rice,62,2.83,2.87,0.51,0.76,0.43
+Anantapur,Wheat,69,2.66,2.44,0.31,0.2,0.56
+Chittoor,Maize,76,3.92,3.81,0.33,0.31,0.69
+East Godavari,Tomato,83,5.04,4.96,0.26,0.42,0.21
+West Godavari,Potato,90,4.5,4.53,0.28,0.53,0.34
+Kadapa,Cotton,63,2.09,2.2,0.47,0.64,0.47
+Guntur,Rice,70,2.95,2.67,0.49,0.75,0.6
+Nellore,Wheat,77,2.93,2.81,0.2,0.19,0.12
+Kurnool,Maize,84,4.2,4.19,0.22,0.3,0.25
+Krishna,Tomato,91,5.16,5.17,0.24,0.41,0.38
+Prakasam,Potato,64,3.94,4.02,0.44,0.52,0.51
+Anantapur,Cotton,71,2.21,2,0.45,0.63,0.64
+Chittoor,Rice,78,3.22,3.04,0.38,0.74,0.16
+East Godavari,Wheat,85,3.06,3.03,0.18,0.18,0.29
+West Godavari,Maize,58,3.64,3.68,0.38,0.29,0.42
+Kadapa,Tomato,65,4.6,4.66,0.4,0.4,0.55
+Guntur,Potato,72,4.07,3.83,0.42,0.51,0.68
+Nellore,Cotton,79,2.48,2.37,0.34,0.62,0.2
+Kurnool,Rice,86,3.35,3.26,0.36,0.73,0.33
+Krishna,Wheat,59,2.23,2.21,0.56,0.84,0.46
+Prakasam,Maize,66,3.76,3.89,0.36,0.28,0.59
+Anantapur,Tomato,73,4.72,4.46,0.38,0.39,0.72
+Chittoor,Potato,80,4.34,4.21,0.3,0.5,0.24
+East Godavari,Cotton,87,2.6,2.57,0.32,0.61,0.37
+West Godavari,Rice,60,2.79,2.75,0.52,0.72,0.5
+Kadapa,Wheat,67,2.35,2.41,0.54,0.83,0.63
+Guntur,Maize,74,4.03,3.86,0.25,0.27,0.15
+Nellore,Tomato,81,5,4.84,0.27,0.38,0.28
+Kurnool,Potato,88,4.46,4.41,0.29,0.49,0.41
+Krishna,Cotton,61,2.04,2.06,0.48,0.6,0.54
+Prakasam,Rice,68,2.91,2.95,0.5,0.71,0.67
+Anantapur,Wheat,75,2.62,2.38,0.43,0.82,0.19
+Chittoor,Maize,82,4.16,4.07,0.23,0.26,0.32
+East Godavari,Tomato,89,5.12,5.04,0.25,0.37,0.45
+West Godavari,Potato,62,3.9,3.9,0.44,0.48,0.58
+Kadapa,Cotton,69,2.17,2.28,0.46,0.59,0.71
+Guntur,Rice,76,3.18,2.92,0.39,0.7,0.23
+Nellore,Wheat,83,2.75,2.6,0.41,0.81,0.36
+Kurnool,Maize,90,4.28,4.27,0.21,0.25,0.49
+Krishna,Tomato,63,4.56,4.54,0.4,0.36,0.62
+Prakasam,Potato,70,4.18,4.28,0.33,0.47,0.14
+Anantapur,Cotton,77,2.44,2.25,0.35,0.58,0.27
+Chittoor,Rice,84,3.3,3.12,0.37,0.69,0.4
+East Godavari,Wheat,91,2.87,2.8,0.39,0.8,0.53
+West Godavari,Maize,64,3.72,3.76,0.37,0.24,0.66
+Kadapa,Tomato,71,4.84,4.92,0.29,0.35,0.18
+Guntur,Potato,78,4.3,4.08,0.31,0.46,0.31
+Nellore,Cotton,85,2.56,2.45,0.33,0.57,0.44
+Kurnool,Rice,58,2.75,2.62,0.53,0.68,0.57
+Krishna,Wheat,65,2.31,2.29,0.55,0.79,0.7
+Prakasam,Maize,72,3.99,4.14,0.25,0.23,0.22
+Anantapur,Tomato,79,4.96,4.72,0.27,0.34,0.35
+Chittoor,Potato,86,4.42,4.29,0.29,0.45,0.48
+East Godavari,Cotton,59,2,1.94,0.49,0.56,0.61
+West Godavari,Rice,66,3.02,2.99,0.42,0.67,0.13
+Kadapa,Wheat,73,2.58,2.66,0.44,0.78,0.26
+Guntur,Maize,80,4.11,3.94,0.24,0.22,0.39
+Nellore,Tomato,87,5.08,4.92,0.25,0.33,0.52
+Kurnool,Potato,60,3.86,3.78,0.45,0.44,0.65
+Krishna,Cotton,67,2.28,2.32,0.38,0.55,0.17
+Prakasam,Rice,74,3.14,3.2,0.4,0.66,0.3
+Anantapur,Wheat,81,2.7,2.46,0.42,0.77,0.43
+Chittoor,Maize,88,4.24,4.15,0.22,0.21,0.56
+East Godavari,Tomato,61,4.52,4.42,0.41,0.32,0.69
+West Godavari,Potato,68,4.14,4.16,0.34,0.43,0.21
+Kadapa,Cotton,75,2.4,2.53,0.36,0.54,0.34
+Guntur,Rice,82,3.26,3,0.38,0.65,0.47
+Nellore,Wheat,89,2.83,2.68,0.4,0.76,0.6
+Kurnool,Maize,62,3.83,3.81,0.28,0.2,0.12
+Krishna,Tomato,69,4.79,4.79,0.3,0.31,0.25
+Prakasam,Potato,76,4.26,4.36,0.32,0.42,0.38
+Anantapur,Cotton,83,2.52,2.33,0.34,0.53,0.51
+Chittoor,Rice,90,3.38,3.21,0.36,0.64,0.64
+East Godavari,Wheat,63,2.42,2.34,0.46,0.75,0.16
+West Godavari,Maize,70,3.95,4.01,0.26,0.19,0.29
+Kadapa,Tomato,77,4.91,4.99,0.28,0.3,0.42
+Guntur,Potato,84,4.38,4.17,0.3,0.41,0.55
+Nellore,Cotton,91,2.64,2.53,0.32,0.52,0.68
+Kurnool,Rice,64,2.98,2.87,0.43,0.63,0.2
+Krishna,Wheat,71,2.54,2.54,0.44,0.74,0.33
+Prakasam,Maize,78,4.07,4.22,0.24,0.18,0.46
+Anantapur,Tomato,85,5.04,4.8,0.26,0.29,0.59
+Chittoor,Potato,58,3.82,3.66,0.46,0.4,0.72
+East Godavari,Cotton,65,2.24,2.2,0.39,0.51,0.24
+West Godavari,Rice,72,3.1,3.08,0.41,0.62,0.37
+Kadapa,Wheat,79,2.66,2.74,0.43,0.73,0.5
+Guntur,Maize,86,3.93,3.72,0.44,0.84,0.63
+Nellore,Tomato,59,4.63,4.46,0.33,0.28,0.15
+Kurnool,Potato,66,4.09,4.03,0.35,0.39,0.28
+Krishna,Cotton,73,2.36,2.4,0.37,0.5,0.41
+Prakasam,Rice,80,3.22,3.28,0.39,0.61,0.54
+Anantapur,Wheat,87,2.78,2.55,0.41,0.72,0.67
+Chittoor,Maize,60,3.52,3.38,0.51,0.83,0.19
+East Godavari,Tomato,67,4.75,4.66,0.31,0.27,0.32
+West Godavari,Potato,74,4.22,4.24,0.33,0.38,0.45
+Kadapa,Cotton,81,2.48,2.61,0.35,0.49,0.58

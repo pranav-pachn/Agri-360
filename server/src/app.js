@@ -46,6 +46,7 @@ app.get('/', (req, res) => {
       },
       analytics: {
         public: {
+          summary: '/api/v1/analytics',
           district: '/api/v1/analytics/district/:district',
           state: '/api/v1/analytics/state/:state',
           national: '/api/v1/analytics/national',

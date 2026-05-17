@@ -124,7 +124,7 @@ const CropDiagnosis = () => {
 			<div className="mx-auto max-w-[1500px] px-4 pb-28 pt-8 md:px-8 lg:px-10">
 				<div className="grid grid-cols-1 gap-8 lg:grid-cols-12">
 					<aside className="hidden lg:col-span-2 lg:block">
-						<div className="sticky top-24 rounded-2xl border border-slate-700/70 bg-slate-800/60 p-4 backdrop-blur">
+						<div className="sticky top-24 card">
 							<p className="px-2 text-[10px] font-bold uppercase tracking-[0.14em] text-emerald-300/80">Digital Agronomist</p>
 							<nav className="mt-4 space-y-1" aria-label="Diagnosis side navigation">
 								{sideLinks.map((link) => (
@@ -162,7 +162,7 @@ const CropDiagnosis = () => {
 
 						<div className="grid grid-cols-1 gap-6 xl:grid-cols-12">
 							<section className="xl:col-span-4 space-y-5">
-								<div className="rounded-2xl border border-slate-700/70 bg-slate-800/70 p-5">
+								<div className="card">
 									<div className="mb-4 flex items-center gap-3">
 										<div className="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-500 text-xs font-bold text-slate-950">1</div>
 										<h2 className="text-lg font-bold text-white">Capture & Upload</h2>
@@ -174,7 +174,7 @@ const CropDiagnosis = () => {
 									)}
 								</div>
 
-								<div className="rounded-2xl border border-slate-700/70 bg-slate-800/70 p-5">
+								<div className="card">
 									<div className="mb-4 flex items-center justify-between">
 										<h3 className="text-xs font-bold uppercase tracking-[0.14em] text-slate-300">Inference Engine</h3>
 										<span className="rounded-full border border-emerald-300/30 bg-emerald-500/15 px-2 py-1 text-[10px] font-bold uppercase tracking-[0.1em] text-emerald-200">
@@ -188,7 +188,7 @@ const CropDiagnosis = () => {
 									</div>
 								</div>
 
-								<div className="rounded-2xl border border-slate-700/70 bg-slate-800/70 p-5 space-y-4">
+								<div className="card space-y-4">
 									<div>
 										<label className="mb-1 block text-xs font-bold uppercase tracking-[0.12em] text-slate-400">Crop Type</label>
 										<input
@@ -231,7 +231,7 @@ const CropDiagnosis = () => {
 							</section>
 
 							<section className="xl:col-span-8 space-y-6">
-								<div className="overflow-hidden rounded-2xl border border-slate-700/70 bg-slate-800/70">
+								<div className="overflow-hidden card p-0">
 									<div className="grid grid-cols-1 lg:grid-cols-2">
 										<div className="relative min-h-[300px] bg-slate-900">
 											{previewURL ? (
@@ -264,11 +264,11 @@ const CropDiagnosis = () => {
 													<p className="text-[11px] font-bold uppercase tracking-[0.14em] text-rose-300">Action Required</p>
 													<h2 className="mt-1 text-3xl font-black text-white">{analysisResult.disease}</h2>
 													<div className="mt-4 grid grid-cols-2 gap-3">
-														<div className="rounded-xl border border-slate-600/60 bg-slate-900/50 p-3">
+														<div className="card-compact">
 															<p className="text-[10px] font-bold uppercase tracking-[0.1em] text-slate-400">Confidence</p>
 															<p className="text-xl font-bold text-emerald-300">{analysisResult.confidence}%</p>
 														</div>
-														<div className="rounded-xl border border-slate-600/60 bg-slate-900/50 p-3">
+														<div className="card-compact">
 															<p className="text-[10px] font-bold uppercase tracking-[0.1em] text-slate-400">Severity</p>
 															<p className="text-xl font-bold text-amber-300">{analysisResult.severity || confidenceLevel}</p>
 														</div>

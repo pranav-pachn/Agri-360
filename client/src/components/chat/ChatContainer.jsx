@@ -1,14 +1,10 @@
 import React, { useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import ChatBubble from './ChatBubble';
 
 const ChatContainer = ({ messages, language = 'en' }) => {
+  const { t } = useTranslation();
   const bottomRef = useRef(null);
-
-  const emptyText = {
-    en: "Ask me anything about your crop health, climate risks, or financial standing.",
-    hi: "मुझसे अपने फसल स्वास्थ्य, जलवायु जोखिम या वित्तीय स्थिति के बारे में कुछ भी पूछें।",
-    te: "మీ పంట ఆరోగ్యం, వాతావరణ నష్టాలు లేదా ఆర్థిక స్థితి గురించి నన్ను ఏదైనా అడగండి."
-  };
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -23,11 +19,11 @@ const ChatContainer = ({ messages, language = 'en' }) => {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"></path>
             </svg>
           </div>
-          <p className="text-center max-w-xs">{emptyText[language] || emptyText.en}</p>
+          <p className="text-center max-w-xs text-base">{t('emptyChat')}</p>
         </div>
       ) : (
         messages.map((msg, idx) => (
-          <ChatBubble key={idx} message={msg} />
+          <ChatBubble key={idx} message={msg} language={language} />
         ))
       )}
       <div ref={bottomRef} className="h-1 pb-1" />

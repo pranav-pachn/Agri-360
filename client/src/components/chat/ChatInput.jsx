@@ -1,40 +1,52 @@
-import React, { useState } from 'react';
+import React, { useMemo, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 const ChatInput = ({ onSend, disabled, language = 'en' }) => {
+  const { t } = useTranslation();
   const [inputText, setInputText] = useState('');
+  const speechRef = useRef(null);
 
-  const placeholders = {
-    en: "Ask about your crop, risk, or loan eligibility...",
-    hi: "अपनी फसल, जोखिम या लोन पात्रता के बारे में पूछें...",
-    te: "మీ పంట, రిస్క్ లేదా లోన్ అర్హత గురించి అడగండి..."
+  const languageMap = {
+    en: 'en-IN',
+    hi: 'hi-IN',
+    te: 'te-IN',
   };
 
-  const quickMessages = {
-    en: [
-      "What diseases affect my crop?",
-      "How can I improve my trust score?",
-      "What fertilizer should I use?",
-      "Explain my yield prediction"
-    ],
-    hi: [
-      "मेरी फसल को कौन सी बीमारियाँ प्रभावित करती हैं?",
-      "मेरा ट्रस्ट स्कोर कैसे सुधारूँ?",
-      "मुझे कौन सा उर्वरक उपयोग करना चाहिए?",
-      "मेरी उपज भविष्यवाणी समझाएं"
-    ],
-    te: [
-      "నా పంటను ఏ వ్యాధులు ప్రభావితం చేస్తున్నాయి?",
-      "నా ట్రస్ట్ స్కోర్ ఎలా మెరుగుపరచాలి?",
-      "నేను ఏ ఎరువు వాడాలి?",
-      "నా దిగుబడి అంచనాను వివరించండి"
-    ]
-  };
+  const chips = useMemo(() => ([
+    t('quickDisease'),
+    t('quickTrust'),
+    t('quickFertilizer'),
+    t('quickYield'),
+  ]), [t, language]);
 
   const handleSend = () => {
     if (inputText.trim() && !disabled) {
       onSend(inputText.trim());
       setInputText('');
     }
+  };
+
+  const handleVoiceInput = () => {
+    if (typeof window === 'undefined') return;
+
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      window.alert(t('speechNotSupported'));
+      return;
+    }
+
+    if (!speechRef.current) {
+      speechRef.current = new SpeechRecognition();
+      speechRef.current.continuous = false;
+      speechRef.current.interimResults = false;
+      speechRef.current.onresult = (event) => {
+        const text = event.results?.[0]?.[0]?.transcript || '';
+        setInputText(text);
+      };
+    }
+
+    speechRef.current.lang = languageMap[language] || languageMap.en;
+    speechRef.current.start();
   };
 
   const handleQuickMessage = (msg) => {
@@ -48,8 +60,6 @@ const ChatInput = ({ onSend, disabled, language = 'en' }) => {
     }
   };
 
-  const chips = quickMessages[language] || quickMessages.en;
-
   return (
     <div className="space-y-3">
       {/* Quick message pills */}
@@ -59,7 +69,7 @@ const ChatInput = ({ onSend, disabled, language = 'en' }) => {
             key={idx}
             onClick={() => handleQuickMessage(msg)}
             disabled={disabled}
-            className="text-xs px-3 py-1.5 bg-slate-800/80 border border-slate-700 hover:border-green-500/40 hover:bg-slate-700 hover:text-green-400 text-slate-400 rounded-full transition-all duration-300 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed"
+            className="text-xs px-3 py-1.5 bg-slate-800/80 border border-slate-700 hover:border-green-500/40 hover:bg-slate-700 hover:text-green-400 text-slate-300 rounded-full transition-all duration-300 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed"
           >
             {msg}
           </button>
@@ -74,13 +84,25 @@ const ChatInput = ({ onSend, disabled, language = 'en' }) => {
           onChange={(e) => setInputText(e.target.value)}
           onKeyDown={handleKeyDown}
           disabled={disabled}
-          placeholder={placeholders[language] || placeholders.en}
-          className="flex-1 bg-transparent text-white placeholder-slate-400 px-4 py-2 focus:outline-none"
+          placeholder={t('chatPlaceholder')}
+          className="flex-1 bg-transparent px-4 py-3 text-lg text-white placeholder-slate-400 focus:outline-none"
           autoComplete="off"
+          aria-label={t('chatPlaceholder')}
         />
+        <button
+          type="button"
+          onClick={handleVoiceInput}
+          disabled={disabled}
+          className="rounded-xl border border-slate-600 px-3 py-3 text-slate-200 transition hover:border-green-500/50 hover:text-green-300 disabled:cursor-not-allowed disabled:opacity-40"
+          aria-label={t('voiceInputLabel')}
+          title={t('speak')}
+        >
+          <span className="text-base">🎤</span>
+        </button>
         <button
           onClick={handleSend}
           disabled={disabled || !inputText.trim()}
+          aria-label={t('sendMessageLabel')}
           className={`p-3 rounded-xl transition-all duration-300 flex-shrink-0 flex items-center justify-center ${
             disabled || !inputText.trim()
               ? 'bg-slate-700 text-slate-500 cursor-not-allowed'

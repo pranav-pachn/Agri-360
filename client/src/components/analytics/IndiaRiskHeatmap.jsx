@@ -1,7 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { ComposableMap, Geographies, Geography } from 'react-simple-maps';
 import { scaleThreshold } from 'd3-scale';
-import { API_URL } from '../../services/api';
 
 const INDIA_STATES_GEOJSON_PATH = '/india_state.geojson';
 
@@ -20,9 +19,6 @@ const STATE_RISK_DATA = [
   { state: 'Telangana', risk: 0.58 },
   { state: 'West Bengal', risk: 0.61 },
 ];
-
-const HEATMAP_REFRESH_MS = 30000;
-
 const riskColorScale = scaleThreshold().domain([0.4, 0.7]).range(['#22c55e', '#facc15', '#ef4444']);
 
 const normalizeState = (value = '') => value.trim().toLowerCase();
@@ -50,13 +46,46 @@ export default function IndiaRiskHeatmap({
   const [activeState, setActiveState] = useState(null);
   const [geoData, setGeoData] = useState(null);
   const [geoError, setGeoError] = useState('');
-  const [liveRiskRows, setLiveRiskRows] = useState([]);
-  const [lastLiveUpdate, setLastLiveUpdate] = useState(null);
-  const [dataMode, setDataMode] = useState('fallback');
+  const [lastDerivedUpdate, setLastDerivedUpdate] = useState(null);
+
+  const derivedRiskRows = useMemo(() => {
+    if (!Array.isArray(districtRows) || districtRows.length === 0) {
+      return [];
+    }
+
+    const buckets = new Map();
+
+    districtRows.forEach((row) => {
+      const state = String(row?.state || '').trim();
+      const risk = Number(row?.avg_risk_score);
+      const reports = Math.max(1, Number(row?.total_reports || 0));
+
+      if (!state || !Number.isFinite(risk)) return;
+
+      if (!buckets.has(state)) {
+        buckets.set(state, {
+          state,
+          weightedRisk: 0,
+          totalReports: 0,
+        });
+      }
+
+      const bucket = buckets.get(state);
+      bucket.weightedRisk += risk * reports;
+      bucket.totalReports += reports;
+    });
+
+    return Array.from(buckets.values()).map((bucket) => ({
+      state: bucket.state,
+      risk: bucket.totalReports ? bucket.weightedRisk / bucket.totalReports : 0,
+    }));
+  }, [districtRows]);
+
+  const dataMode = derivedRiskRows.length ? 'live' : 'fallback';
 
   const riskRows = useMemo(
-    () => (liveRiskRows.length ? liveRiskRows : STATE_RISK_DATA),
-    [liveRiskRows]
+    () => (derivedRiskRows.length ? derivedRiskRows : STATE_RISK_DATA),
+    [derivedRiskRows]
   );
 
   const riskLookup = useMemo(() => {
@@ -120,46 +149,10 @@ export default function IndiaRiskHeatmap({
   }, []);
 
   useEffect(() => {
-    let cancelled = false;
-
-    const fetchLiveRisk = async () => {
-      try {
-        const response = await fetch(`${API_URL}/v1/analytics/dashboard`);
-        if (!response.ok) {
-          throw new Error(`Failed to fetch analytics (${response.status})`);
-        }
-
-        const payload = await response.json();
-        const states = Array.isArray(payload?.states) ? payload.states : [];
-
-        const mapped = states
-          .filter((row) => row?.state && Number.isFinite(Number(row?.avg_risk_score)))
-          .map((row) => ({
-            state: String(row.state).trim(),
-            risk: Number(row.avg_risk_score),
-          }));
-
-        if (!cancelled && mapped.length) {
-          setLiveRiskRows(mapped);
-          setLastLiveUpdate(new Date());
-          setDataMode('live');
-        }
-      } catch (error) {
-        if (!cancelled) {
-          setDataMode('fallback');
-        }
-        console.warn('Live state risk unavailable, using fallback heatmap data.', error);
-      }
-    };
-
-    fetchLiveRisk();
-    const timer = setInterval(fetchLiveRisk, HEATMAP_REFRESH_MS);
-
-    return () => {
-      cancelled = true;
-      clearInterval(timer);
-    };
-  }, []);
+    if (derivedRiskRows.length) {
+      setLastDerivedUpdate(new Date());
+    }
+  }, [derivedRiskRows]);
 
   return (
     <section className="bg-slate-800 rounded-xl border border-slate-700 p-5 shadow-md">
@@ -169,8 +162,8 @@ export default function IndiaRiskHeatmap({
           States are colored by risk level: red (high), yellow (medium), green (low).
         </p>
         <p className="text-xs text-slate-500 mt-2">
-          Data source: {dataMode === 'live' ? 'Live analytics (auto-refresh 30s)' : 'Fallback demo data'}
-          {lastLiveUpdate ? ` • Last update ${lastLiveUpdate.toLocaleTimeString()}` : ''}
+          Data source: {dataMode === 'live' ? 'Derived from live district intelligence' : 'Fallback demo data'}
+          {lastDerivedUpdate ? ` • Last update ${lastDerivedUpdate.toLocaleTimeString()}` : ''}
         </p>
       </div>
 
@@ -310,7 +303,7 @@ export default function IndiaRiskHeatmap({
           </div>
 
           <p className="text-xs text-slate-400 leading-5">
-            Live mode reads backend analytics every 30 seconds. Fallback data appears only when API is unavailable.
+            State coloring is computed from district intelligence already loaded on this page. Fallback data appears only when no live district data is available.
           </p>
         </aside>
       </div>

@@ -106,32 +106,7 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50">
-      {/* Header */}
-      <header className="bg-white shadow-sm border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-4">
-            <div className="flex items-center">
-              <div className="w-10 h-10 bg-gradient-to-r from-green-400 to-green-600 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-xl">🌾</span>
-              </div>
-              <h1 className="ml-3 text-2xl font-bold text-gray-800">AgriMitra 360</h1>
-              <span className="ml-2 text-sm text-gray-500">Agricultural Intelligence Platform</span>
-            </div>
-            
-            <div className="flex items-center gap-4">
-              <span className="text-sm text-gray-600">Welcome back,</span>
-              <span className="font-semibold text-gray-800">{user?.name || 'Farmer'}</span>
-              <button
-                onClick={handleSignOut}
-                className="flex items-center gap-2 text-sm text-red-600 hover:text-red-700 transition-colors"
-              >
-                <LogOut className="w-4 h-4" />
-                Sign Out
-              </button>
-            </div>
-          </div>
-        </div>
-      </header>
+      {/* Header removed - navbar provides top navigation and branding */}
 
       {/* Main Dashboard Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">

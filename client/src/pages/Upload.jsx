@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import UploadBox from '../components/upload/UploadBox';
@@ -18,6 +19,7 @@ const CROP_OPTIONS = [
 ];
 
 const Upload = () => {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const [imageFile, setImageFile] = useState(null);
   const [previewURL, setPreviewURL] = useState(null);
@@ -92,7 +94,7 @@ const Upload = () => {
       navigate(`/result/${resultId}`, { state: { analysisData } });
     } catch (error) {
       console.error('Analysis failed:', error);
-      alert('Failed to analyze the image. Please try again.');
+      alert(t('analysisFailed'));
     } finally {
       setLoading(false);
     }
@@ -105,10 +107,10 @@ const Upload = () => {
         {/* Header Section */}
         <div className="text-center space-y-3">
           <h1 className="text-3xl font-extrabold text-white tracking-tight sm:text-4xl">
-            Crop Diagnostics
+            {t('cropDiagnostics')}
           </h1>
           <p className="text-slate-400 text-lg max-w-md mx-auto">
-            Upload a clear image of your crop to detect diseases and assess health.
+            {t('uploadSubtitle')}
           </p>
         </div>
 
@@ -128,14 +130,15 @@ const Upload = () => {
           {/* Additional Analysis Details */}
           <div className="space-y-4 bg-slate-800/50 p-1 rounded-2xl">
             <div>
-              <label className="block text-sm font-medium text-slate-400 mb-1.5 ml-1">Crop Type</label>
+              <label className="block text-sm font-medium text-slate-400 mb-1.5 ml-1">{t('cropType')}</label>
               <input 
                 list="crop-options"
                 type="text" 
-                placeholder="Select or type a crop..."
+                placeholder={t('selectCropPlaceholder')}
                 value={cropType}
                 onChange={(e) => setCropType(e.target.value)}
                 className="w-full bg-slate-900/60 border border-slate-700/80 rounded-xl px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-green-500/50 focus:border-green-500/80 transition-all shadow-inner"
+                aria-label={t('cropType')}
               />
               <datalist id="crop-options">
                 {CROP_OPTIONS.map((crop) => (
@@ -146,28 +149,30 @@ const Upload = () => {
             
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-slate-400 mb-1.5 ml-1">Location</label>
+                <label className="block text-sm font-medium text-slate-400 mb-1.5 ml-1">{t('location')}</label>
                 <input 
                   type="text" 
-                  placeholder="e.g. Maharashtra, Punjab..."
+                  placeholder={t('locationPlaceholder')}
                   value={farmLocation}
                   onChange={(e) => setFarmLocation(e.target.value)}
                   className="w-full bg-slate-900/60 border border-slate-700/80 rounded-xl px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-green-500/50 focus:border-green-500/80 transition-all shadow-inner"
+                  aria-label={t('location')}
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-400 mb-1.5 ml-1">Fertilizer Usage</label>
+                <label className="block text-sm font-medium text-slate-400 mb-1.5 ml-1">{t('fertilizerUsage')}</label>
                 <div className="relative">
                   <select 
                     value={fertilizerUsage}
                     onChange={(e) => setFertilizerUsage(e.target.value)}
                     className="w-full bg-slate-900/60 border border-slate-700/80 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-green-500/50 focus:border-green-500/80 transition-all shadow-inner appearance-none cursor-pointer"
+                    aria-label={t('fertilizerUsage')}
                   >
-                    <option value="" disabled className="text-slate-500">Select intensity...</option>
-                    <option value="Low">Low</option>
-                    <option value="Medium">Medium</option>
-                    <option value="High">High</option>
+                    <option value="" disabled className="text-slate-500">{t('selectIntensity')}</option>
+                    <option value="Low">{t('low')}</option>
+                    <option value="Medium">{t('medium')}</option>
+                    <option value="High">{t('high')}</option>
                   </select>
                   <div className="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none">
                     <svg className="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">

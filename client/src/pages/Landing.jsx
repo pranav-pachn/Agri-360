@@ -16,6 +16,7 @@ import { Link } from 'react-router-dom';
 const topNavItems = [
   { label: 'Dashboard', to: '/dashboard' },
   { label: 'Analytics', to: '/analytics' },
+  { label: 'Architecture', to: '/architecture' },
   { label: 'Support Chat', to: '/chat' },
 ];
 
@@ -219,6 +220,7 @@ export default function Landing() {
           <div className="landing-footer-links" aria-label="Footer links">
             <Link to="/dashboard">Dashboard</Link>
             <Link to="/analytics">Analytics</Link>
+            <Link to="/architecture">Architecture</Link>
             <Link to="/chat">Support</Link>
             <Link to="/profile">Profile</Link>
           </div>

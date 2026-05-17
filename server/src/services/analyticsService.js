@@ -1,5 +1,12 @@
+const fs = require('fs');
+const path = require('path');
+const csv = require('csv-parser');
 const supabase = require('../config/supabase');
 const logger = require('../utils/logger');
+
+const SYNTHETIC_DATASET_PATH = path.join(__dirname, '../../../data/farm_dataset.csv');
+let syntheticDatasetCache = null;
+let syntheticDatasetPromise = null;
 
 const toTitleCase = (value = '') => {
     const text = String(value || '').trim().toLowerCase();
@@ -39,6 +46,312 @@ const parseDistrictStateFromLocation = (location = '') => {
 const safeNumber = (value, fallback = 0) => {
     const num = Number(value);
     return Number.isFinite(num) ? num : fallback;
+};
+
+const loadSyntheticDataset = async () => {
+    if (syntheticDatasetCache) {
+        return syntheticDatasetCache;
+    }
+
+    if (syntheticDatasetPromise) {
+        return syntheticDatasetPromise;
+    }
+
+    syntheticDatasetPromise = new Promise((resolve, reject) => {
+        const rows = [];
+
+        fs.createReadStream(SYNTHETIC_DATASET_PATH)
+            .pipe(csv())
+            .on('data', (row) => {
+                rows.push({
+                    district: row.district,
+                    crop: row.crop,
+                    health: safeNumber(row.health),
+                    yield_pred: safeNumber(row.yield_pred),
+                    actual_yield: safeNumber(row.actual_yield),
+                    risk: safeNumber(row.risk),
+                    weather_volatility: safeNumber(row.weather_volatility),
+                    market_fluctuation: safeNumber(row.market_fluctuation)
+                });
+            })
+            .on('end', () => {
+                syntheticDatasetCache = rows;
+                syntheticDatasetPromise = null;
+                resolve(rows);
+            })
+            .on('error', (error) => {
+                syntheticDatasetPromise = null;
+                reject(error);
+            });
+    });
+
+    return syntheticDatasetPromise;
+};
+
+const calculateMAE = (data = []) => {
+    if (!data.length) return 0;
+
+    const error = data.reduce((acc, row) => (
+        acc + Math.abs(safeNumber(row.yield_pred) - safeNumber(row.actual_yield))
+    ), 0) / data.length;
+
+    return Number(error.toFixed(2));
+};
+
+const calculateRiskAccuracy = (data = []) => {
+    if (!data.length) return 0;
+
+    let correct = 0;
+
+    data.forEach((row) => {
+        const predicted = safeNumber(row.risk) > 0.5 ? 'High' : 'Low';
+        const actual = safeNumber(row.actual_yield) < 2.5 ? 'High' : 'Low';
+
+        if (predicted === actual) {
+            correct += 1;
+        }
+    });
+
+    return Number((correct / data.length).toFixed(2));
+};
+
+const classifyRiskBand = (risk) => {
+    const score = safeNumber(risk);
+    if (score > 0.7) return 'High';
+    if (score > 0.4) return 'Medium';
+    return 'Low';
+};
+
+const SYNTHETIC_DISTRICT_STATE_MAP = {
+    Guntur: 'Andhra Pradesh',
+    Nellore: 'Andhra Pradesh',
+    Kurnool: 'Andhra Pradesh',
+    Krishna: 'Andhra Pradesh',
+    Prakasam: 'Andhra Pradesh',
+    Anantapur: 'Andhra Pradesh',
+    Chittoor: 'Andhra Pradesh',
+    'East Godavari': 'Andhra Pradesh',
+    'West Godavari': 'Andhra Pradesh',
+    Kadapa: 'Andhra Pradesh'
+};
+
+const buildSyntheticAnalyticsSnapshot = async () => {
+    const rows = await loadSyntheticDataset();
+    const districtBuckets = new Map();
+
+    rows.forEach((row) => {
+        const district = String(row.district || '').trim() || 'Unknown District';
+        const state = SYNTHETIC_DISTRICT_STATE_MAP[district] || 'Andhra Pradesh';
+        const key = `${district}::${state}`;
+
+        if (!districtBuckets.has(key)) {
+            districtBuckets.set(key, {
+                district,
+                state,
+                total_reports: 0,
+                healthy_reports: 0,
+                disease_reports: 0,
+                risk_sum: 0,
+                health_sum: 0,
+                trust_sum: 0,
+                cropCounts: new Map()
+            });
+        }
+
+        const bucket = districtBuckets.get(key);
+        const risk = safeNumber(row.risk);
+        const health = safeNumber(row.health);
+        const trustEstimate = Math.max(300, Math.min(900, Math.round(900 - (risk * 400) + (health * 2))));
+
+        bucket.total_reports += 1;
+        bucket.risk_sum += risk;
+        bucket.health_sum += health;
+        bucket.trust_sum += trustEstimate;
+
+        if (health >= 75) {
+            bucket.healthy_reports += 1;
+        } else {
+            bucket.disease_reports += 1;
+        }
+
+        const crop = String(row.crop || 'Mixed').trim() || 'Mixed';
+        bucket.cropCounts.set(crop, (bucket.cropCounts.get(crop) || 0) + 1);
+    });
+
+    const districtRows = Array.from(districtBuckets.values()).map((bucket) => {
+        const dominantCrop = Array.from(bucket.cropCounts.entries())
+            .sort((a, b) => b[1] - a[1])[0]?.[0] || 'Mixed';
+
+        return {
+            district: bucket.district,
+            state: bucket.state,
+            crop: dominantCrop,
+            avg_risk_score: Number((bucket.risk_sum / Math.max(1, bucket.total_reports)).toFixed(4)),
+            total_reports: bucket.total_reports,
+            healthy_reports: bucket.healthy_reports,
+            disease_reports: bucket.disease_reports,
+            avg_trust_score: Number((bucket.trust_sum / Math.max(1, bucket.total_reports)).toFixed(2)),
+            avg_health_score: Number((bucket.health_sum / Math.max(1, bucket.total_reports)).toFixed(2)),
+            last_updated: new Date().toISOString(),
+            source: 'synthetic-dataset'
+        };
+    }).sort((a, b) => b.total_reports - a.total_reports);
+
+    const stateBuckets = new Map();
+
+    districtRows.forEach((row) => {
+        if (!stateBuckets.has(row.state)) {
+            stateBuckets.set(row.state, {
+                state: row.state,
+                total_reports: 0,
+                healthy_reports: 0,
+                risk_weighted_sum: 0,
+                trust_weighted_sum: 0
+            });
+        }
+
+        const bucket = stateBuckets.get(row.state);
+        bucket.total_reports += safeNumber(row.total_reports);
+        bucket.healthy_reports += safeNumber(row.healthy_reports);
+        bucket.risk_weighted_sum += safeNumber(row.avg_risk_score) * safeNumber(row.total_reports);
+        bucket.trust_weighted_sum += safeNumber(row.avg_trust_score) * safeNumber(row.total_reports);
+    });
+
+    const stateRows = Array.from(stateBuckets.values()).map((bucket) => ({
+        state: bucket.state,
+        avg_risk_score: Number((bucket.risk_weighted_sum / Math.max(1, bucket.total_reports)).toFixed(4)),
+        avg_trust_score: Number((bucket.trust_weighted_sum / Math.max(1, bucket.total_reports)).toFixed(2)),
+        total_reports: bucket.total_reports,
+        healthy_reports: bucket.healthy_reports,
+        last_updated: new Date().toISOString(),
+        source: 'synthetic-dataset'
+    }));
+
+    const nationalTotalReports = districtRows.reduce((sum, row) => sum + safeNumber(row.total_reports), 0);
+    const national = {
+        avg_risk_score: Number((districtRows.reduce((sum, row) => sum + (safeNumber(row.avg_risk_score) * safeNumber(row.total_reports)), 0) / Math.max(1, nationalTotalReports)).toFixed(4)),
+        total_reports: nationalTotalReports,
+        healthy_reports: districtRows.reduce((sum, row) => sum + safeNumber(row.healthy_reports), 0),
+        avg_trust_score: Number((districtRows.reduce((sum, row) => sum + (safeNumber(row.avg_trust_score) * safeNumber(row.total_reports)), 0) / Math.max(1, nationalTotalReports)).toFixed(2)),
+        source: 'synthetic-dataset'
+    };
+
+    return {
+        districts: districtRows,
+        states: stateRows,
+        national,
+        summary: {
+            total_districts: districtRows.length,
+            total_states: stateRows.length,
+            national_avg_risk: national.avg_risk_score,
+            national_avg_trust: national.avg_trust_score
+        }
+    };
+};
+
+const checkAnalyticsTableStatus = async () => {
+    try {
+        const { error, status } = await supabase
+            .from('analytics')
+            .select('id')
+            .limit(1);
+
+        if (error) {
+            if (error.code === 'PGRST205') {
+                return {
+                    reachable: true,
+                    analyticsTableReady: false,
+                    status,
+                    reason: 'missing_analytics_table',
+                    message: "The 'analytics' table is missing from the connected Supabase project."
+                };
+            }
+
+            return {
+                reachable: false,
+                analyticsTableReady: false,
+                status,
+                reason: 'analytics_query_failed',
+                message: error.message
+            };
+        }
+
+        return {
+            reachable: true,
+            analyticsTableReady: true,
+            status,
+            reason: 'ok',
+            message: 'Analytics table is available.'
+        };
+    } catch (error) {
+        return {
+            reachable: false,
+            analyticsTableReady: false,
+            status: 0,
+            reason: 'network_or_auth_error',
+            message: error.message
+        };
+    }
+};
+
+const getSyntheticAnalyticsSummary = async () => {
+    try {
+        const data = await loadSyntheticDataset();
+        const mae = calculateMAE(data);
+        const riskAccuracy = calculateRiskAccuracy(data);
+        const uniqueDistricts = new Set(data.map((row) => row.district).filter(Boolean));
+        const uniqueCrops = new Set(data.map((row) => row.crop).filter(Boolean));
+        const averageHealth = data.length
+            ? Number((data.reduce((sum, row) => sum + safeNumber(row.health), 0) / data.length).toFixed(1))
+            : 0;
+        const riskDistribution = data.reduce((acc, row) => {
+            const band = classifyRiskBand(row.risk);
+            acc[band] += 1;
+            return acc;
+        }, { High: 0, Medium: 0, Low: 0 });
+        const comparisonSeries = data.slice(0, 12).map((row, index) => ({
+            label: `${row.district.slice(0, 3).toUpperCase()}-${index + 1}`,
+            district: row.district,
+            crop: row.crop,
+            predicted: safeNumber(row.yield_pred),
+            actual: safeNumber(row.actual_yield)
+        }));
+        const samplePredictions = data.slice(0, 8).map((row) => ({
+            district: row.district,
+            crop: row.crop,
+            predicted: safeNumber(row.yield_pred),
+            actual: safeNumber(row.actual_yield),
+            risk: safeNumber(row.risk),
+            riskBand: classifyRiskBand(row.risk),
+            weatherVolatility: safeNumber(row.weather_volatility),
+            marketFluctuation: safeNumber(row.market_fluctuation)
+        }));
+        const explainabilitySample = [...data]
+            .sort((a, b) => safeNumber(b.risk) - safeNumber(a.risk))[0];
+        const explainability = explainabilitySample
+            ? `High risk due to ${safeNumber(explainabilitySample.weather_volatility).toFixed(2)} weather volatility and ${safeNumber(explainabilitySample.market_fluctuation).toFixed(2)} market fluctuation observed in similar historical records.`
+            : 'Risk is estimated from crop health, yield behavior, weather volatility, and market movement.';
+
+        return {
+            totalRecords: data.length,
+            districtsCovered: uniqueDistricts.size,
+            cropsCovered: uniqueCrops.size,
+            mae,
+            maeLabel: `Mean Absolute Error (MAE): ${mae.toFixed(2)} tons/hectare`,
+            riskAccuracy,
+            riskAccuracyPercent: Number((riskAccuracy * 100).toFixed(0)),
+            averageHealth,
+            dataSource: 'Synthetic dataset modeled on real agricultural patterns (crop yield, health, and risk factors).',
+            riskDistribution,
+            comparisonSeries,
+            samplePredictions,
+            explainability,
+            sample: data.slice(0, 5)
+        };
+    } catch (error) {
+        logger.error('Synthetic analytics summary error:', error);
+        throw error;
+    }
 };
 
 // Analytics Service Functions
@@ -229,6 +542,11 @@ const getDashboardAnalytics = async () => {
             logger.warn('Dashboard national analytics unavailable, using empty summary:', nationalError);
         }
 
+        if (districtsError || statesError || nationalError) {
+            logger.info('Falling back to synthetic analytics snapshot for dashboard');
+            return await buildSyntheticAnalyticsSnapshot();
+        }
+
         const safeDistricts = Array.isArray(districts) ? districts : [];
         const safeStates = Array.isArray(states) ? states : [];
         const safeNational = national || buildEmptyDashboardAnalytics().national;
@@ -270,13 +588,22 @@ const listDistrictAnalytics = async ({ state = '' } = {}) => {
         const { data, error } = await query;
 
         if (error) {
-            throw new Error(`Failed to fetch district list: ${error.message}`);
+            logger.warn('District list unavailable from Supabase, using synthetic fallback:', error);
+            const synthetic = await buildSyntheticAnalyticsSnapshot();
+            const filtered = String(state || '').trim()
+                ? synthetic.districts.filter((row) => row.state === String(state).trim())
+                : synthetic.districts;
+            return filtered;
         }
 
         return data || [];
     } catch (error) {
-        logger.error('District list analytics error:', error);
-        throw error;
+        logger.warn('District list analytics error, attempting synthetic fallback:', error);
+        const synthetic = await buildSyntheticAnalyticsSnapshot();
+        const filtered = String(state || '').trim()
+            ? synthetic.districts.filter((row) => row.state === String(state).trim())
+            : synthetic.districts;
+        return filtered;
     }
 };
 
@@ -284,7 +611,8 @@ const recomputeAnalyticsFromReports = async () => {
     try {
         logger.info('Recomputing analytics from crop reports');
 
-        const [{ data: reports, error: reportsError }, { data: farmers, error: farmersError }, { data: credits, error: creditsError }] = await Promise.all([
+        // Use Promise.allSettled to handle individual query failures gracefully
+        const results = await Promise.allSettled([
             supabase
                 .from('crop_reports')
                 .select('farmer_id, risk_score, health_score, disease')
@@ -297,8 +625,54 @@ const recomputeAnalyticsFromReports = async () => {
                 .select('farmer_id, trust_score')
         ]);
 
-        if (reportsError || farmersError || creditsError) {
-            throw new Error('Failed to load source data for analytics recompute');
+        // Extract data and errors from settled promises
+        let reports = [];
+        let farmers = [];
+        let credits = [];
+        let hasError = false;
+
+        if (results[0].status === 'fulfilled' && results[0].value.data) {
+            reports = results[0].value.data;
+        } else if (results[0].status === 'rejected') {
+            logger.warn('Failed to fetch crop_reports:', results[0].reason);
+            hasError = true;
+        } else if (results[0].value.error) {
+            logger.warn('Crop reports query error:', results[0].value.error);
+            hasError = true;
+        }
+
+        if (results[1].status === 'fulfilled' && results[1].value.data) {
+            farmers = results[1].value.data;
+        } else if (results[1].status === 'rejected') {
+            logger.warn('Failed to fetch farmers:', results[1].reason);
+            hasError = true;
+        } else if (results[1].value.error) {
+            logger.warn('Farmers query error:', results[1].value.error);
+            hasError = true;
+        }
+
+        if (results[2].status === 'fulfilled' && results[2].value.data) {
+            credits = results[2].value.data;
+        } else if (results[2].status === 'rejected') {
+            logger.warn('Failed to fetch credit_scores:', results[2].reason);
+            hasError = true;
+        } else if (results[2].value.error) {
+            logger.warn('Credit scores query error:', results[2].value.error);
+            hasError = true;
+        }
+
+        if (hasError && !reports.length && !farmers.length) {
+            throw new Error('Failed to load source data for analytics recompute - all queries failed');
+        }
+
+        if (!reports.length) {
+            logger.warn('No crop reports found - using empty analytics');
+            return {
+                districts_updated: 0,
+                states_updated: 0,
+                national_reports: 0,
+                last_updated: new Date().toISOString()
+            };
         }
 
         const farmerLocation = new Map((farmers || []).map((row) => [row.id, row.location || '']));
@@ -493,11 +867,16 @@ const recomputeAnalyticsFromReports = async () => {
 };
 
 module.exports = {
+    checkAnalyticsTableStatus,
     getDistrictAnalytics,
     getStateAnalytics,
     getNationalAnalytics,
     updateDistrictAnalytics,
     updateStateAnalytics,
+    getSyntheticAnalyticsSummary,
+    loadSyntheticDataset,
+    calculateMAE,
+    calculateRiskAccuracy,
     getDashboardAnalytics,
     listDistrictAnalytics,
     recomputeAnalyticsFromReports

@@ -12,6 +12,7 @@ import Result from './pages/Result';
 import TrustScore from './pages/TrustScore';
 import Chatbot from './pages/Chatbot';
 import Analytics from './pages/Analytics';
+import Architecture from './pages/Architecture';
 import Profile from './pages/Profile';
 import PendingApplications from './pages/PendingApplications';
 
@@ -22,6 +23,7 @@ function AppRoutes() {
     <Router>
       <Routes>
         <Route path="/" element={<Landing />} />
+        <Route path="/architecture" element={<Architecture />} />
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={user ? <Navigate to="/dashboard" /> : <Signup />} />
         

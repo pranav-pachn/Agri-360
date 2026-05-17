@@ -41,19 +41,66 @@ Screenshots and demo clips go here. Replace with live demo links or embed videos
 
 ---
 
-## Architecture
+## 🏗️ System Architecture
 
-Conceptually:
+AgriMitra 360 follows a modular, data-driven pipeline that transforms raw agricultural input into financial intelligence.
 
-```
-[Farm Data] -> [AI/ML Engines] -> [Trust Score Engine] -> [Dashboard & API]
-```
+### 🔄 Data Flow Pipeline
 
-Modules:
-- `ai/` — crop intelligence, yield, trust engines
-- `server/` — API, score logic, database models
-- `client/` — React dashboard and farmer portal
-- `database/` — SQL schema and seed data
+Farmer Input  
+→ Crop Analysis (ML / Rule-based detection)  
+→ Yield Prediction (statistical + rule-based model)  
+→ Risk Engine (Explainable scoring system)  
+→ Trust Score Engine (financial reliability scoring)  
+→ Recommendation Engine (actionable insights)  
+→ Dashboard & Analytics  
+
+Designed as a modular pipeline enabling scalable agricultural intelligence and financial decision-making.
+
+---
+
+### ⚙️ Backend Architecture
+
+- **API Layer (Express.js)**
+  - `/analyze` → crop + yield + risk + trust
+  - `/risk` → explainable risk breakdown
+  - `/analytics` → dataset insights + metrics
+
+- **Service Layer**
+  - `crop.service.js`
+  - `yield.service.js`
+  - `risk.service.js`
+  - `trust.service.js`
+
+- **Data Layer**
+  - Supabase (PostgreSQL)
+  - Synthetic dataset (CSV)
+
+---
+
+### 🤖 Model Pipeline
+
+- Crop health estimation (rule-based / image-based)
+- Yield prediction (feature-driven model)
+- Risk scoring (multi-factor explainable engine)
+- Trust score (weighted financial model)
+
+---
+
+### 📊 Data Flow
+
+Input Data:
+- Crop type
+- Location
+- Crop health
+- Weather indicators
+- Market signals
+
+Processed Into:
+- Yield prediction
+- Risk score
+- Trust score
+- Recommendations
 
 ---
 

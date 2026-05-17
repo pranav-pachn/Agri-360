@@ -1,30 +1,53 @@
-import React, { useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import ChatContainer from '../components/chat/ChatContainer';
 import ChatInput from '../components/chat/ChatInput';
 import LanguageSelector from '../components/chat/LanguageSelector';
 import SuggestionChips from '../components/chat/SuggestionChips';
 
 const Chatbot = () => {
+  const { t, i18n } = useTranslation();
   const [messages, setMessages] = useState([]);
-  const [language, setLanguage] = useState('en');
   const [loading, setLoading] = useState(false);
+  const language = i18n.language || 'en';
 
-  const greetings = {
-    en: "Hello! I'm your Agri Assistant. Ask me about your crop risk, loan eligibility, or trust score.",
-    hi: "नमस्ते! मैं आपका कृषि सहायक हूँ। अपनी फसल के जोखिम, लोन योग्यता या ट्रस्ट स्कोर के बारे में पूछें।",
-    te: "నమస్కారం! నేను మీ వ్యవసాయ సహాయకుడిని. మీ పంట రిస్క్, లోన్ అర్హత లేదా ట్రస్ట్ స్కోర్ గురించి అడగండి."
-  };
+  const responses = useMemo(() => ({
+    thinking: {
+      en: t('assistantThinking', { lng: 'en' }),
+      hi: t('assistantThinking', { lng: 'hi' }),
+      te: t('assistantThinking', { lng: 'te' }),
+    },
+    risk: {
+      en: t('responseRisk', { lng: 'en' }),
+      hi: t('responseRisk', { lng: 'hi' }),
+      te: t('responseRisk', { lng: 'te' }),
+    },
+    loan: {
+      en: t('responseLoan', { lng: 'en' }),
+      hi: t('responseLoan', { lng: 'hi' }),
+      te: t('responseLoan', { lng: 'te' }),
+    },
+    trust: {
+      en: t('responseTrust', { lng: 'en' }),
+      hi: t('responseTrust', { lng: 'hi' }),
+      te: t('responseTrust', { lng: 'te' }),
+    },
+    default: {
+      en: t('responseDefault', { lng: 'en' }),
+      hi: t('responseDefault', { lng: 'hi' }),
+      te: t('responseDefault', { lng: 'te' }),
+    },
+  }), [t]);
 
   // When language changes, reset the chat and show a greeting in that language
   const handleLanguageChange = (lang) => {
-    setLanguage(lang);
-    setMessages([{ text: greetings[lang] || greetings.en, sender: 'bot' }]);
+    setMessages([{ text: t('chatGreeting', { lng: lang }), sender: 'bot' }]);
   };
 
   // Greet on first load
-  React.useEffect(() => {
-    setMessages([{ text: greetings['en'], sender: 'bot' }]);
-  }, []);
+  useEffect(() => {
+    setMessages([{ text: t('chatGreeting', { lng: language }), sender: 'bot' }]);
+  }, [language, t]);
 
   const handleSendMessage = async (text) => {
     if (!text.trim()) return;
@@ -38,50 +61,25 @@ const Chatbot = () => {
       // Setup payload / mock logic for AI response
       await new Promise(resolve => setTimeout(resolve, 1500)); // typing delay
 
-      // Mock bot intelligence logic mapping
-      let botResponse = "";
       const query = text.toLowerCase();
-
-      const responses = {
-        en: {
-          thinking: "I'm assessing your query against our agricultural database...",
-          risk: "Based on our latest satellite and AI analysis, your farm's risk score is High (0.82) primarily due to a 87% chance of Early Blight in your tomato crops.",
-          loan: "Looking at your financial integrity map and projected yield loss of 40%, you are currently Not Eligible for a micro-loan. We recommend taking the fungicide actions strictly to recover your Trust Score.",
-          trust: "Your AgriMitra Trust Score is exactly 45 out of 100, which puts you in the 'Poor' band. Improving crop treatment immediately will start rehabilitating this metric steadily.",
-          default: "I can help analyze your farm's exact risks, crop yield changes, or your trust score for farming loans. How can I assist you today?"
-        },
-        hi: {
-          thinking: "मैं हमारे कृषि डेटाबेस से आपकी क्वेरी का आकलन कर रहा हूँ...",
-          risk: "हमारे नवीनतम विश्लेषण के आधार पर, आपके खेत का जोखिम स्कोर उच्च (0.82) है। टमाटर की फसल में अर्ली ब्लाइट की 87% संभावना है।",
-          loan: "आपके 40% संभावित उपज नुकसान को देखते हुए, आप अभी माइक्रो-लोन के लिए पात्र नहीं हैं। कृपया कवकनाशी का उपयोग करें।",
-          trust: "आपका एग्रीमित्रा ट्रस्ट स्कोर 100 में से 45 है, जो 'खराब' श्रेणी में आता है।",
-          default: "मैं आपके खेत के जोखिम, फसल की उपज या लोन के लिए ट्रस्ट स्कोर का विश्लेषण करने में मदद कर सकता हूँ। मैं आपकी कैसे मदद कर सकता हूँ?"
-        },
-        te: {
-          thinking: "నేను వ్యవసాయ డేటాబేస్ ద్వారా మీ ప్రశ్నను అంచనా వేస్తున్నాను...",
-          risk: "మా తాజా విశ్లేషణ ప్రకారం, మీ పొలం రిస్క్ స్కోర్ ఎక్కువ (0.82). టమాటా పంటలో ఎర్లీ బ్లైట్ వచ్చే అవకాశం 87% ఉంది.",
-          loan: "మీ 40% సంభావ్య దిగుబడి నష్టాన్ని దృష్టిలో ఉంచుకుని, మీరు ప్రస్తుతం మైక్రో-లోన్‌కు అర్హులు కారు.",
-          trust: "మీ అగ్రిమిత్ర ట్రస్ట్ స్కోరు 100కి 45, ఇది 'పూర్' విభాగంలోకి వస్తుంది.",
-          default: "మీ పొలం రిస్క్, పంట దిగుబడి లేదా లోన్ కోసం ట్రస్ట్ స్కోర్‌ను విశ్లేషించడంలో నేను సహాయపడగలను. ఈరోజు నేనెలా సహాయపడగలను?"
-        }
-      };
-
-      const dictionary = responses[language] || responses.en;
+      let explanation = responses.default;
 
       if (query.includes('risk') || query.includes('जोखिम') || query.includes('రిస్క్')) {
-        botResponse = dictionary.risk;
+        explanation = responses.risk;
       } else if (query.includes('loan') || query.includes('eligible') || query.includes('लोन') || query.includes('లోన్') || query.includes('అర్హులు')) {
-        botResponse = dictionary.loan;
+        explanation = responses.loan;
       } else if (query.includes('trust score') || query.includes('ट्रस्ट') || query.includes('ట్రస్ట్')) {
-        botResponse = dictionary.trust;
-      } else {
-        botResponse = dictionary.default;
+        explanation = responses.trust;
       }
 
-      setMessages([...newMessages, { text: botResponse, sender: 'bot' }]);
+      setMessages([...newMessages, {
+        text: explanation[language] || explanation.en,
+        sender: 'bot',
+        explanation,
+      }]);
     } catch (error) {
       console.error('Chat error', error);
-      setMessages([...newMessages, { text: "Network error trying to connect to the AI engine.", sender: 'bot' }]);
+      setMessages([...newMessages, { text: t('networkError'), sender: 'bot' }]);
     } finally {
       setLoading(false);
     }
@@ -102,10 +100,10 @@ const Chatbot = () => {
             </svg>
           </div>
           <div>
-            <h1 className="text-xl font-bold text-white tracking-wide">Agri Assistant</h1>
-            <p className="text-xs text-green-400 font-medium flex items-center">
+            <h1 className="text-2xl font-bold text-white tracking-wide">{t('agriAssistant')}</h1>
+            <p className="text-sm text-green-400 font-medium flex items-center">
               <span className="w-1.5 h-1.5 bg-green-500 rounded-full mr-1.5 animate-pulse"></span>
-              Online
+              {t('online')}
             </p>
           </div>
         </div>
