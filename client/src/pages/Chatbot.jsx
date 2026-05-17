@@ -1,43 +1,21 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useAuth } from '../context/AuthContext';
 import ChatContainer from '../components/chat/ChatContainer';
 import ChatInput from '../components/chat/ChatInput';
 import LanguageSelector from '../components/chat/LanguageSelector';
 import SuggestionChips from '../components/chat/SuggestionChips';
+import { api } from '../services/api';
+import { buildChatContextFromDashboardData, getDashboardData } from '../services/dashboardDataService';
 
 const Chatbot = () => {
   const { t, i18n } = useTranslation();
+  const { user } = useAuth();
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [chatContext, setChatContext] = useState({});
+  const requestIdRef = useRef(0);
   const language = i18n.language || 'en';
-
-  const responses = useMemo(() => ({
-    thinking: {
-      en: t('assistantThinking', { lng: 'en' }),
-      hi: t('assistantThinking', { lng: 'hi' }),
-      te: t('assistantThinking', { lng: 'te' }),
-    },
-    risk: {
-      en: t('responseRisk', { lng: 'en' }),
-      hi: t('responseRisk', { lng: 'hi' }),
-      te: t('responseRisk', { lng: 'te' }),
-    },
-    loan: {
-      en: t('responseLoan', { lng: 'en' }),
-      hi: t('responseLoan', { lng: 'hi' }),
-      te: t('responseLoan', { lng: 'te' }),
-    },
-    trust: {
-      en: t('responseTrust', { lng: 'en' }),
-      hi: t('responseTrust', { lng: 'hi' }),
-      te: t('responseTrust', { lng: 'te' }),
-    },
-    default: {
-      en: t('responseDefault', { lng: 'en' }),
-      hi: t('responseDefault', { lng: 'hi' }),
-      te: t('responseDefault', { lng: 'te' }),
-    },
-  }), [t]);
 
   // When language changes, reset the chat and show a greeting in that language
   const handleLanguageChange = (lang) => {
@@ -49,6 +27,23 @@ const Chatbot = () => {
     setMessages([{ text: t('chatGreeting', { lng: language }), sender: 'bot' }]);
   }, [language, t]);
 
+  useEffect(() => {
+    const loadChatContext = async () => {
+      const requestId = ++requestIdRef.current;
+
+      try {
+        const dashboardData = await getDashboardData({ farmerId: user?.id, user });
+        if (requestId !== requestIdRef.current) return;
+        setChatContext(buildChatContextFromDashboardData(dashboardData, user));
+      } catch (error) {
+        if (requestId !== requestIdRef.current) return;
+        setChatContext(buildChatContextFromDashboardData({}, user));
+      }
+    };
+
+    loadChatContext();
+  }, [user]);
+
   const handleSendMessage = async (text) => {
     if (!text.trim()) return;
 
@@ -58,24 +53,15 @@ const Chatbot = () => {
     setLoading(true);
 
     try {
-      // Setup payload / mock logic for AI response
-      await new Promise(resolve => setTimeout(resolve, 1500)); // typing delay
-
-      const query = text.toLowerCase();
-      let explanation = responses.default;
-
-      if (query.includes('risk') || query.includes('जोखिम') || query.includes('రిస్క్')) {
-        explanation = responses.risk;
-      } else if (query.includes('loan') || query.includes('eligible') || query.includes('लोन') || query.includes('లోన్') || query.includes('అర్హులు')) {
-        explanation = responses.loan;
-      } else if (query.includes('trust score') || query.includes('ट्रस्ट') || query.includes('ట్రస్ట్')) {
-        explanation = responses.trust;
-      }
+      const response = await api.chat({
+        message: text,
+        language,
+        context: chatContext,
+      });
 
       setMessages([...newMessages, {
-        text: explanation[language] || explanation.en,
+        text: response?.data?.reply || t('responseDefault'),
         sender: 'bot',
-        explanation,
       }]);
     } catch (error) {
       console.error('Chat error', error);
@@ -112,7 +98,12 @@ const Chatbot = () => {
       </div>
 
       {/* 2. CHAT AREA */}
-      <ChatContainer messages={messages} language={language} />
+      <ChatContainer
+        messages={messages}
+        language={language}
+        loading={loading}
+        loadingText={t('assistantThinking')}
+      />
 
       {/* 3. INPUT AREA */}
       <div className="p-4 bg-slate-900 border-t border-slate-800 z-10">

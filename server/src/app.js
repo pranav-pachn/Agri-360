@@ -5,6 +5,7 @@ const analyticsRoutes = require('./routes/analytics.routes');
 const chatRoutes = require('./routes/chat.routes');
 const farmerRoutes = require('./routes/farmer.routes');
 const riskRoutes = require('./routes/risk.routes');
+const weatherRoutes = require('./routes/weather.routes');
 const errorHandler = require('./middlewares/error.middleware');
 const logger = require('./utils/logger');
 
@@ -25,6 +26,7 @@ app.use('/api/v1/analytics', analyticsRoutes);
 app.use('/api/v1/chat', chatRoutes);
 app.use('/api/v1/farmers', farmerRoutes);
 app.use('/api/v1/risk', riskRoutes);
+app.use('/api/v1/weather', weatherRoutes);
 
 // Root route - Welcome page
 app.get('/', (req, res) => {
@@ -64,6 +66,9 @@ app.get('/', (req, res) => {
         getConversation: '/api/v1/chat/conversations/:conversationId',
         farmerConversations: '/api/v1/chat/farmers/:farmerId/conversations',
         conversationStats: '/api/v1/chat/conversations/:conversationId/stats'
+      },
+      weather: {
+        current: '/api/v1/weather/current?location=Guntur'
       },
       farmers: {
         createOrSync: {

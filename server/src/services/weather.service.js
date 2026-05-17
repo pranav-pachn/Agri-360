@@ -1,50 +1,30 @@
-/**
- * Weather Service
- * ===============
- * Integrates with OpenWeatherMap API to fetch real-time weather data
- * and normalize it for risk calculation in the agricultural context.
- *
- * Features:
- * - Geolocation via OpenWeatherMap Geocoding API
- * - Real-time weather data fetching
- * - Weather condition normalization (dry, normal, humid, rainy)
- * - Simple in-memory caching (expires on server restart)
- * - Graceful fallback to 'normal' weather on API failure
- */
-
 const axios = require('axios');
 
 const OPENWEATHER_API_KEY = process.env.OPENWEATHER_API_KEY;
 const OPENWEATHER_BASE_URL = process.env.OPENWEATHER_BASE_URL || 'https://api.openweathermap.org/data/2.5';
 
-// In-memory cache: { 'location_string': { weather, timestamp } }
-// Cache expires after 1 hour (3600 seconds)
 const WEATHER_CACHE = {};
 const CACHE_TTL = 3600; // seconds
 
-/**
- * Normalize OpenWeatherMap weather data to agricultural context
- * @param {Object} weatherData - OpenWeatherMap weather response
- * @returns {string} - Normalized weather: 'dry', 'normal', 'humid', 'rainy'
- */
+const buildUnavailableWeatherSnapshot = (location = '') => ({
+  temperatureC: null,
+  humidity: null,
+  windSpeed: null,
+  condition: 'Unavailable',
+  normalizedCondition: 'normal',
+  location: location || 'Unknown location',
+  fetchedAt: new Date().toISOString(),
+  available: false,
+});
+
 const normalizeWeather = (weatherData) => {
   if (!weatherData) return 'normal';
 
-  const humidity = weatherData.main?.humidity || 50;
-  const cloudiness = weatherData.clouds?.all || 0;
-  const description = String(weatherData.weather?.[0]?.main || '').toLowerCase();
+  const humidity = Number(weatherData.main?.humidity || 50);
+  const cloudiness = Number(weatherData.clouds?.all || 0);
+  const description = String(weatherData.weather?.[0]?.main || weatherData.weather?.[0]?.description || '').toLowerCase();
 
-  // Classification logic:
-  // - Rain/Drizzle/Thunderstorm → 'rainy'
-  // - High humidity (>75%) + clouds → 'humid'
-  // - Low humidity (<35%) → 'dry'
-  // - Default → 'normal'
-
-  if (
-    description.includes('rain') ||
-    description.includes('drizzle') ||
-    description.includes('thunderstorm')
-  ) {
+  if (description.includes('rain') || description.includes('drizzle') || description.includes('thunderstorm')) {
     return 'rainy';
   }
 
@@ -59,28 +39,31 @@ const normalizeWeather = (weatherData) => {
   return 'normal';
 };
 
-/**
- * Get coordinates (lat/lon) from location string via Geocoding API
- * @param {string} location - Location string (e.g., "Punjab, India")
- * @returns {Promise<{lat: number, lon: number}>} - Coordinates or null
- */
+const toWeatherSnapshot = (weatherData, location = '') => ({
+  temperatureC: Number.isFinite(Number(weatherData?.main?.temp)) ? Number(weatherData.main.temp) : null,
+  humidity: Number.isFinite(Number(weatherData?.main?.humidity)) ? Number(weatherData.main.humidity) : null,
+  windSpeed: Number.isFinite(Number(weatherData?.wind?.speed)) ? Number(weatherData.wind.speed) : null,
+  condition: weatherData?.weather?.[0]?.main || weatherData?.weather?.[0]?.description || 'Unknown',
+  normalizedCondition: normalizeWeather(weatherData),
+  location: location || weatherData?.name || 'Unknown location',
+  fetchedAt: new Date().toISOString(),
+  available: true,
+});
+
 const getCoordinatesFromLocation = async (location) => {
   try {
     if (!location || !OPENWEATHER_API_KEY) {
       return null;
     }
 
-    const response = await axios.get(
-      `${OPENWEATHER_BASE_URL}/geo/1.0/direct`,
-      {
-        params: {
-          q: location,
-          limit: 1,
-          appid: OPENWEATHER_API_KEY
-        },
-        timeout: 5000
-      }
-    );
+    const response = await axios.get(`${OPENWEATHER_BASE_URL}/geo/1.0/direct`, {
+      params: {
+        q: location,
+        limit: 1,
+        appid: OPENWEATHER_API_KEY,
+      },
+      timeout: 5000,
+    });
 
     if (response.data && response.data.length > 0) {
       const { lat, lon } = response.data[0];
@@ -89,172 +72,130 @@ const getCoordinatesFromLocation = async (location) => {
 
     return null;
   } catch (error) {
-    console.error(`❌ Geocoding API error for location "${location}":`, error.message);
+    console.error(`Geocoding API error for location "${location}":`, error.message);
     return null;
   }
 };
 
-/**
- * Fetch weather data by coordinates
- * @param {number} lat - Latitude
- * @param {number} lon - Longitude
- * @returns {Promise<Object>} - Weather data from OpenWeatherMap
- */
 const fetchWeatherByCoordinates = async (lat, lon) => {
   try {
     if (!OPENWEATHER_API_KEY) {
-      console.warn('⚠️ OPENWEATHER_API_KEY not configured');
+      console.warn('OPENWEATHER_API_KEY not configured');
       return null;
     }
 
-    const response = await axios.get(
-      `${OPENWEATHER_BASE_URL}/weather`,
-      {
-        params: {
-          lat,
-          lon,
-          appid: OPENWEATHER_API_KEY,
-          units: 'metric'
-        },
-        timeout: 5000
-      }
-    );
+    const response = await axios.get(`${OPENWEATHER_BASE_URL}/weather`, {
+      params: {
+        lat,
+        lon,
+        appid: OPENWEATHER_API_KEY,
+        units: 'metric',
+      },
+      timeout: 5000,
+    });
 
     return response.data;
   } catch (error) {
-    console.error(`❌ Weather API error for coordinates (${lat}, ${lon}):`, error.message);
+    console.error(`Weather API error for coordinates (${lat}, ${lon}):`, error.message);
     return null;
   }
 };
 
-/**
- * Get weather by location string (with caching)
- * @param {string} location - Location string (e.g., "Punjab, India")
- * @returns {Promise<string>} - Normalized weather condition
- */
-const getWeatherByLocation = async (location) => {
-  try {
-    if (!location) {
-      return 'normal';
-    }
+const readCache = (key) => {
+  const entry = WEATHER_CACHE[key];
+  if (!entry) return null;
 
-    const locationKey = location.toLowerCase().trim();
-
-    // Check cache
-    if (WEATHER_CACHE[locationKey]) {
-      const { weather, timestamp } = WEATHER_CACHE[locationKey];
-      const ageSeconds = (Date.now() - timestamp) / 1000;
-
-      if (ageSeconds < CACHE_TTL) {
-        console.log(`✅ Weather cache hit for "${location}": ${weather}`);
-        return weather;
-      }
-
-      // Cache expired, delete entry
-      delete WEATHER_CACHE[locationKey];
-    }
-
-    console.log(`🌦️  Fetching weather for location: "${location}"`);
-
-    // Get coordinates from location string
-    const coords = await getCoordinatesFromLocation(location);
-    if (!coords) {
-      console.log(`⚠️  Could not geocode location "${location}", using 'normal' weather`);
-      return 'normal';
-    }
-
-    // Fetch weather data
-    const weatherData = await fetchWeatherByCoordinates(coords.lat, coords.lon);
-    if (!weatherData) {
-      console.log(`⚠️  Could not fetch weather for "${location}", using 'normal' weather`);
-      return 'normal';
-    }
-
-    // Normalize weather
-    const normalizedWeather = normalizeWeather(weatherData);
-
-    // Cache result
-    WEATHER_CACHE[locationKey] = {
-      weather: normalizedWeather,
-      timestamp: Date.now()
-    };
-
-    console.log(`✅ Weather for "${location}": ${normalizedWeather}`);
-    return normalizedWeather;
-  } catch (error) {
-    console.error(`❌ Error getting weather for location "${location}":`, error.message);
-    return 'normal'; // Fallback to neutral weather
+  const ageSeconds = (Date.now() - entry.timestamp) / 1000;
+  if (ageSeconds < CACHE_TTL) {
+    return entry.snapshot;
   }
+
+  delete WEATHER_CACHE[key];
+  return null;
 };
 
-/**
- * Get weather by coordinates (with caching)
- * @param {number} lat - Latitude
- * @param {number} lon - Longitude
- * @returns {Promise<string>} - Normalized weather condition
- */
-const getWeatherByCoordinates = async (lat, lon) => {
+const writeCache = (key, snapshot) => {
+  WEATHER_CACHE[key] = {
+    snapshot,
+    timestamp: Date.now(),
+  };
+};
+
+const getWeatherSnapshotByCoordinates = async (lat, lon, location = '') => {
   try {
-    if (!lat || !lon) {
-      return 'normal';
+    if (!Number.isFinite(Number(lat)) || !Number.isFinite(Number(lon))) {
+      return buildUnavailableWeatherSnapshot(location);
     }
 
-    const coordKey = `${lat.toFixed(2)},${lon.toFixed(2)}`;
-
-    // Check cache
-    if (WEATHER_CACHE[coordKey]) {
-      const { weather, timestamp } = WEATHER_CACHE[coordKey];
-      const ageSeconds = (Date.now() - timestamp) / 1000;
-
-      if (ageSeconds < CACHE_TTL) {
-        console.log(`✅ Weather cache hit for coordinates (${lat}, ${lon}): ${weather}`);
-        return weather;
-      }
-
-      delete WEATHER_CACHE[coordKey];
+    const coordKey = `${Number(lat).toFixed(2)},${Number(lon).toFixed(2)}`;
+    const cached = readCache(coordKey);
+    if (cached) {
+      return cached;
     }
 
-    console.log(`🌦️  Fetching weather for coordinates: (${lat}, ${lon})`);
-
-    // Fetch weather data
     const weatherData = await fetchWeatherByCoordinates(lat, lon);
     if (!weatherData) {
-      console.log(`⚠️  Could not fetch weather for coordinates, using 'normal' weather`);
-      return 'normal';
+      return buildUnavailableWeatherSnapshot(location);
     }
 
-    // Normalize weather
-    const normalizedWeather = normalizeWeather(weatherData);
-
-    // Cache result
-    WEATHER_CACHE[coordKey] = {
-      weather: normalizedWeather,
-      timestamp: Date.now()
-    };
-
-    console.log(`✅ Weather for (${lat}, ${lon}): ${normalizedWeather}`);
-    return normalizedWeather;
+    const snapshot = toWeatherSnapshot(weatherData, location);
+    writeCache(coordKey, snapshot);
+    return snapshot;
   } catch (error) {
-    console.error(`❌ Error getting weather for coordinates:`, error.message);
-    return 'normal'; // Fallback to neutral weather
+    console.error('Error getting weather snapshot by coordinates:', error.message);
+    return buildUnavailableWeatherSnapshot(location);
   }
 };
 
-/**
- * Clear the weather cache (useful for testing)
- */
+const getWeatherSnapshotByLocation = async (location) => {
+  try {
+    if (!location) {
+      return buildUnavailableWeatherSnapshot(location);
+    }
+
+    const locationKey = String(location).toLowerCase().trim();
+    const cached = readCache(locationKey);
+    if (cached) {
+      return cached;
+    }
+
+    const coords = await getCoordinatesFromLocation(location);
+    if (!coords) {
+      return buildUnavailableWeatherSnapshot(location);
+    }
+
+    const snapshot = await getWeatherSnapshotByCoordinates(coords.lat, coords.lon, location);
+    writeCache(locationKey, snapshot);
+    return snapshot;
+  } catch (error) {
+    console.error(`Error getting weather snapshot for location "${location}":`, error.message);
+    return buildUnavailableWeatherSnapshot(location);
+  }
+};
+
+const getWeatherByLocation = async (location) => {
+  const snapshot = await getWeatherSnapshotByLocation(location);
+  return snapshot.normalizedCondition || 'normal';
+};
+
+const getWeatherByCoordinates = async (lat, lon) => {
+  const snapshot = await getWeatherSnapshotByCoordinates(lat, lon);
+  return snapshot.normalizedCondition || 'normal';
+};
+
 const clearCache = () => {
-  Object.keys(WEATHER_CACHE).forEach(key => delete WEATHER_CACHE[key]);
-  console.log('✅ Weather cache cleared');
+  Object.keys(WEATHER_CACHE).forEach((key) => delete WEATHER_CACHE[key]);
 };
 
 module.exports = {
   getWeatherByLocation,
   getWeatherByCoordinates,
+  getWeatherSnapshotByLocation,
+  getWeatherSnapshotByCoordinates,
   normalizeWeather,
   clearCache,
-  // For testing purposes
+  buildUnavailableWeatherSnapshot,
   _getCache: () => WEATHER_CACHE,
   _fetchWeatherByCoordinates: fetchWeatherByCoordinates,
-  _getCoordinatesFromLocation: getCoordinatesFromLocation
+  _getCoordinatesFromLocation: getCoordinatesFromLocation,
 };

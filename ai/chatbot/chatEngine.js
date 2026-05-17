@@ -9,7 +9,7 @@ const shouldUseLLM = () => process.env.USE_LLM === "true";
  * @param {object} opts
  * @param {string} opts.message    - User's raw message
  * @param {string} opts.language   - ISO code: 'en' | 'hi' | 'te'
- * @param {object} opts.context    - Farm context: { disease, riskLevel, projectedYield, trustScore }
+ * @param {object} opts.context    - Farm context: { disease, crop, location, riskScore, riskLevel, projectedYield, trustScore, explanation }
  * @returns {{ reply: string, original: string, metadata: object }}
  */
 const processChat = async ({ message, language = "en", context = {} }) => {

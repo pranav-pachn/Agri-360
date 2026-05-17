@@ -1,11 +1,24 @@
 const chatService = require('../services/chatService');
 const logger = require('../utils/logger');
 
+const pickFirstDefined = (...values) => {
+    for (const value of values) {
+        if (value !== undefined && value !== null && value !== '') {
+            return value;
+        }
+    }
+    return null;
+};
+
 const normalizeChatContext = (context = {}) => ({
-    disease: context.disease || context?.diagnosis?.disease || null,
-    riskLevel: context.riskLevel || context?.risk?.level || context?.risk_assessment?.level || null,
-    projectedYield: context.projectedYield || context?.yield?.projectedYield || context?.yield_prediction?.predicted_yield || null,
-    trustScore: context.trustScore || context?.trust?.score || context?.score || context?.trust_score || null
+    disease: pickFirstDefined(context.disease, context?.diagnosis?.disease),
+    crop: pickFirstDefined(context.crop, context?.analysis?.crop, context?.cropType),
+    location: pickFirstDefined(context.location, context?.analysis?.location),
+    riskScore: pickFirstDefined(context.riskScore, context?.risk?.score, context?.risk_assessment?.score),
+    riskLevel: pickFirstDefined(context.riskLevel, context?.risk?.level, context?.risk_assessment?.level),
+    projectedYield: pickFirstDefined(context.projectedYield, context?.yieldValue, context?.yield?.projectedYield, context?.yield_prediction?.predicted_yield),
+    trustScore: pickFirstDefined(context.trustScore, context?.trust?.score, context?.score, context?.trust_score),
+    explanation: pickFirstDefined(context.explanation, context?.risk?.explanation, context?.analysis?.explanation)
 });
 
 const createConversation = async (req, res, next) => {

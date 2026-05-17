@@ -5,6 +5,7 @@ import { supabase } from '../lib/supabase';
 import FarmerProfile from '../components/dashboard/FarmerProfile';
 import RiskPanel from '../components/dashboard/RiskPanel';
 import CropInsights from '../components/dashboard/CropInsights';
+import WeatherImpactCard from '../components/dashboard/WeatherImpactCard';
 import Recommendations from '../components/dashboard/Recommendations';
 import AnalyticsSection from '../components/dashboard/AnalyticsSection';
 import { getDashboardData } from '../services/dashboardDataService';
@@ -91,13 +92,15 @@ const getRiskCategory = (score) => {
   return 'Low';
 };
 
-const buildRiskData = ({ riskScore, riskLevel, yieldDelta, latestReport, trustScore }) => {
+const buildRiskData = ({ riskScore, riskLevel, yieldDelta, latestReport, trustScore, weatherImpact }) => {
   const normalizedRisk = Math.max(0, Math.min(1, Number(riskScore) || 0));
   const category = getRiskCategory(normalizedRisk);
   const diseasePenalty = String(latestReport?.disease || '').toLowerCase().includes('healthy') ? 8 : -18;
   const yieldImpact = -(Math.abs(Number(yieldDelta) || 0));
   const financialStrength = Math.round(((Number(trustScore) || 650) - 600) / 12);
-  const weatherImpact = category === 'High' ? -22 : category === 'Medium' ? -11 : 6;
+  const liveWeatherImpact = Number(weatherImpact?.deltaPercent || 0);
+  const weatherStressImpact = -liveWeatherImpact;
+  const weatherReason = weatherImpact?.reason || 'Current weather conditions are contributing a neutral risk impact.';
 
   return {
     riskScore: normalizedRisk.toFixed(2),
@@ -107,9 +110,9 @@ const buildRiskData = ({ riskScore, riskLevel, yieldDelta, latestReport, trustSc
       { factor: 'Disease pressure', impact: diseasePenalty },
       { factor: 'Yield outlook', impact: yieldImpact },
       { factor: 'Financial resilience', impact: financialStrength },
-      { factor: 'Weather stress', impact: weatherImpact },
+      { factor: 'Live weather overlay', impact: weatherStressImpact },
     ],
-    explanation: `Overall risk is ${riskLevel}. The score reflects crop health, expected yield pressure, repayment strength, and current field volatility.`,
+    explanation: `Overall risk is ${riskLevel}. The stored score reflects crop health, expected yield pressure, and repayment strength. ${weatherReason}`,
   };
 };
 
@@ -209,6 +212,8 @@ export default function Dashboard() {
   const [riskLevel, setRiskLevel] = useState('Low Risk');
   const [yieldData, setYieldData] = useState({});
   const [yieldDelta, setYieldDelta] = useState(0);
+  const [liveWeather, setLiveWeather] = useState(null);
+  const [weatherImpact, setWeatherImpact] = useState(null);
   const [analyticsSnapshot, setAnalyticsSnapshot] = useState({ states: [], districts: [] });
   const loadRequestIdRef = useRef(0);
 
@@ -264,6 +269,8 @@ export default function Dashboard() {
       setRiskLevel(data.riskLevel);
       setYieldData({ predictedYield: data.yieldValue });
       setYieldDelta(data.yieldDelta);
+      setLiveWeather(data.liveWeather || null);
+      setWeatherImpact(data.weatherImpact || null);
       setAnalyticsSnapshot(buildAnalyticsSnapshot(data));
     } catch (error) {
       if (requestId !== loadRequestIdRef.current) {
@@ -277,6 +284,8 @@ export default function Dashboard() {
         riskLevel: 'Medium Risk',
         yieldValue: 12,
         yieldDelta: -12,
+        liveWeather: null,
+        weatherImpact: null,
       };
 
       setAnalyses(fallback.analyses);
@@ -285,6 +294,8 @@ export default function Dashboard() {
       setRiskLevel(fallback.riskLevel);
       setYieldData({ predictedYield: fallback.yieldValue });
       setYieldDelta(fallback.yieldDelta);
+      setLiveWeather(fallback.liveWeather);
+      setWeatherImpact(fallback.weatherImpact);
       setAnalyticsSnapshot(buildAnalyticsSnapshot({ analyses: fallback.analyses }));
     } finally {
       if (requestId === loadRequestIdRef.current) {
@@ -305,13 +316,13 @@ export default function Dashboard() {
 
   const latestReport = analyses?.[0] || {};
   const farmerName = user?.user_metadata?.name || 'Ramesh Kumar';
-  const farmerLocation = latestReport?.location || user?.user_metadata?.location || 'Guntur, Andhra Pradesh';
+  const farmerLocation = user?.user_metadata?.location || latestReport?.location || 'Guntur, Andhra Pradesh';
   const cropName = latestReport?.crop || 'Rice';
   const diseaseName = latestReport?.disease || 'Early Blight';
   const confidence = Math.round(78 + Math.max(0, Math.min(1, Number(riskScore) || 0)) * 18);
   const yieldValue = Number(yieldData?.predictedYield || latestReport?.yield || 12);
   const lossPercent = Math.abs(Number(yieldDelta) || 0);
-  const riskData = buildRiskData({ riskScore, riskLevel, yieldDelta, latestReport, trustScore });
+  const riskData = buildRiskData({ riskScore, riskLevel, yieldDelta, latestReport, trustScore, weatherImpact });
   const recommendationItems = buildRecommendationItems({ latestReport, riskScore, yieldDelta });
   const yieldTrend = buildYieldTrend(analyses, yieldValue);
   const riskDistribution = buildRiskDistribution(analyticsSnapshot, riskScore);
@@ -325,7 +336,7 @@ export default function Dashboard() {
           crop={toTitleCase(cropName)}
         />
 
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
           <RiskPanel riskData={riskData} />
           <CropInsights
             disease={toTitleCase(diseaseName)}
@@ -333,6 +344,7 @@ export default function Dashboard() {
             yieldValue={Number(yieldValue.toFixed(1))}
             lossPercent={lossPercent}
           />
+          <WeatherImpactCard weather={liveWeather} impact={weatherImpact} />
         </div>
 
         <Recommendations items={recommendationItems} />

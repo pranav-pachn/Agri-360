@@ -2,7 +2,7 @@ import React, { useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import ChatBubble from './ChatBubble';
 
-const ChatContainer = ({ messages, language = 'en' }) => {
+const ChatContainer = ({ messages, language = 'en', loading = false, loadingText = '' }) => {
   const { t } = useTranslation();
   const bottomRef = useRef(null);
 
@@ -25,6 +25,11 @@ const ChatContainer = ({ messages, language = 'en' }) => {
         messages.map((msg, idx) => (
           <ChatBubble key={idx} message={msg} language={language} />
         ))
+      )}
+      {loading && (
+        <div className="opacity-90">
+          <ChatBubble message={{ text: loadingText || t('assistantThinking'), sender: 'bot' }} language={language} />
+        </div>
       )}
       <div ref={bottomRef} className="h-1 pb-1" />
     </div>

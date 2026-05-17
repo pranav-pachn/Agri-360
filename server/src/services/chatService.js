@@ -183,7 +183,7 @@ const getFarmerConversations = async (farmerId, limit = 20) => {
 /**
  * @param {string} message   - Raw user message
  * @param {string} language  - Language code: 'en' | 'hi' | 'te'
- * @param {object} context   - Optional farm context: { disease, riskLevel, projectedYield, trustScore }
+ * @param {object} context   - Optional farm context: { disease, crop, location, riskScore, riskLevel, projectedYield, trustScore, explanation }
  */
 const generateAIResponse = async (message, language = 'en', context = {}) => {
     try {

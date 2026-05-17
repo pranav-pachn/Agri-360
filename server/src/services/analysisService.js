@@ -4,6 +4,7 @@ const yieldService = require('./yield.service');
 const sustainabilityService = require('./sustainability.service');
 const aiService = require('./ai.service');
 const weatherService = require('./weather.service');
+const { calculateWeatherImpact } = require('./weatherImpact.service');
 const logger = require('../utils/logger');
 const { calculateRisk } = require('../../../ai/risk-engine/riskCalculator');
 const {
@@ -43,6 +44,11 @@ const toRiskLevel = (riskScore) => {
     if (n > 0.7) return 'High';
     if (n > 0.4) return 'Medium';
     return 'Low';
+};
+
+const toDetailedRiskLevel = (riskScore) => {
+    const compact = toRiskLevel(riskScore);
+    return compact === 'Low' ? 'Low Risk' : compact === 'Medium' ? 'Medium Risk' : 'High Risk';
 };
 
 const toEstimatedLossPercent = (riskScore) => {
@@ -191,21 +197,23 @@ const generateAnalysis = async (crop, location, imageUrl = null, fertilizerLevel
         recommended_action: aiResults.diagnosis?.advice || null
     };
 
-    // Get weather from AI results, or fetch from weather service if not available
-    let weather = aiResults?.location_analysis?.weather;
-    if (!weather || weather === 'normal') {
-      const fetchedWeather = await weatherService.getWeatherByLocation(location);
-      weather = fetchedWeather || 'normal';
-    }
+    const weatherSnapshot = await weatherService.getWeatherSnapshotByLocation(location);
+    const weatherLabel = weatherSnapshot.normalizedCondition || aiResults?.location_analysis?.weather || 'normal';
+    const weatherImpact = calculateWeatherImpact(weatherSnapshot);
 
-    const riskComputation = calculateRisk({
+    const baseRiskComputation = calculateRisk({
         confidence: aiResults?.diagnosis?.confidence,
         severity,
-        weather
+        weather: 'normal'
     });
-    const risk = riskComputation.riskScore;
+    const finalRiskScore = Math.max(
+        0,
+        Math.min(1, Number((baseRiskComputation.riskScore + weatherImpact.deltaScore).toFixed(4)))
+    );
+    const finalRiskLevel = toDetailedRiskLevel(finalRiskScore);
+    const risk = finalRiskScore;
 
-    const isHighRisk = riskComputation.riskScore > 0.7;
+    const isHighRisk = finalRiskScore > 0.7;
 
     // 2. Risk -> Yield impact
     // Projected Yield = Base × (1 - Risk × 0.5)
@@ -213,7 +221,7 @@ const generateAnalysis = async (crop, location, imageUrl = null, fertilizerLevel
     const baseYield = BASE_YIELD[cropKey] || 15;
     const yieldResult = calculateProjectedYield({
         baseYield,
-        riskScore: riskComputation.riskScore,
+        riskScore: finalRiskScore,
         crop
     });
     const adjustedYield = yieldResult.projectedYield;
@@ -222,7 +230,7 @@ const generateAnalysis = async (crop, location, imageUrl = null, fertilizerLevel
 
     // 3. Yield -> Credit score impact
     const yieldCreditMultiplier = yieldResult.yieldLossPercent > 30 ? 0.75 : 1.0;
-    const riskSeverityMultiplier = riskComputation.riskScore > 0.7 ? 0.85 : 1.0;
+    const riskSeverityMultiplier = finalRiskScore > 0.7 ? 0.85 : 1.0;
 
     const inferredEstimatedLoss = isHighRisk ? '30–50%' : `${(lossPercentage * 100).toFixed(1)}%`;
     const normalizedYield = yieldService.normalizeYieldScore(adjustedYield, 10);
@@ -233,7 +241,7 @@ const generateAnalysis = async (crop, location, imageUrl = null, fertilizerLevel
     
     const trustInputs = {
         yieldStability: Number((100 - yieldResult.yieldLossPercent).toFixed(2)),
-        riskTrend: Number((100 - (riskComputation.riskScore * 100)).toFixed(2)),
+        riskTrend: Number((100 - (finalRiskScore * 100)).toFixed(2)),
         sustainability,
         consistency: 75
     };
@@ -281,10 +289,11 @@ const generateAnalysis = async (crop, location, imageUrl = null, fertilizerLevel
         yield_engine: {
             formula: 'projectedYield = baseYield * (1 - riskScore * 0.5)',
             base_yield: baseYield,
-            risk_score: riskComputation.riskScore,
+            risk_score: finalRiskScore,
             loss_percentage: lossPercentage,
             risk_yield_factor: riskYieldFactor,
-            adjusted_yield: adjustedYield
+            adjusted_yield: adjustedYield,
+            weather_impact_percent: weatherImpact.deltaPercent
         },
         credit_engine: {
             severity,
@@ -307,7 +316,7 @@ const generateAnalysis = async (crop, location, imageUrl = null, fertilizerLevel
         crop_type: crop,
         disease: aiResults.diagnosis?.disease || null,
         confidence: normalizeConfidenceToDecimal(aiResults.diagnosis?.confidence),
-        risk_score: Number(riskComputation.riskScore.toFixed(4)),
+        risk_score: Number(finalRiskScore.toFixed(4)),
         health_score: Number.isFinite(Number(health)) ? Math.round(Number(health)) : null,
         yield_prediction: adjustedYield,
         image_url: imageUrl,
@@ -379,7 +388,7 @@ const generateAnalysis = async (crop, location, imageUrl = null, fertilizerLevel
                 farmer_id: farmerId,
                 trust_score: scaledTrustScore,
                 credit_grade: finalCreditRating,
-                risk_category: String(riskComputation.riskLevel || 'low').toLowerCase(),
+                risk_category: String(toRiskLevel(finalRiskScore) || 'low').toLowerCase(),
                 loan_eligibility: loanEligible,
                 created_at: new Date().toISOString(),
             };
@@ -405,9 +414,12 @@ const generateAnalysis = async (crop, location, imageUrl = null, fertilizerLevel
         confidence: normalizeConfidenceToDecimal(aiResults.diagnosis.confidence),
         severity,
         risk: {
-            score: riskComputation.riskScore,
-            level: riskComputation.riskLevel,
-            weatherFactor: riskComputation.weatherFactor
+            score: finalRiskScore,
+            level: finalRiskLevel,
+            weatherFactor: baseRiskComputation.weatherFactor,
+            weatherImpact: weatherImpact.deltaPercent,
+            reason: weatherImpact.reason,
+            weatherReason: weatherImpact.reason
         },
         trust: {
             score: finalTrustScore,
@@ -436,7 +448,7 @@ const generateAnalysis = async (crop, location, imageUrl = null, fertilizerLevel
             base_yield: baseYield,
             adjusted_yield: adjustedYield,
             formula: 'projectedYield = baseYield * (1 - riskScore * 0.5)',
-            risk_score: riskComputation.riskScore,
+            risk_score: finalRiskScore,
             impact_factor: yieldResult.impactFactor,
             risk_yield_factor: riskYieldFactor,
             loss_percentage: yieldResult.yieldLossPercent,
@@ -457,11 +469,12 @@ const generateAnalysis = async (crop, location, imageUrl = null, fertilizerLevel
             scaled_trust_score: scaledTrustScore
         },
         risk_assessment: {
-            score: riskComputation.riskScore,
-            level: riskComputation.riskLevel,
-            weather_factor: riskComputation.weatherFactor,
-            severity_weight: riskComputation.severityWeight,
-            weather
+            score: finalRiskScore,
+            level: finalRiskLevel,
+            weather_factor: baseRiskComputation.weatherFactor,
+            severity_weight: baseRiskComputation.severityWeight,
+            weather: weatherLabel,
+            weather_impact: weatherImpact
         },
         risk_impacts: {
             estimated_loss_band: inferredEstimatedLoss,
@@ -469,6 +482,7 @@ const generateAnalysis = async (crop, location, imageUrl = null, fertilizerLevel
             credit_multiplier: yieldCreditMultiplier,
             urgent_action_flag: isHighRisk
         },
+        weather: weatherSnapshot,
         recommendations,
         health_trend: aiResults.health_trend,
         decision_intelligence: {

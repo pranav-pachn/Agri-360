@@ -1,62 +1,162 @@
-const translations = {
+const exactTranslations = {
   hi: {
-    "Expected yield is 4.5 tons/hectare. Loan eligibility: Eligible.":
-      "अपेक्षित उपज 4.5 टन/हेक्टेयर है। ऋण पात्रता: पात्र।",
-    "Disease detected: Leaf Blight. Spray fungicide within 48 hours and avoid overwatering.":
-      "रोग पाया गया: लीफ ब्लाइट। 48 घंटों के भीतर फफूंदनाशक का छिड़काव करें और अधिक सिंचाई से बचें।",
-    "Disease detected: Leaf Blight. Spray fungicide within 48 hours and avoid overwatering. The crop is currently at high risk and needs immediate attention.":
-      "रोग पाया गया: लीफ ब्लाइट। 48 घंटों के भीतर फफूंदनाशक का छिड़काव करें और अधिक सिंचाई से बचें। फसल अभी उच्च जोखिम में है और तुरंत ध्यान देने की आवश्यकता है।",
-    "High risk detected ⚠️. Immediate action required within 24–48 hours.":
-      "उच्च जोखिम ⚠️। 24–48 घंटे में तुरंत कार्रवाई करें।",
-    "Low risk. Crop condition is stable.":
-      "कम जोखिम। फसल की स्थिति स्थिर है।",
-    "You are eligible for a loan.": "आप ऋण के लिए पात्र हैं।",
-    "Improve farm stability to increase loan eligibility.":
-      "ऋण पात्रता बढ़ाने के लिए खेत की स्थिरता सुधारें।",
-    "Yield and risk directly affect your income.":
-      "उपज और जोखिम सीधे आपकी आय को प्रभावित करते हैं।",
-    "High risk detected. Immediate action is required.":
-      "उच्च जोखिम पाया गया है। तुरंत कार्रवाई आवश्यक है।",
-    "Moderate risk. Monitor crop regularly and take preventive measures.":
-      "मध्यम जोखिम है। फसल की नियमित निगरानी करें और निवारक उपाय अपनाएँ।",
-    "You can ask about disease, yield, or loan eligibility.":
-      "आप रोग, उपज या ऋण पात्रता के बारे में पूछ सकते हैं।",
-    "Your crop is at high risk. Apply treatment immediately and monitor closely.":
-      "आपकी फसल उच्च जोखिम में है। तुरंत उपचार करें और नज़दीकी निगरानी रखें।",
-    "Please upload crop image or ask about disease, yield, risk, or loan eligibility.":
-      "कृपया फसल की छवि अपलोड करें या रोग, उपज, जोखिम या ऋण पात्रता के बारे में पूछें।"
+    'Please ask about risk, yield, trust score, or loan eligibility.':
+      'कृपया जोखिम, उपज, ट्रस्ट स्कोर या ऋण पात्रता के बारे में पूछें।',
+    'This currently supports loan eligibility.':
+      'यह वर्तमान में ऋण पात्रता का समर्थन करता है।',
+    'Improving yield stability and lowering risk will strengthen eligibility.':
+      'उपज स्थिरता बढ़ाने और जोखिम कम करने से पात्रता मजबूत होगी।',
+    'High Risk': 'उच्च जोखिम',
+    'Medium Risk': 'मध्यम जोखिम',
+    'Low Risk': 'कम जोखिम',
   },
   te: {
-    "Expected yield is 4.5 tons/hectare. Loan eligibility: Eligible.":
-      "అంచనా దిగుబడి 4.5 టన్నులు/హెక్టారు. రుణ అర్హత: అర్హులు.",
-    "Disease detected: Leaf Blight. Spray fungicide within 48 hours and avoid overwatering.":
-      "వ్యాధి గుర్తించబడింది: లీఫ్ బ్లైట్. 48 గంటల్లో ఫంగిసైడ్ పిచికారీ చేసి అధిక నీరు పోయడం నివారించండి.",
-    "Disease detected: Leaf Blight. Spray fungicide within 48 hours and avoid overwatering. The crop is currently at high risk and needs immediate attention.":
-      "వ్యాధి గుర్తించబడింది: లీఫ్ బ్లైట్. 48 గంటల్లో ఫంగిసైడ్ పిచికారీ చేసి అధిక నీరు పోయడం నివారించండి. పంట ప్రస్తుతం అధిక ప్రమాదంలో ఉంది మరియు వెంటనే శ్రద్ధ అవసరం.",
-    "High risk detected ⚠️. Immediate action required within 24–48 hours.":
-      "అధిక ప్రమాదం ⚠️. 24–48 గంటల్లో చర్య తీసుకోండి.",
-    "Low risk. Crop condition is stable.":
-      "తక్కువ ప్రమాదం. పంట స్థిరంగా ఉంది।",
-    "You are eligible for a loan.": "మీరు రుణానికి అర్హులు.",
-    "Improve farm stability to increase loan eligibility.":
-      "రుణ అర్హత పెంచడానికి వ్యవసాయాన్ని మెరుగుపరచండి.",
-    "Yield and risk directly affect your income.":
-      "దిగుబడి మరియు ప్రమాదం మీ ఆదాయాన్ని నేరుగా ప్రభావితం చేస్తాయి.",
-    "High risk detected. Immediate action is required.":
-      "అధిక ప్రమాదం గుర్తించబడింది. వెంటనే చర్య అవసరం.",
-    "Moderate risk. Monitor crop regularly and take preventive measures.":
-      "మధ్యస్థ ప్రమాదం ఉంది. పంటను క్రమం తప్పకుండా పరిశీలించి నిరోధక చర్యలు తీసుకోండి.",
-    "You can ask about disease, yield, or loan eligibility.":
-      "మీరు వ్యాధి, దిగుబడి లేదా రుణ అర్హత గురించి అడగవచ్చు.",
-    "Your crop is at high risk. Apply treatment immediately and monitor closely.":
-      "మీ పంట అధిక ప్రమాదంలో ఉంది. వెంటనే చికిత్స చేసి దగ్గరగా గమనించండి.",
-    "Please upload crop image or ask about disease, yield, risk, or loan eligibility.":
-      "దయచేసి పంట చిత్రాన్ని అప్‌లోడ్ చేయండి లేదా వ్యాధి, దిగుబడి, ప్రమాదం లేదా రుణ అర్హత గురించి అడగండి."
+    'Please ask about risk, yield, trust score, or loan eligibility.':
+      'దయచేసి రిస్క్, దిగుబడి, ట్రస్ట్ స్కోర్ లేదా రుణ అర్హత గురించి అడగండి.',
+    'This currently supports loan eligibility.':
+      'ఇది ప్రస్తుతం రుణ అర్హతకు మద్దతు ఇస్తోంది.',
+    'Improving yield stability and lowering risk will strengthen eligibility.':
+      'దిగుబడి స్థిరత్వాన్ని మెరుగుపరచడం మరియు రిస్క్ తగ్గించడం అర్హతను బలపరుస్తాయి.',
+    'High Risk': 'అధిక ప్రమాదం',
+    'Medium Risk': 'మధ్యస్థ ప్రమాదం',
+    'Low Risk': 'తక్కువ ప్రమాదం',
+  },
+};
+
+const explanationTranslations = {
+  hi: {
+    'Overall risk is Low Risk. The score reflects crop health, expected yield pressure, repayment strength, and current field volatility.':
+      'कुल जोखिम कम है। यह स्कोर फसल स्वास्थ्य, अनुमानित उपज दबाव, पुनर्भुगतान क्षमता और मौजूदा खेत अस्थिरता को दर्शाता है।',
+    'Overall risk is Medium Risk. The score reflects crop health, expected yield pressure, repayment strength, and current field volatility.':
+      'कुल जोखिम मध्यम है। यह स्कोर फसल स्वास्थ्य, अनुमानित उपज दबाव, पुनर्भुगतान क्षमता और मौजूदा खेत अस्थिरता को दर्शाता है।',
+    'Overall risk is High Risk. The score reflects crop health, expected yield pressure, repayment strength, and current field volatility.':
+      'कुल जोखिम उच्च है। यह स्कोर फसल स्वास्थ्य, अनुमानित उपज दबाव, पुनर्भुगतान क्षमता और मौजूदा खेत अस्थिरता को दर्शाता है।',
+  },
+  te: {
+    'Overall risk is Low Risk. The score reflects crop health, expected yield pressure, repayment strength, and current field volatility.':
+      'మొత్తం రిస్క్ తక్కువగా ఉంది. ఈ స్కోర్ పంట ఆరోగ్యం, అంచనా దిగుబడి ఒత్తిడి, చెల్లింపు సామర్థ్యం మరియు ప్రస్తుత పొల అస్థిరతను ప్రతిబింబిస్తుంది.',
+    'Overall risk is Medium Risk. The score reflects crop health, expected yield pressure, repayment strength, and current field volatility.':
+      'మొత్తం రిస్క్ మధ్యస్థంగా ఉంది. ఈ స్కోర్ పంట ఆరోగ్యం, అంచనా దిగుబడి ఒత్తిడి, చెల్లింపు సామర్థ్యం మరియు ప్రస్తుత పొల అస్థిరతను ప్రతిబింబిస్తుంది.',
+    'Overall risk is High Risk. The score reflects crop health, expected yield pressure, repayment strength, and current field volatility.':
+      'మొత్తం రిస్క్ అధికంగా ఉంది. ఈ స్కోర్ పంట ఆరోగ్యం, అంచనా దిగుబడి ఒత్తిడి, చెల్లింపు సామర్థ్యం మరియు ప్రస్తుత పొల అస్థిరతను ప్రతిబింబిస్తుంది.',
+  },
+};
+
+const riskLabel = (lang, label) => exactTranslations[lang]?.[label] || label;
+
+const translateExplanation = (text, lang) => {
+  if (explanationTranslations[lang]?.[text]) {
+    return explanationTranslations[lang][text];
   }
+
+  const dynamicMatch = text.match(
+    /^Overall risk is (.+)\. The current risk score is ([\d.]+), projected yield is ([\d.]+) tons\/hectare, and trust score is (\d+)\.$/
+  );
+
+  if (!dynamicMatch) {
+    return text;
+  }
+
+  const [, level, riskScore, yieldValue, trustScore] = dynamicMatch;
+
+  if (lang === 'hi') {
+    return `कुल जोखिम ${riskLabel('hi', level)} है। वर्तमान जोखिम स्कोर ${riskScore} है, अनुमानित उपज ${yieldValue} टन/हेक्टेयर है, और ट्रस्ट स्कोर ${trustScore} है।`;
+  }
+
+  if (lang === 'te') {
+    return `మొత్తం రిస్క్ ${riskLabel('te', level)}. ప్రస్తుత రిస్క్ స్కోర్ ${riskScore}, అంచనా దిగుబడి ${yieldValue} టన్నులు/హెక్టారు, మరియు ట్రస్ట్ స్కోర్ ${trustScore}.`;
+  }
+
+  return text;
+};
+
+const patternTranslators = {
+  hi: [
+    {
+      pattern: /^Your risk is ([\d.]+) \((.+)\)\. (.+)$/,
+      translate: ([, score, level, reason]) =>
+        `आपका जोखिम ${score} (${riskLabel('hi', level)}) है। ${translateExplanation(reason, 'hi')}`,
+    },
+    {
+      pattern: /^You are eligible for a loan with moderate confidence\. Your trust score is (\d+), and current risk is (.+)\.$/,
+      translate: ([, score, level]) =>
+        `आप मध्यम विश्वास के साथ ऋण के लिए पात्र हैं। आपका ट्रस्ट स्कोर ${score} है, और वर्तमान जोखिम ${riskLabel('hi', level)} है।`,
+    },
+    {
+      pattern: /^Your current trust score is (\d+), which is below the current loan approval range\.$/,
+      translate: ([, score]) =>
+        `आपका वर्तमान ट्रस्ट स्कोर ${score} है, जो मौजूदा ऋण स्वीकृति सीमा से नीचे है।`,
+    },
+    {
+      pattern: /^Your trust score is (\d+)\. (.+)$/,
+      translate: ([, score, remainder]) =>
+        `आपका ट्रस्ट स्कोर ${score} है। ${exactTranslations.hi[remainder] || remainder}`,
+    },
+    {
+      pattern: /^Your projected yield is ([\d.]+) tons\/hectare\.$/,
+      translate: ([, value]) => `आपकी अनुमानित उपज ${value} टन/हेक्टेयर है।`,
+    },
+    {
+      pattern: /^Here is why: (.+)$/,
+      translate: ([, reason]) => `कारण यह है: ${translateExplanation(reason, 'hi')}`,
+    },
+    {
+      pattern: /^The latest crop diagnosis indicates (.+) for (.+)\.$/,
+      translate: ([, disease, crop]) => `नवीनतम फसल निदान ${crop} के लिए ${disease} दर्शाता है।`,
+    },
+  ],
+  te: [
+    {
+      pattern: /^Your risk is ([\d.]+) \((.+)\)\. (.+)$/,
+      translate: ([, score, level, reason]) =>
+        `మీ రిస్క్ ${score} (${riskLabel('te', level)}). ${translateExplanation(reason, 'te')}`,
+    },
+    {
+      pattern: /^You are eligible for a loan with moderate confidence\. Your trust score is (\d+), and current risk is (.+)\.$/,
+      translate: ([, score, level]) =>
+        `మీరు మోస్తరు విశ్వాసంతో రుణానికి అర్హులు. మీ ట్రస్ట్ స్కోర్ ${score}, ప్రస్తుత రిస్క్ ${riskLabel('te', level)}.`,
+    },
+    {
+      pattern: /^Your current trust score is (\d+), which is below the current loan approval range\.$/,
+      translate: ([, score]) =>
+        `మీ ప్రస్తుత ట్రస్ట్ స్కోర్ ${score}, ఇది ప్రస్తుత రుణ ఆమోద పరిధికి దిగువన ఉంది.`,
+    },
+    {
+      pattern: /^Your trust score is (\d+)\. (.+)$/,
+      translate: ([, score, remainder]) =>
+        `మీ ట్రస్ట్ స్కోర్ ${score}. ${exactTranslations.te[remainder] || remainder}`,
+    },
+    {
+      pattern: /^Your projected yield is ([\d.]+) tons\/hectare\.$/,
+      translate: ([, value]) => `మీ అంచనా దిగుబడి ${value} టన్నులు/హెక్టారు.`,
+    },
+    {
+      pattern: /^Here is why: (.+)$/,
+      translate: ([, reason]) => `కారణం ఇది: ${translateExplanation(reason, 'te')}`,
+    },
+    {
+      pattern: /^The latest crop diagnosis indicates (.+) for (.+)\.$/,
+      translate: ([, disease, crop]) => `తాజా పంట నిర్ధారణ ${crop} కోసం ${disease}ని సూచిస్తోంది.`,
+    },
+  ],
 };
 
 const translate = (text, lang) => {
-  return translations[lang]?.[text] || text;
+  if (!lang || lang === 'en') return text;
+
+  if (exactTranslations[lang]?.[text]) {
+    return exactTranslations[lang][text];
+  }
+
+  const translators = patternTranslators[lang] || [];
+  for (const translator of translators) {
+    const match = text.match(translator.pattern);
+    if (match) {
+      return translator.translate(match);
+    }
+  }
+
+  return text;
 };
 
 module.exports = { translate };
