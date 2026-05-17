@@ -1,202 +1,400 @@
+# AgriMitra 360
 
-# AgriMitra 360 — AI for Agricultural Trust & Credit
+[![Status](https://img.shields.io/badge/status-prototype-blue)](#known-gaps--reality-check)
+[![Frontend](https://img.shields.io/badge/frontend-React%20%2B%20Vite-61dafb)](#tech-stack)
+[![Backend](https://img.shields.io/badge/backend-Express-000000)](#tech-stack)
+[![AI](https://img.shields.io/badge/ai-TensorFlow.js-orange)](#tech-stack)
+[![Weather](https://img.shields.io/badge/live%20weather-OpenWeather-ffb703)](#live-weather-overlay)
+[![Database](https://img.shields.io/badge/data-Supabase-3ecf8e)](#tech-stack)
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE) [![Status](https://img.shields.io/badge/Status-Prototype-blue)](https://github.com/your-username/agrimitra-360)
+AI-powered crop diagnostics, explainable agricultural risk scoring, and finance-ready trust intelligence for smallholder farmers.
 
-An open-source MVP that converts farm data into transparent, bankable trust scores to help smallholder farmers access credit.
+AgriMitra 360 is a full-stack prototype that turns a crop image and farm context into an actionable decision workflow:
 
-Key highlights:
-- Real-time crop disease detection (MobileNetV2)
-- Rule-based yield prediction using weather and soil inputs
-- Sustainability scoring and explainable Trust Score (300–900)
+- detect likely crop disease
+- estimate yield impact
+- compute risk and trust signals
+- surface recovery recommendations
+- present lender-friendly summaries in a modern dashboard
 
----
+It is designed to feel like a practical bridge between agri-tech and agri-finance rather than just an image classifier demo.
 
-## Table of Contents
-- [Demo](#demo)
-- [Features](#features)
-- [Architecture](#architecture)
-- [Quick Start](#quick-start)
-- [Configuration](#configuration)
-- [Development](#development)
-- [Contributing](#contributing)
-- [License](#license)
-- [Contact](#contact)
+## At A Glance
 
----
+| Area | What It Does |
+| --- | --- |
+| Crop Intelligence | Upload a crop image and generate disease, severity, health, and recovery guidance |
+| Risk Engine | Compute explainable agricultural risk using model confidence, severity, and live weather context |
+| Yield Projection | Estimate yield and expected loss from risk-aware crop logic |
+| Trust Intelligence | Convert farm performance into finance-ready trust and eligibility signals |
+| Dashboard | Surface live risk, weather impact, trends, and recommendations in one workspace |
+| AI Assistant | Answer context-aware questions about risk, yield, trust, and loan readiness |
 
-## Demo
+## Showcase
 
-Screenshots and demo clips go here. Replace with live demo links or embed videos for investor demos.
+### Product Highlights
+- **End-to-end workflow**: from image upload to diagnosis, score interpretation, and action plan.
+- **Live environmental signal**: weather is not decorative; it changes risk and is surfaced explicitly in the UI.
+- **Finance-aware outputs**: trust score and eligibility framing make the system relevant to agri-credit scenarios.
+- **Explorable experience**: dashboard, analytics, profile, assistant, and applications views make the prototype feel like a real platform.
 
----
+### Suggested Screenshots To Add
+- `Landing page` — product positioning and value proposition
+- `Crop diagnosis workspace` — upload, inference, and action panel
+- `Analysis result report` — disease, risk, yield, and trust output
+- `Dashboard` — live weather impact, risk summary, and trends
+- `Analytics view` — district/state/national intelligence
+- `AI assistant` — context-grounded question answering
 
-## Features
+### Demo Assets
+- Add product screenshots under `docs/` or `client/public/assets/`
+- Add a short GIF or Loom link showing:
+  1. sign in
+  2. upload image
+  3. inspect report
+  4. open dashboard weather overlay
+  5. ask the assistant a risk question
 
-- Crop disease detection (MobileNetV2) — health score per image
-- Yield prediction combining crop factors, health, and weather
-- Sustainability and environmental impact scoring
-- Trust Score generator (explainable breakdown for banks)
-- Dashboard with charts and explainability reports
+## Why This Project Stands Out
 
----
+- **Crop diagnosis workflow, not just classification**: image upload feeds disease detection, severity, health scoring, recovery guidance, and a full result page.
+- **Explainable risk + trust logic**: outputs are structured so users and reviewers can see why a score moved, not just the final number.
+- **Live weather integration**: OpenWeather data can influence risk during analysis and also appears as a live dashboard overlay.
+- **Finance-facing product layer**: trust score, eligibility state, pending applications, and analytics push the project beyond a pure ML showcase.
+- **Multilingual AI assistant**: the chat experience is grounded in live farm context and supports English, Hindi, and Telugu UI flows.
+- **Portfolio-ready frontend**: protected app shell, analytics views, crop intelligence workspace, and dashboard experience.
 
-## 🏗️ System Architecture
+## Core Capabilities
 
-AgriMitra 360 follows a modular, data-driven pipeline that transforms raw agricultural input into financial intelligence.
+### 1. Crop Intelligence
+- Upload a leaf image and analyze it through the crop diagnosis flow.
+- Generate disease, confidence, severity, health, and recovery guidance.
+- Open a full result report with risk, yield, sustainability, and loan-readiness signals.
 
-### 🔄 Data Flow Pipeline
+### 2. Risk Engine
+- Combines disease confidence, severity, and weather context.
+- Supports explainable risk outputs and live weather impact reasoning.
+- Returns both user-facing summaries and structured backend payloads.
 
-Farmer Input  
-→ Crop Analysis (ML / Rule-based detection)  
-→ Yield Prediction (statistical + rule-based model)  
-→ Risk Engine (Explainable scoring system)  
-→ Trust Score Engine (financial reliability scoring)  
-→ Recommendation Engine (actionable insights)  
-→ Dashboard & Analytics  
+### 3. Yield Prediction
+- Uses rule-based yield estimation tied to crop type and risk score.
+- Reports projected yield and estimated loss.
 
-Designed as a modular pipeline enabling scalable agricultural intelligence and financial decision-making.
+### 4. Trust / Credit Readiness
+- Converts farm-performance signals into a trust score.
+- Maps trust results into eligibility-style summaries for lending scenarios.
+- Supports pending application workflows and farmer detail views.
 
----
+### 5. Live Weather Overlay
+- Fetches current weather from OpenWeather.
+- Computes a bounded weather impact from temperature, humidity, and wind.
+- Shows the current weather effect on risk in the dashboard.
 
-### ⚙️ Backend Architecture
+### 6. Farmer Dashboard
+- Displays current risk, crop insight, yield trend, portfolio mix, and recommendations.
+- Merges stored farmer data with live weather context.
 
-- **API Layer (Express.js)**
-  - `/analyze` → crop + yield + risk + trust
-  - `/risk` → explainable risk breakdown
-  - `/analytics` → dataset insights + metrics
+### 7. AI Assistant
+- Answers context-aware questions about risk, trust, loan eligibility, and yield.
+- Uses the farmer’s latest dashboard snapshot instead of generic canned chat behavior.
 
-- **Service Layer**
-  - `crop.service.js`
-  - `yield.service.js`
-  - `risk.service.js`
-  - `trust.service.js`
+## Product Walkthrough
 
-- **Data Layer**
-  - Supabase (PostgreSQL)
-  - Synthetic dataset (CSV)
+### Public / Entry Experience
+- Landing page
+- Login / signup
 
----
+### Protected App Experience
+- `/dashboard` — overview, live risk, weather, and farm intelligence
+- `/upload` — crop intelligence / diagnosis workflow
+- `/result/:id` — analysis result view
+- `/trust-score` — trust and finance view
+- `/chat` — context-aware assistant
+- `/analytics` — district / state / national intelligence views
+- `/profile` — farmer profile
+- `/applications` — pending loan-style application view
 
-### 🤖 Model Pipeline
+## Tech Stack
 
-- Crop health estimation (rule-based / image-based)
-- Yield prediction (feature-driven model)
-- Risk scoring (multi-factor explainable engine)
-- Trust score (weighted financial model)
+### Frontend
+- React 18
+- Vite
+- Tailwind CSS
+- React Router
+- i18next / react-i18next
+- Lucide React
+- Supabase JS client
 
----
+### Backend
+- Node.js
+- Express
+- Supabase
+- Axios
+- Multer
+- Sharp
+- UUID
 
-### 📊 Data Flow
+### AI / Decision Layer
+- TensorFlow.js
+- MobileNet
+- Rule-based risk engine
+- Rule-based yield logic
+- Trust / credit scoring logic
 
-Input Data:
-- Crop type
-- Location
-- Crop health
-- Weather indicators
-- Market signals
+### Data
+- Supabase-backed application data
+- Local CSV dataset for analytics / benchmarking flows
 
-Processed Into:
-- Yield prediction
-- Risk score
-- Trust score
-- Recommendations
+## Architecture
 
----
+AgriMitra 360 follows a modular flow:
+
+`Farmer input -> crop analysis -> risk computation -> yield projection -> trust scoring -> recommendations -> dashboard / assistant / finance views`
+
+### System Diagram
+
+```text
+                +----------------------+
+                |   Farmer / Operator  |
+                +----------+-----------+
+                           |
+                           v
+                +----------------------+
+                |  React Frontend App  |
+                |  Dashboard / Upload  |
+                |  Chat / Analytics    |
+                +----------+-----------+
+                           |
+                           v
+                +----------------------+
+                |   Express API Layer  |
+                | /analyze /chat       |
+                | /analytics /weather  |
+                +----------+-----------+
+                           |
+          +----------------+----------------+
+          |                |                |
+          v                v                v
+ +----------------+ +----------------+ +------------------+
+ | AI Inference   | | Risk / Yield   | | Weather Service  |
+ | TensorFlow.js  | | Trust Engines  | | OpenWeather API  |
+ +----------------+ +----------------+ +------------------+
+          |                |                |
+          +----------------+----------------+
+                           |
+                           v
+                +----------------------+
+                |  Supabase + Dataset  |
+                | farmers, reports,    |
+                | credit, chat, stats  |
+                +----------------------+
+```
+
+### Backend Modules
+- `server/src/services/analysisService.js` orchestrates the main analysis pipeline.
+- `server/src/services/weather.service.js` fetches and normalizes live weather.
+- `server/src/services/weatherImpact.service.js` computes explainable weather risk deltas.
+- `server/src/services/chatService.js` powers the assistant layer.
+- `server/src/services/analyticsService.js` supports aggregated analytics views.
+
+### AI Modules
+- `ai/crop-intelligence/` contains inference and TensorFlow-facing logic.
+- `ai/risk-engine/` contains explainable risk logic.
+- `ai/yield-prediction/` contains rule-based yield estimation.
+- `ai/trust-engine/` contains trust / finance logic.
+
+### Frontend Modules
+- `client/src/pages/` contains major app views.
+- `client/src/components/` contains dashboard, result, chat, and upload UI pieces.
+- `client/src/services/` maps backend data into frontend-friendly contracts.
+
+## API Surface
+
+The backend currently exposes routes across analysis, analytics, chat, farmers, risk, and weather.
+
+### Key Endpoints
+- `POST /api/analyze`
+  Analyze a crop image and return structured diagnosis, risk, yield, trust, and recommendation data.
+
+- `GET /api/analysis/:id`
+  Fetch a previously stored analysis result.
+
+- `GET /api/v1/analytics`
+  Analytics summary endpoints for broader agricultural intelligence.
+
+- `POST /api/v1/chat`
+  Context-aware assistant quick chat.
+
+- `GET /api/v1/farmers/:farmerId/details`
+  Farmer profile plus recent crop reports and credit snapshot.
+
+- `GET /api/v1/weather/current?location=Guntur`
+  Live weather snapshot with structured risk impact output.
+
+## Repository Structure
+
+```text
+agri-360/
+├─ ai/                  # crop intelligence, risk, trust, yield logic
+├─ client/              # React + Vite frontend
+├─ server/              # Express backend
+├─ database/            # schema, migrations, setup docs
+├─ data/                # CSV dataset
+├─ docs/                # supporting docs
+└─ scripts/             # utility scripts
+```
+
+## Screenshots
+
+No production screenshots are committed yet, but the repo already includes supporting visual assets in:
+
+- `client/public/assets/loan-dashboard-farmer.svg`
+- `client/public/assets/loan-dashboard-map.svg`
+
+Recommended next step: add exported screenshots named like:
+
+```text
+docs/screenshots/
+├─ landing.png
+├─ crop-intelligence.png
+├─ result-report.png
+├─ dashboard-weather.png
+├─ analytics.png
+└─ assistant.png
+```
 
 ## Quick Start
 
-Prerequisites:
+### Prerequisites
 - Node.js 18+
-- npm (or yarn)
-- Git
-- Supabase project (free tier)
-- OpenWeatherMap API key
+- npm
+- Supabase project
+- OpenWeather API key for live weather features
 
-Clone and install:
+### 1. Clone and install
 
 ```bash
 git clone https://github.com/your-username/agrimitra-360.git
 cd agri-360
 npm install
-cd client && npm install && cd ../server && npm install
+cd client && npm install
+cd ../server && npm install
 ```
 
-Configuration:
+### 2. Configure environment
+
+The checked-in `.env.example` is minimal, so in practice you will likely want a root `.env` with values like:
 
 ```bash
-cp .env.example .env
-# Edit .env with your SUPABASE and OPENWEATHER keys
+SUPABASE_URL=your_supabase_url
+SUPABASE_ANON_KEY=your_supabase_anon_key
+SUPABASE_SERVICE_KEY=your_supabase_service_key
+OPENWEATHER_API_KEY=your_openweather_key
+USE_TENSORFLOW=true
+USE_LLM=false
+LLM_API_URL=
+LLM_API_KEY=
+LLM_MODEL=gpt-4o-mini
+PORT=5000
 ```
 
-Database:
-- Create a Supabase project and run `database/schema.sql` to create tables.
-- (Optional) Run `database/seed.sql` for demo data.
+Notes:
+- `server/src/config/supabase.js` reads the root `.env`.
+- frontend API calls are proxied through Vite from `/api` to `http://localhost:5000`.
 
-Run locally (development):
+### 3. Set up the database
+
+Run the full schema or migrations in Supabase / PostgreSQL:
 
 ```bash
-# Start backend
+psql -d your_database -f database/schema.sql
+```
+
+or
+
+```bash
+psql -d your_database -f database/migrations/run_migrations.sql
+```
+
+See [database/README.md](database/README.md) for more detail.
+
+### 4. Start the app
+
+Backend:
+
+```bash
 cd server
 npm run dev
+```
 
-# Start frontend
-cd ../client
+Frontend:
+
+```bash
+cd client
 npm run dev
 ```
 
-Open the frontend at http://localhost:5173 and the API at http://localhost:3000
+### 5. Open locally
 
----
+- Frontend: `http://localhost:5173`
+- Backend: `http://localhost:5000`
+- Health check: `http://localhost:5000/health`
 
-## Configuration
+## Demo Flow For Reviewers
 
-Required environment variables (example in `.env.example`):
+If you are showing this project to recruiters, judges, or collaborators, this is the cleanest path:
 
-- `SUPABASE_URL`
-- `SUPABASE_ANON_KEY`
-- `SUPABASE_SERVICE_KEY` (for server-side operations)
-- `OPENWEATHER_API_KEY`
-- `PORT` (default: 3000)
+1. Open the landing page and sign in.
+2. Go to `Crop Intelligence` and upload a sample image.
+3. Run diagnosis and open the full report.
+4. Show the dashboard with live weather impact.
+5. Open the chat assistant and ask about risk or loan eligibility.
+6. Visit analytics to show district/state/national intelligence context.
 
----
+This sequence makes the project feel like a complete product system rather than a single ML demo screen.
 
-## Development Notes
+## Elevator Pitch
 
-- Use the pretrained MobileNetV2 model (no training in the MVP)
-- Yield formula is rule-based and lives under `ai/yield-prediction`
-- Trust score composition: Health (30%) · Yield (25%) · Sustainability (20%) · History (15%) · Compliance (10%)
+AgriMitra 360 is a decision-support prototype for agricultural intelligence and credit readiness. It combines crop diagnosis, explainable risk, yield forecasting, live weather impact, and trust scoring into a single workflow so a farmer or lender can move from “What’s happening in the field?” to “What action should we take next?” without switching systems.
 
-Testing:
+## Current Strengths
 
-```bash
-# Add project-specific tests to `server/` and `client/` and run them here
-```
+- Strong product framing across agriculture + finance
+- Good modular separation between AI logic, backend orchestration, and frontend presentation
+- Real weather-aware risk extension
+- Context-grounded assistant
+- Supabase-backed data flows
 
----
+## Known Gaps / Reality Check
+
+- Test coverage is still light.
+- Some docs are placeholders and have lagged behind implementation.
+- Environment setup is more manual than ideal.
+- There are a few legacy / overlapping routes and pages from iterative development.
+- This is best described as a strong prototype or hackathon-to-portfolio build, not a production-hardened platform.
+
+## Recommended Next Upgrades
+
+- Add automated tests for analysis, weather impact, and result contract mapping.
+- Expand `.env.example` to reflect the real required variables.
+- Add screenshots / GIFs to this README.
+- Add seed + bootstrap scripts for a faster first run.
+- Add CI for frontend build and backend smoke checks.
 
 ## Contributing
 
-Contributions are welcome. Please:
+Contributions are welcome. A good contribution flow is:
 
 1. Fork the repo
 2. Create a feature branch
-3. Commit and push your changes
-4. Open a Pull Request with a clear description and testing notes
-
-See [CONTRIBUTING.md](CONTRIBUTING.md) for more details (if present).
-
----
+3. Make focused changes
+4. Include testing notes
+5. Open a pull request with a clear summary
 
 ## License
 
-This project is licensed under the MIT License — see the [LICENSE](LICENSE) file.
+This project is licensed under the MIT License.
 
----
+## Acknowledgment
 
-## Contact
-
-Team AgriMitra — https://github.com/your-username/agrimitra-360
-
-Built with ❤️ for farmers and financial inclusion.
-
+Built to explore how AI can support farmer decision-making, crop recovery planning, and finance-readiness in one workflow.
