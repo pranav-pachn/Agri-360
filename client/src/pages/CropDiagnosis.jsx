@@ -23,14 +23,6 @@ const CROP_OPTIONS = [
 	'Sugarcane', 'Sunflower', 'Tea', 'Tomato', 'Turmeric', 'Wheat',
 ];
 
-const sideLinks = [
-	{ label: 'Overview', to: '/dashboard' },
-	{ label: 'Crop Intelligence', to: '/upload', active: true },
-	{ label: 'Credit Pulse', to: '/analytics' },
-	{ label: 'Support', to: '/chat' },
-	{ label: 'Profile', to: '/profile' },
-];
-
 const CropDiagnosis = () => {
 	const { user } = useAuth();
 	const navigate = useNavigate();
@@ -122,35 +114,7 @@ const CropDiagnosis = () => {
 	return (
 		<div className="min-h-[calc(100vh-4rem)] bg-slate-900 text-slate-100">
 			<div className="mx-auto max-w-[1500px] px-4 pb-28 pt-8 md:px-8 lg:px-10">
-				<div className="grid grid-cols-1 gap-8 lg:grid-cols-12">
-					<aside className="hidden lg:col-span-2 lg:block">
-						<div className="sticky top-24 card">
-							<p className="px-2 text-[10px] font-bold uppercase tracking-[0.14em] text-emerald-300/80">Digital Agronomist</p>
-							<nav className="mt-4 space-y-1" aria-label="Diagnosis side navigation">
-								{sideLinks.map((link) => (
-									<Link
-										key={link.label}
-										to={link.to}
-										className={`block rounded-xl px-3 py-2 text-sm font-medium transition ${
-											link.active
-												? 'bg-gradient-to-r from-emerald-600 to-blue-600 text-white'
-												: 'text-slate-300 hover:bg-slate-700/70 hover:text-white'
-										}`}
-									>
-										{link.label}
-									</Link>
-								))}
-							</nav>
-							<button
-								onClick={() => navigate('/analytics')}
-								className="mt-6 w-full rounded-full bg-blue-600 px-4 py-2 text-sm font-bold text-white hover:bg-blue-500"
-							>
-								Apply for Credit
-							</button>
-						</div>
-					</aside>
-
-					<div className="lg:col-span-10">
+				<div>
 						<header className="mb-8 rounded-2xl border border-slate-700/70 bg-slate-800/50 p-6">
 							<p className="text-[11px] font-bold uppercase tracking-[0.15em] text-emerald-300/80">Crop Intelligence Engine</p>
 							<h1 className="mt-2 text-3xl font-black tracking-tight text-white md:text-4xl">Diagnosis & Recovery</h1>
@@ -263,7 +227,7 @@ const CropDiagnosis = () => {
 												<>
 													<p className="text-[11px] font-bold uppercase tracking-[0.14em] text-rose-300">Action Required</p>
 													<h2 className="mt-1 text-3xl font-black text-white">{analysisResult.disease}</h2>
-													<div className="mt-4 grid grid-cols-2 gap-3">
+													<div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
 														<div className="card-compact">
 															<p className="text-[10px] font-bold uppercase tracking-[0.1em] text-slate-400">Confidence</p>
 															<p className="text-xl font-bold text-emerald-300">{analysisResult.confidence}%</p>
@@ -293,7 +257,7 @@ const CropDiagnosis = () => {
 
 								{analysisResult && (
 									<>
-										<div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-4">
+										<div className="grid grid-cols-1 gap-5 md:grid-cols-2 2xl:grid-cols-4">
 											<DiseaseCard disease={analysisResult.disease} confidence={analysisResult.confidence} />
 											<RiskCard riskLevel={analysisResult.riskLevel} riskScore={analysisResult.riskScore} />
 											<YieldCard projectedYield={analysisResult.projectedYield} estimatedLoss={analysisResult.estimatedLoss} />
@@ -311,7 +275,6 @@ const CropDiagnosis = () => {
 								)}
 							</section>
 						</div>
-					</div>
 				</div>
 			</div>
 

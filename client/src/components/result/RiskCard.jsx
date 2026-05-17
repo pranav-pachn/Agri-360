@@ -13,22 +13,22 @@ const RiskCard = ({ riskLevel, riskScore }) => {
   const colors = getRiskColor(riskLevel);
 
   return (
-    <div className={`rounded-2xl p-5 shadow-md border hover:shadow-lg hover:border-slate-600 transition-all duration-300 bg-slate-800 border-slate-700/50`}>
-      <div className="flex justify-between items-center mb-4">
-        <div className="flex items-center">
-          <div className="p-2 bg-slate-700/50 rounded-lg mr-3 text-orange-400">
+    <div className={`h-full min-w-0 rounded-2xl p-5 shadow-md border hover:shadow-lg hover:border-slate-600 transition-all duration-300 bg-slate-800 border-slate-700/50`}>
+      <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex min-w-0 items-center">
+          <div className="p-2 bg-slate-700/50 rounded-lg mr-3 shrink-0 text-orange-400">
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
             </svg>
           </div>
-          <h3 className="text-lg font-bold text-white">Risk Profile</h3>
+          <h3 className="min-w-0 break-words text-lg font-bold text-white">Risk Profile</h3>
         </div>
-        <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold border tracking-wider ${colors}`}>
+        <span className={`w-fit px-2.5 py-0.5 rounded-full text-xs font-bold border tracking-wider ${colors}`}>
           {riskLevel?.toUpperCase()}
         </span>
       </div>
       
-      <div className="flex flex-col">
+      <div className="flex h-[calc(100%-4.25rem)] flex-col">
         <div className="flex justify-between items-end mb-2">
           <p className="text-slate-400 text-sm">Risk Score</p>
           <div className="flex items-baseline space-x-1">
