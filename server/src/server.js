@@ -1,8 +1,11 @@
-// Load .env from current working directory if it exists, otherwise rely on system env vars
-try {
-  require('dotenv').config({ path: '.env', override: false });
-} catch (e) {
-  console.log('No local .env file found, using system environment variables');
+const path = require('path');
+
+// Load env from the server folder first, then fall back to the repo root.
+for (const envPath of [
+  path.resolve(__dirname, '../.env'),
+  path.resolve(__dirname, '../../.env')
+]) {
+  require('dotenv').config({ path: envPath, override: false });
 }
 
 const app = require('./app');

@@ -13,9 +13,9 @@
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
-    "@supabase/supabase-js": "^2.100.0",
-    "@tensorflow/tfjs": "^4.22.0",
+    "@supabase/supabase-js": "^2.105.4",
     "@tensorflow-models/mobilenet": "^2.1.1",
+    "@tensorflow/tfjs": "^4.22.0",
     "axios": "^1.13.6",
     "cors": "^2.8.6",
     "csv-parser": "^3.2.1",
