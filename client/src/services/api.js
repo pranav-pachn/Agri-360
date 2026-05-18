@@ -1,4 +1,7 @@
-export const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+// In development `VITE_API_URL` can point to the API server. In production
+// prefer a relative path so the front-end talks to the same origin (or set
+// `VITE_API_URL` at build time for a dedicated API host).
+export const API_URL = import.meta.env.VITE_API_URL || '/api';
 
 const fetchApi = async (endpoint, options = {}) => {
   const url = `${API_URL}${endpoint}`;
