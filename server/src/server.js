@@ -1,4 +1,4 @@
-require('dotenv').config({ path: '../.env' });
+require('dotenv').config({ path: '.env' });
 const app = require('./app');
 const aiService = require('./services/ai.service');
 const analyticsService = require('./services/analyticsService');
