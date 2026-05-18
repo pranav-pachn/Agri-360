@@ -6,6 +6,7 @@ import UploadBox from '../components/upload/UploadBox';
 import ImagePreview from '../components/upload/ImagePreview';
 import AnalyzeButton from '../components/upload/AnalyzeButton';
 import LoadingOverlay from '../components/upload/LoadingOverlay';
+import { api } from '../services/api';
 import { buildFallbackResultPayload, normalizeResultPayload } from '../services/resultDataMapper';
 
 const CROP_OPTIONS = [
@@ -66,14 +67,7 @@ const Upload = () => {
       let analysisData;
 
       try {
-        const response = await fetch('/api/analyze', {
-          method: 'POST',
-          body: formData,
-        });
-
-        if (!response.ok) throw new Error(`API error: ${response.status}`);
-
-        const json = await response.json();
+        const json = await api.post('/analyze', formData);
         const d = json.data;
 
         analysisData = normalizeResultPayload(d, {

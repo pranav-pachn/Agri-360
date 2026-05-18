@@ -11,6 +11,7 @@ import YieldCard from '../components/result/YieldCard';
 import LoanCard from '../components/result/LoanCard';
 import RecommendationBox from '../components/result/RecommendationBox';
 import SustainabilityCard from '../components/result/SustainabilityCard';
+import { api } from '../services/api';
 import { buildFallbackResultPayload, normalizeResultPayload } from '../services/resultDataMapper';
 
 const CROP_OPTIONS = [
@@ -74,16 +75,7 @@ const CropDiagnosis = () => {
 
 			let normalized;
 			try {
-				const response = await fetch('/api/analyze', {
-					method: 'POST',
-					body: formData,
-				});
-
-				if (!response.ok) {
-					throw new Error(`API error: ${response.status}`);
-				}
-
-				const json = await response.json();
+				const json = await api.post('/analyze', formData);
 				normalized = normalizeResultPayload(json.data, {
 					image: previewURL,
 				});

@@ -9,6 +9,7 @@ import LoanCard from '../components/result/LoanCard';
 import RecommendationBox from '../components/result/RecommendationBox';
 import ExplainabilityBox from '../components/result/ExplainabilityBox';
 import SustainabilityCard from '../components/result/SustainabilityCard';
+import { api } from '../services/api';
 import { buildFallbackResultPayload, normalizeResultPayload } from '../services/resultDataMapper';
 
 const Result = () => {
@@ -26,12 +27,7 @@ const Result = () => {
     } else {
       const fetchAnalysis = async () => {
         try {
-          const response = await fetch(`/api/analysis/${id}`);
-          if (!response.ok) {
-            throw new Error(`Failed to load analysis: ${response.status}`);
-          }
-
-          const analysis = await response.json();
+          const analysis = await api.get(`/analysis/${id}`);
           if (isMounted) {
             setData(normalizeResultPayload(analysis));
           }

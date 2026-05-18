@@ -76,7 +76,7 @@ export function AuthProvider({ children }) {
         provider: 'google',
         options: {
           // Ensure OAuth callback lands on app dashboard instead of public landing route.
-          redirectTo: `${window.location.origin}/dashboard`,
+          redirectTo: `${window.location.origin}/#/dashboard`,
         },
       }),
     signOut: () => supabase.auth.signOut(),
