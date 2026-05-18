@@ -3,7 +3,6 @@
  * Browser-compatible version that works without native compilation
  */
 
-const sharp = require('sharp');
 const axios = require('axios');
 const { runInference, runTensorflow } = require('./inference');
 
@@ -90,6 +89,7 @@ class TensorFlowService {
         console.log(`📥 Downloading image: ${imageUrl}`);
         try {
             ensureTensorflowDependencies();
+            const sharp = require('sharp');
 
             // First, get the raw image buffer
             const response = await axios.get(imageUrl, { responseType: 'arraybuffer' });
