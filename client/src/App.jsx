@@ -7,6 +7,7 @@ import Login from './pages/Login';
 import Landing from './pages/Landing';
 import Signup from './pages/Signup';
 import Dashboard from './pages/Dashboard';
+import AuthCallback from './pages/AuthCallback';
 import CropDiagnosis from './pages/CropDiagnosis';
 import Result from './pages/Result';
 import TrustScore from './pages/TrustScore';
@@ -24,6 +25,7 @@ function AppRoutes() {
       <Routes>
         <Route path="/" element={<Landing />} />
         <Route path="/architecture" element={<Architecture />} />
+        <Route path="/auth/callback" element={<AuthCallback />} />
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={user ? <Navigate to="/dashboard" /> : <Signup />} />
         

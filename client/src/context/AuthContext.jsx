@@ -71,14 +71,19 @@ export function AuthProvider({ children }) {
   const value = {
     signUp: signUpWithSync,
     signIn: signInWithSync,
-    signInWithGoogle: () =>
-      supabase.auth.signInWithOAuth({
+    signInWithGoogle: () => {
+      // Build the redirect URL - must match what's registered in Google OAuth AND Supabase Site URL
+      const currentOrigin = window.location.origin;
+      // Use hash path for client-side routing with HashRouter
+      const redirectUrl = `${currentOrigin}/#/auth/callback`;
+      
+      return supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          // Ensure OAuth callback lands on app dashboard instead of public landing route.
-          redirectTo: `${window.location.origin}/#/dashboard`,
+          redirectTo: redirectUrl,
         },
-      }),
+      });
+    },
     signOut: () => supabase.auth.signOut(),
     user,
   };

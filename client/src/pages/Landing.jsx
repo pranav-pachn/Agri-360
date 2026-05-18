@@ -11,7 +11,8 @@ import {
   Sprout,
   User,
 } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, Navigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 
 const topNavItems = [
   { label: 'Dashboard', to: '/dashboard' },
@@ -57,6 +58,13 @@ const mobileTabs = [
 ];
 
 export default function Landing() {
+  const { user } = useAuth();
+
+  // Redirect to dashboard if already logged in
+  if (user) {
+    return <Navigate to="/dashboard" replace />;
+  }
+
   return (
     <div className="landing-shell animate-fade">
       <div className="landing-grid-overlay" aria-hidden="true" />
