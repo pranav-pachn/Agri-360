@@ -9,20 +9,16 @@
 
 AI-powered crop diagnostics, explainable agricultural risk scoring, and finance-ready trust intelligence for smallholder farmers.
 
-AgriMitra 360 is a full-stack prototype that turns a crop image and farm context into an actionable decision workflow:
+One-line pitch: Turn a crop image and farm context into lender-ready insights and recommendations.
 
-- detect likely crop disease
-- estimate yield impact
-- compute risk and trust signals
-- surface recovery recommendations
-- present lender-friendly summaries in a modern dashboard
+## 🚀 Key Highlights
 
-It is designed to feel like a practical bridge between agri-tech and agri-finance rather than just an image classifier demo.
-
-**Designed as a modular, explainable AI pipeline integrating real-time environmental data with financial decision systems.**
+- Explainable AI Risk Engine — interpretable breakdowns for every score.
+- Real-time Weather Integration — live weather affects risk and recommendations.
+- Finance-ready Trust Score — lender-focused signals and eligibility framing.
+- Multilingual AI Assistant — English, Hindi, and Telugu support for field teams.
 
 ## At A Glance
-
 | Area | What It Does |
 | --- | --- |
 | Crop Intelligence | Upload a crop image and generate disease, severity, health, and recovery guidance |
@@ -32,30 +28,22 @@ It is designed to feel like a practical bridge between agri-tech and agri-financ
 | Dashboard | Surface live risk, weather impact, trends, and recommendations in one workspace |
 | AI Assistant | Answer context-aware questions about risk, yield, trust, and loan readiness |
 
-## Showcase
+## Product Preview
+
+The most recruiter-facing visuals are shown below — priority order: Dashboard, Result page, Chat assistant.
+
+![Dashboard](docs/screenshots/dashboard.png)
+
+![Result Page](docs/screenshots/result-page.png)
+
+![Chat Assistant](docs/screenshots/chat.png)
 
 ### Product Highlights
-- **End-to-end workflow**: from image upload to diagnosis, score interpretation, and action plan.
-- **Live environmental signal**: weather is not decorative; it changes risk and is surfaced explicitly in the UI.
-- **Finance-aware outputs**: trust score and eligibility framing make the system relevant to agri-credit scenarios.
-- **Explorable experience**: dashboard, analytics, profile, assistant, and applications views make the prototype feel like a real platform.
+- End-to-end workflow: image upload → diagnosis → risk & yield → lender-ready summary.
+- Live environmental signal: weather actively informs risk and recommendations.
+- Finance-aware outputs: trust score and eligibility framing for agri-credit scenarios.
 
-### Suggested Screenshots To Add
-- `Landing page` — product positioning and value proposition
-- `Crop diagnosis workspace` — upload, inference, and action panel
-- `Analysis result report` — disease, risk, yield, and trust output
-- `Dashboard` — live weather impact, risk summary, and trends
-- `Analytics view` — district/state/national intelligence
-- `AI assistant` — context-grounded question answering
-
-### Demo Assets
-- Add product screenshots under `docs/` or `client/public/assets/`
-- Add a short GIF or Loom link showing:
-  1. sign in
-  2. upload image
-  3. inspect report
-  4. open dashboard weather overlay
-  5. ask the assistant a risk question
+(Support assets and capture guidance moved to `docs/screenshots/README.md`.)
 
 ## Why This Project Stands Out
 
@@ -76,6 +64,14 @@ It is designed to feel like a practical bridge between agri-tech and agri-financ
 - Weather volatility significantly impacts high-risk predictions.
 - Crop health strongly correlates with yield stability.
 - The analytics layer exposes comparable predicted vs actual yield patterns for reviewer inspection.
+
+### 📈 Sample Visualization
+
+Below are recruiter-facing proof charts showing model outputs vs observed data.
+
+![Predicted vs Actual Yield](docs/screenshots/yield-vs-actual.png)
+
+![Risk Distribution](docs/screenshots/risk-distribution.png)
 
 ### Validation Notes
 - The proof layer is backed by the synthetic agricultural dataset in `data/farm_dataset.csv`.
@@ -283,32 +279,22 @@ agri-360/
 └─ scripts/             # utility scripts
 ```
 
-## Screenshots
+## Screenshot Assets
 
-The repository now reserves a dedicated screenshot area at `docs/screenshots/`.
+The root README now embeds the main recruiter-facing visuals directly.
 
-Current supporting visual assets already in the repo:
-
-- `client/public/assets/loan-dashboard-farmer.svg`
-- `client/public/assets/loan-dashboard-map.svg`
-
-Recommended screenshots to add:
+Current image set in `docs/screenshots/`:
 
 ```text
 docs/screenshots/
-├─ landing.png
-├─ crop-intelligence.png
-├─ result-report.png
-├─ dashboard-weather.png
-├─ analytics.png
-└─ assistant.png
+├─ dashboard.png
+├─ result-page.png
+├─ chat.png
+├─ yield-vs-actual.png
+└─ risk-distribution.png
 ```
 
-Priority order for recruiter impact:
-1. Dashboard
-2. Result page
-3. Chat assistant
-4. Analytics
+Use `docs/screenshots/README.md` for capture guidance and future asset refresh notes.
 
 ## Quick Start
 
@@ -424,7 +410,7 @@ AgriMitra 360 is a decision-support prototype for agricultural intelligence and 
 
 - Add automated tests for analysis, weather impact, and result contract mapping.
 - Expand `.env.example` to reflect the real required variables.
-- Add screenshots / GIFs to this README.
+- Add a short GIF walkthrough showing upload → result → dashboard → chat flow.
 - Add seed + bootstrap scripts for a faster first run.
 - Add CI for frontend build and backend smoke checks.
 

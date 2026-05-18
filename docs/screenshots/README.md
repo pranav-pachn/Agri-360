@@ -1,26 +1,22 @@
-# Screenshots Placeholder
+# Screenshots (supporting guidance)
 
-Add product screenshots to this folder so the main `README.md` can link to them directly.
+This folder holds recruiter-facing screenshots and capture guidance used by the root `README.md`.
 
-Recommended files:
+Primary files expected by the top-level README:
 
-- `landing.png`
-- `crop-intelligence.png`
-- `result-report.png`
-- `dashboard-weather.png`
-- `analytics.png`
-- `assistant.png`
+- `dashboard.png` (priority)
+- `result-page.png`
+- `chat.png`
+- `yield-vs-actual.png` (chart)
+- `risk-distribution.png` (chart)
 
-Recommended order for README embedding:
+Capture checklist:
 
-1. Dashboard
-2. Result report
-3. Chat assistant
-4. Analytics
+- Use desktop width screenshots for portfolio clarity
+- Prefer consistent theme (dark or light) across assets
+- Show real data states where possible (avoid empty tables)
+- Crop or hide browser chrome for cleaner presentation
 
-Suggested capture guidelines:
+Notes:
 
-- Use desktop width first
-- Prefer dark theme for consistency with current app visuals
-- Capture real data states where possible
-- Avoid browser chrome if you want cleaner portfolio presentation
+- The main recruiter-facing README now embeds the top three visuals directly; keep this file as supporting guidance and the canonical asset list.
