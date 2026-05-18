@@ -14,6 +14,7 @@ const safeRequire = (moduleName) => {
         return require(moduleName);
     } catch (e) {
         const tryPaths = [
+            path.resolve(__dirname, '../../server/node_modules'),
             path.resolve(__dirname, '../../node_modules'),
             path.resolve(__dirname, '../../../node_modules'),
             path.resolve(__dirname, '../../../../node_modules')
