@@ -3,11 +3,26 @@
  * Browser-compatible version that works without native compilation
  */
 
-const tf = require('@tensorflow/tfjs');
-const mobilenet = require('@tensorflow-models/mobilenet');
 const sharp = require('sharp');
 const axios = require('axios');
 const { runInference, runTensorflow } = require('./inference');
+
+let tf = null;
+let mobilenet = null;
+
+const ensureTensorflowDependencies = () => {
+    if (tf && mobilenet) {
+        return true;
+    }
+
+    try {
+        tf = require('@tensorflow/tfjs');
+        mobilenet = require('@tensorflow-models/mobilenet');
+        return true;
+    } catch (error) {
+        throw new Error(`TensorFlow.js dependencies unavailable: ${error.message}`);
+    }
+};
 
 // Lazy-load weather service (to avoid circular dependencies)
 let weatherService = null;
@@ -44,6 +59,13 @@ class TensorFlowService {
      * Load MobileNet model for image classification (Iterative version)
      */
     async loadModel() {
+        try {
+            ensureTensorflowDependencies();
+        } catch (error) {
+            console.warn('⚠️ TensorFlow dependencies unavailable, using enhanced mock service:', error.message);
+            return false;
+        }
+
         for (let i = 0; i < this.maxLoadAttempts; i++) {
             try {
                 console.log(`🧠 Loading MobileNet model... Attempt ${i + 1}`);
@@ -67,6 +89,8 @@ class TensorFlowService {
     async loadImageAsTensor(imageUrl) {
         console.log(`📥 Downloading image: ${imageUrl}`);
         try {
+            ensureTensorflowDependencies();
+
             // First, get the raw image buffer
             const response = await axios.get(imageUrl, { responseType: 'arraybuffer' });
             const imageBuffer = Buffer.from(response.data);
