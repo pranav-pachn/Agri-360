@@ -3,37 +3,40 @@
  * Browser-compatible version that works without native compilation
  */
 
+const path = require('path');
 const { runInference, runTensorflow } = require('./inference');
 
 let tf = null;
 let mobilenet = null;
 
-const ensureTensorflowDependencies = () => {
-    if (tf && mobilenet) {
-        return true;
-    }
-
+const safeRequire = (moduleName) => {
     try {
-        tf = require('@tensorflow/tfjs');
-        mobilenet = require('@tensorflow-models/mobilenet');
+        return require(moduleName);
+    } catch (e) {
+        const tryPaths = [
+            path.resolve(__dirname, '../../node_modules'),
+            path.resolve(__dirname, '../../../node_modules'),
+            path.resolve(__dirname, '../../../../node_modules')
+        ];
+
+        try {
+            const resolved = require.resolve(moduleName, { paths: tryPaths });
+            return require(resolved);
+        } catch (err) {
+            throw e; // rethrow original require error for clearer message
+        }
+    }
+};
+
+const ensureTensorflowDependencies = () => {
+    if (tf && mobilenet) return true;
+    try {
+        tf = safeRequire('@tensorflow/tfjs');
+        mobilenet = safeRequire('@tensorflow-models/mobilenet');
         return true;
     } catch (error) {
         throw new Error(`TensorFlow.js dependencies unavailable: ${error.message}`);
     }
-};
-
-// Lazy-load weather service (to avoid circular dependencies)
-let weatherService = null;
-const getWeatherService = () => {
-  if (!weatherService) {
-    try {
-      weatherService = require('../../server/src/services/weather.service');
-    } catch (err) {
-      console.warn('⚠️ Weather service not available, weather will default to "normal"');
-      weatherService = { getWeatherByLocation: async () => 'normal' };
-    }
-  }
-  return weatherService;
 };
 
 const FALLBACK_ESTIMATED_LOSS_BY_SEVERITY = {
@@ -88,8 +91,8 @@ class TensorFlowService {
         console.log(`📥 Downloading image: ${imageUrl}`);
         try {
             ensureTensorflowDependencies();
-            const axios = require('axios');
-            const sharp = require('sharp');
+                const axios = safeRequire('axios');
+                const sharp = safeRequire('sharp');
 
             // First, get the raw image buffer
             const response = await axios.get(imageUrl, { responseType: 'arraybuffer' });
