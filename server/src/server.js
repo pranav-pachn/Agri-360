@@ -1,16 +1,35 @@
-require('dotenv').config({ path: '.env' });
+// Load .env from current working directory if it exists, otherwise rely on system env vars
+try {
+  require('dotenv').config({ path: '.env', override: false });
+} catch (e) {
+  console.log('No local .env file found, using system environment variables');
+}
+
 const app = require('./app');
 const aiService = require('./services/ai.service');
 const analyticsService = require('./services/analyticsService');
-const tensorflowService = require('../../ai/crop-intelligence/tensorflow-service');
+
+// Conditionally require TensorFlow only if enabled
+let tensorflowService = null;
+if (process.env.USE_TENSORFLOW === 'true') {
+  try {
+    tensorflowService = require('../../ai/crop-intelligence/tensorflow-service');
+  } catch (e) {
+    console.warn('TensorFlow service unavailable:', e.message);
+  }
+}
 
 const PORT = process.env.PORT || 5000;
 
-// Initialize TensorFlow service directly
+// Initialize services
 async function initializeServices() {
   try {
     console.log('🧠 Pre-loading MobileNet model into memory (Cold Start Prevention)...');
-    await tensorflowService.loadModel();
+    if (tensorflowService) {
+      await tensorflowService.loadModel();
+    } else {
+      console.log('TensorFlow service disabled, using enhanced mock AI');
+    }
 
     const analyticsStatus = await analyticsService.checkAnalyticsTableStatus();
     if (analyticsStatus.analyticsTableReady) {

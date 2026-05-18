@@ -24,7 +24,7 @@ app.use((req, res, next) => {
 app.use('/api', analysisRoutes);
 app.use('/api/v1/analytics', analyticsRoutes);
 app.use('/api/v1/chat', chatRoutes);
-app.use('/api/v1/farmers', farmerRoutes);
+    ai_service: process.env.USE_TENSORFLOW === 'true' ? 'TensorFlow + Enhanced Mock' : 'Enhanced Mock',
 app.use('/api/v1/risk', riskRoutes);
 app.use('/api/v1/weather', weatherRoutes);
 
@@ -94,6 +94,7 @@ app.get('/', (req, res) => {
         }
       }
     },
+    ai_service: process.env.USE_TENSORFLOW === 'true' && tensorflowService ? 'TensorFlow + Enhanced Mock' : 'Enhanced Mock',
     ai_service: process.env.USE_TENSORFLOW === 'true' ? 'TensorFlow + Enhanced Mock' : 'Enhanced Mock',
     documentation: 'Visit /health for server status'
   });
