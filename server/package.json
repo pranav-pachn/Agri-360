@@ -5,7 +5,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "predeploy": "npm --prefix ../client install && npm --prefix ../client run build",
+    "predeploy": "(npm --prefix ./client install && npm --prefix ./client run build) || (npm --prefix ../client install && npm --prefix ../client run build)",
     "dev": "nodemon src/server.js",
     "prestart": "npm run predeploy",
     "start": "node src/server.js",
