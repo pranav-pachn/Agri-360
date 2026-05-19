@@ -31,19 +31,37 @@ export function AuthProvider({ children }) {
   };
 
   useEffect(() => {
-    const cleanupOAuthHash = () => {
-      if (window.location.hash.includes('access_token=')) {
-        if (import.meta.env.PROD) {
-          window.location.replace(`${window.location.origin}/dashboard`);
-        } else {
-          // Replace the URL with the app hash route so HashRouter works normally
-          window.location.replace(`${window.location.origin}/#/dashboard`);
-        }
-      }
-    };
-
     const handleOAuthFromUrl = async () => {
-      if (window.location.hash.includes('access_token=')) {
+      const currentUrl = new URL(window.location.href);
+      const hasOAuthCode = currentUrl.searchParams.has('code');
+
+      if (hasOAuthCode) {
+        console.debug('[Auth] OAuth code detected in URL, exchanging for session');
+        try {
+          const { data, error } = await supabase.auth.exchangeCodeForSession(window.location.href);
+          console.debug('[Auth] exchangeCodeForSession returned', { data, error });
+
+          if (error) {
+            console.error('Error exchanging OAuth code for session:', error);
+          } else if (data?.session) {
+            const session = data.session;
+            setUser(session?.user ?? null);
+            if (session?.user) {
+              await syncFarmerProfile(session.user);
+            }
+          } else {
+            console.warn('[Auth] exchangeCodeForSession returned no session object');
+          }
+        } catch (e) {
+          console.error('Exception exchanging OAuth code for session:', e);
+        } finally {
+          currentUrl.searchParams.delete('code');
+          currentUrl.searchParams.delete('state');
+          currentUrl.searchParams.delete('scope');
+          currentUrl.searchParams.delete('auth_code');
+          window.history.replaceState({}, document.title, `${currentUrl.pathname}${currentUrl.search}`);
+        }
+      } else if (window.location.hash.includes('access_token=')) {
         console.debug('[Auth] OAuth fragment detected in URL, attempting to parse session');
         try {
           const { data, error } = await supabase.auth.getSessionFromUrl({ storeSession: true });
@@ -61,8 +79,6 @@ export function AuthProvider({ children }) {
           }
         } catch (e) {
           console.error('Exception parsing session from URL:', e);
-        } finally {
-          cleanupOAuthHash();
         }
       }
     };
@@ -84,7 +100,6 @@ export function AuthProvider({ children }) {
       setUser(session?.user ?? null);
       if (session?.user) {
         syncFarmerProfile(session.user);
-        cleanupOAuthHash();
       }
       setLoading(false);
     });
