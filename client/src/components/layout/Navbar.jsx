@@ -1,17 +1,26 @@
 import React, { useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
-import { Search, Sun, Moon, User, Menu, X } from 'lucide-react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Search, Sun, Moon, User, Menu, X, LogOut } from 'lucide-react';
 import { useTheme } from '../../context/ThemeContext';
 import { useTranslation } from 'react-i18next';
 import LanguageSelector from '../chat/LanguageSelector';
 import { protectedMobileMenuItems, protectedPrimaryNavItems } from './navigation';
+import { useAuth } from '../../context/AuthContext';
 
 const Navbar = () => {
   const location = useLocation();
+  const navigate = useNavigate();
   const { isDark, toggleTheme } = useTheme();
   const { i18n, t } = useTranslation();
+  const { signOut } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const language = i18n.language || 'en';
+
+  const handleSignOut = async () => {
+    setMobileMenuOpen(false);
+    await signOut();
+    navigate('/login', { replace: true });
+  };
 
   return (
     <>
@@ -135,6 +144,13 @@ const Navbar = () => {
               );
             })}
           </div>
+          <button
+            onClick={handleSignOut}
+            className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-bold uppercase text-red-400 hover:bg-red-500/10 transition-all"
+          >
+            <LogOut className="h-4 w-4" />
+            <span>Sign Out</span>
+          </button>
         </div>
       )}
     </>

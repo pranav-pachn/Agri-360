@@ -1,13 +1,21 @@
-import { Link, useLocation } from 'react-router-dom';
-import { Leaf } from 'lucide-react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Leaf, LogOut } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import LanguageSelector from '../chat/LanguageSelector';
 import { protectedPrimaryNavItems } from './navigation';
+import { useAuth } from '../../context/AuthContext';
 
 export default function Sidebar() {
   const location = useLocation();
+  const navigate = useNavigate();
   const { i18n, t } = useTranslation();
+  const { signOut } = useAuth();
   const language = i18n.language || 'en';
+
+  const handleSignOut = async () => {
+    await signOut();
+    navigate('/login', { replace: true });
+  };
 
   return (
     <aside className="fixed left-0 top-0 z-50 hidden h-screen w-64 flex-col gap-2 border-r border-slate-800 bg-[#060e1a] py-6 lg:flex">
@@ -48,7 +56,7 @@ export default function Sidebar() {
       </nav>
 
       {/* Bottom Section */}
-      <div className="mt-auto space-y-4 px-4">
+      <div className="mt-auto space-y-3 px-4">
         <div>
           <p className="mb-2 px-1 text-[11px] font-bold uppercase tracking-[0.18em] text-slate-500">
             {t('language')}
@@ -65,6 +73,13 @@ export default function Sidebar() {
         >
           Apply for Credit
         </Link>
+        <button
+          onClick={handleSignOut}
+          className="flex w-full items-center justify-center gap-2 rounded-full border border-slate-700/60 bg-slate-800/40 py-2.5 text-sm font-semibold text-slate-400 transition-all hover:border-red-500/40 hover:bg-red-500/10 hover:text-red-400"
+        >
+          <LogOut className="h-4 w-4" />
+          Sign Out
+        </button>
       </div>
     </aside>
   );
