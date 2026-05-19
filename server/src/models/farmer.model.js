@@ -318,7 +318,10 @@ class FarmerModel {
         .eq('id', farmerId)
         .single();
 
-      if (error) throw error;
+      if (error) {
+        if (error.code === 'PGRST116') return null;
+        throw error;
+      }
       return data;
     } catch (error) {
       console.error('Error fetching farmer:', error);
@@ -355,7 +358,10 @@ class FarmerModel {
         .eq('id', farmerId)
         .single();
 
-      if (farmerError) throw farmerError;
+      if (farmerError) {
+        if (farmerError.code === 'PGRST116') return null;
+        throw farmerError;
+      }
 
       // Get recent crop reports
       const { data: reports } = await supabase
