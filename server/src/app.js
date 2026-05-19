@@ -1,5 +1,7 @@
 const express = require('express');
 const cors = require('cors');
+const fs = require('fs');
+const path = require('path');
 const analysisRoutes = require('./routes/analysisRoutes');
 const analyticsRoutes = require('./routes/analytics.routes');
 const chatRoutes = require('./routes/chat.routes');
@@ -10,6 +12,9 @@ const errorHandler = require('./middlewares/error.middleware');
 const logger = require('./utils/logger');
 
 const app = express();
+const clientDistPath = path.resolve(__dirname, '../../client/dist');
+const clientIndexPath = path.join(clientDistPath, 'index.html');
+const hasClientBuild = fs.existsSync(clientIndexPath);
 
 app.use(cors());
 app.use(express.json());
@@ -47,5 +52,18 @@ app.use((err, req, res, next) => {
 
 // Use global error handler
 app.use(errorHandler);
+
+// Serve the built client in production so browser-router routes like /auth/callback work.
+if (hasClientBuild) {
+  app.use(express.static(clientDistPath));
+
+  app.get('*', (req, res, next) => {
+    if (req.path.startsWith('/api')) {
+      return next();
+    }
+
+    return res.sendFile(clientIndexPath);
+  });
+}
 
 module.exports = app;

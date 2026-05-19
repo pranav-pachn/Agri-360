@@ -109,6 +109,7 @@ export default function Login() {
                 type="password"
                 className="input-field auth-input"
                 placeholder="••••••••"
+                autoComplete="current-password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required

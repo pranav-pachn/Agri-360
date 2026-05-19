@@ -104,6 +104,7 @@ export default function Signup() {
                 type="password"
                 className="input-field auth-input"
                 placeholder="Create a secure password"
+                autoComplete="new-password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
