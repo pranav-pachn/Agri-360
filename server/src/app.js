@@ -12,6 +12,8 @@ const errorHandler = require('./middlewares/error.middleware');
 const logger = require('./utils/logger');
 
 const app = express();
+const serveClientBuild = process.env.SERVE_CLIENT_BUILD === 'true';
+const frontendUrl = (process.env.FRONTEND_URL || '').replace(/\/$/, '');
 
 function resolveClientBuildPath() {
   const distCandidates = [
@@ -36,7 +38,7 @@ function resolveClientBuildPath() {
 }
 
 const { distPath: clientDistPath, indexPath: clientIndexPath } = resolveClientBuildPath();
-const hasClientBuild = Boolean(clientDistPath && clientIndexPath);
+const hasClientBuild = serveClientBuild && Boolean(clientDistPath && clientIndexPath);
 
 app.use(cors());
 app.use(express.json());
@@ -67,6 +69,16 @@ app.get('/health', (req, res) => {
   res.status(200).json({ status: 'ok', message: 'AgriMitra 360 Backend is running smoothly.' });
 });
 
+// Split deployment support: when frontend is hosted separately (e.g. Vercel),
+// redirect backend callback traffic to the frontend callback route.
+if (!hasClientBuild && frontendUrl) {
+  app.get('/auth/callback', (req, res) => {
+    const queryIndex = req.originalUrl.indexOf('?');
+    const query = queryIndex >= 0 ? req.originalUrl.slice(queryIndex) : '';
+    return res.redirect(`${frontendUrl}/auth/callback${query}`);
+  });
+}
+
 // Enhanced error handling middleware
 app.use((err, req, res, next) => {
   logger.error('Unhandled error:', err);
@@ -90,8 +102,10 @@ if (hasClientBuild) {
 
     return res.sendFile(clientIndexPath);
   });
-} else {
+} else if (serveClientBuild) {
   logger.warn('Client build not found. SPA routes (e.g. /auth/callback) will return 404 until client/dist is deployed.');
+} else {
+  logger.info('Running in API-only mode (SERVE_CLIENT_BUILD is not true).');
 }
 
 module.exports = app;
