@@ -306,9 +306,46 @@ export default function Dashboard() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#060e1a] p-6 text-white">
-        <div className="mx-auto flex max-w-7xl items-center justify-center rounded-2xl bg-slate-800 p-12 shadow-md">
-          <p className="text-lg font-semibold">Loading dashboard intelligence...</p>
+      <div className="page-wrapper">
+        <div className="page-inner">
+          {/* Skeleton Header */}
+          <div className="card flex items-center gap-5">
+            <div className="skeleton h-16 w-16 rounded-full" />
+            <div className="flex-1 space-y-3">
+              <div className="skeleton h-5 w-48" />
+              <div className="skeleton h-3 w-32" />
+            </div>
+            <div className="skeleton h-10 w-36 rounded-xl" />
+          </div>
+
+          {/* Skeleton 3-col grid */}
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+            {[0, 1, 2].map((i) => (
+              <div key={i} className="card space-y-4">
+                <div className="skeleton h-4 w-24" />
+                <div className="skeleton h-12 w-20" />
+                <div className="space-y-2">
+                  <div className="skeleton h-3 w-full" />
+                  <div className="skeleton h-3 w-3/4" />
+                  <div className="skeleton h-3 w-1/2" />
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Skeleton recommendations */}
+          <div className="card space-y-3">
+            <div className="skeleton h-4 w-40" />
+            {[0, 1, 2].map((i) => (
+              <div key={i} className="skeleton h-10 w-full" />
+            ))}
+          </div>
+
+          {/* Skeleton analytics */}
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+            <div className="card skeleton h-52" />
+            <div className="card skeleton h-52" />
+          </div>
         </div>
       </div>
     );
@@ -328,8 +365,8 @@ export default function Dashboard() {
   const riskDistribution = buildRiskDistribution(analyticsSnapshot, riskScore);
 
   return (
-    <div className="min-h-screen bg-[#060e1a] p-6 text-white">
-      <div className="mx-auto max-w-7xl space-y-6">
+    <div className="page-wrapper">
+      <div className="page-inner">
         <FarmerProfile
           name={farmerName}
           location={farmerLocation}
@@ -357,3 +394,4 @@ export default function Dashboard() {
     </div>
   );
 }
+

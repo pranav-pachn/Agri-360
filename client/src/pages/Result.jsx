@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useLocation, useParams, useNavigate } from 'react-router-dom';
+import { Plus, CheckCircle, AlertCircle } from 'lucide-react';
 import ImagePanel from '../components/result/ImagePanel';
 import DiseaseCard from '../components/result/DiseaseCard';
 import RiskCard from '../components/result/RiskCard';
@@ -21,150 +22,117 @@ const Result = () => {
   useEffect(() => {
     let isMounted = true;
 
-    // Check if we received data from router navigation (e.g. from upload page)
     if (location.state?.analysisData) {
       setData(normalizeResultPayload(location.state.analysisData));
     } else {
       const fetchAnalysis = async () => {
         try {
           const analysis = await api.get(`/analysis/${id}`);
-          if (isMounted) {
-            setData(normalizeResultPayload(analysis));
-          }
+          if (isMounted) setData(normalizeResultPayload(analysis));
         } catch (error) {
           console.error('Failed to fetch analysis by id, using fallback:', error);
           if (isMounted) {
-            setData(
-              buildFallbackResultPayload({
-                id: id || 'mock-analysis',
-                dataMode: {
-                  source: 'frontend-mock',
-                  fallbackUsed: true,
-                },
-              })
-            );
+            setData(buildFallbackResultPayload({
+              id: id || 'mock-analysis',
+              dataMode: { source: 'frontend-mock', fallbackUsed: true },
+            }));
           }
         }
       };
-
       fetchAnalysis();
     }
 
-    return () => {
-      isMounted = false;
-    };
+    return () => { isMounted = false; };
   }, [id, location.state]);
 
   if (!data) {
     return (
-      <div className="min-h-screen bg-[#060e1a] flex flex-col items-center justify-center">
-        <div className="w-16 h-16 border-4 border-indigo-500/20 border-t-indigo-500 rounded-full animate-spin"></div>
-        <p className="mt-4 text-indigo-400 font-medium animate-pulse">Loading analysis report...</p>
+      <div className="min-h-screen bg-[#060e1a] flex flex-col items-center justify-center gap-4">
+        <div className="h-14 w-14 rounded-full border-4 border-emerald-500/20 border-t-emerald-400 animate-spin" />
+        <p className="text-sm font-semibold uppercase tracking-[0.15em] text-emerald-400 animate-pulse">
+          Loading analysis report...
+        </p>
       </div>
     );
   }
 
   return (
-    <div className="min-h-[calc(100vh-4rem)] bg-[#060e1a] py-8 px-4 sm:px-6 lg:px-8 animate-in fade-in duration-500">
-      <div className="max-w-7xl mx-auto">
-        
-        {/* Header Section */}
-        <div className="mb-8 flex flex-col sm:flex-row sm:items-end justify-between gap-4 border-b border-slate-800 pb-6">
-          <div>
-            <div className="flex items-center space-x-2 text-indigo-400 mb-2">
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-              </svg>
-              <span className="text-sm font-bold tracking-wider uppercase">Analysis Complete</span>
-              <span className="rounded-full border border-indigo-400/30 bg-indigo-500/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-indigo-200">
-                {data?.dataMode?.fallbackUsed ? 'Fallback Data' : 'Real Data'}
-              </span>
+    <div className="page-wrapper">
+      <div className="page-inner">
+
+        {/* Page Header Card */}
+        <div className="rounded-2xl border border-white/10 bg-slate-800/80 backdrop-blur-md p-6 shadow-lg">
+          <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <div className="flex items-center gap-2 mb-3">
+                <CheckCircle className="h-4 w-4 text-emerald-400" />
+                <span className="section-kicker">Analysis Complete</span>
+                <span className="rounded-full border border-emerald-500/25 bg-emerald-500/10 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-emerald-300">
+                  {data?.dataMode?.fallbackUsed ? 'Fallback Data' : 'Live Data'}
+                </span>
+              </div>
+              <h1 className="section-title">Crop Assessment Report</h1>
+              <p className="section-subtitle">
+                Comprehensive breakdown of crop health, risk factors, and financial eligibility based on your recent scan.
+              </p>
             </div>
-            <h1 className="text-3xl font-extrabold text-white tracking-tight sm:text-4xl">
-              Crop Assessment Report
-            </h1>
-            <p className="text-slate-400 mt-2 max-w-2xl">
-              Comprehensive breakdown of crop health, risk factors, and financial eligibility based on your recent scan.
-            </p>
+            <button
+              onClick={() => navigate('/upload')}
+              className="btn-saas-primary shrink-0"
+            >
+              <Plus className="h-4 w-4" />
+              New Analysis
+            </button>
           </div>
-          <button 
-            onClick={() => navigate('/upload')}
-            className="flex items-center px-5 py-2.5 bg-slate-800 text-white font-medium rounded-xl border border-slate-700 hover:bg-slate-700 hover:border-slate-500 transition-all shadow-sm"
-          >
-            <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
-            </svg>
-            New Analysis
-          </button>
         </div>
 
-        {/* Main Content Grid */}
+        {/* Main Content: two-column */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          
-          {/* LEFT SIDE: Image panel */}
-          <div className="space-y-6 flex flex-col">
+
+          {/* LEFT: Image + context */}
+          <div className="flex flex-col gap-6">
             <ImagePanel imageUrl={data.image} />
-            
-            {/* Optional context box that fits nicely under the image */}
-            <div className="bg-slate-800/40 rounded-2xl p-5 border border-slate-800 text-sm text-slate-400">
-              <p className="flex items-start">
-                <svg className="w-5 h-5 text-indigo-400 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                </svg>
+
+            <div className="card flex items-start gap-3">
+              <AlertCircle className="h-5 w-5 text-slate-500 mt-0.5 shrink-0" />
+              <p className="text-sm text-slate-400 leading-relaxed">
                 This report is generated using advanced AI analysis. Results are estimates and should be verified with local agricultural experts for critical decisions.
               </p>
             </div>
           </div>
 
-          {/* RIGHT SIDE: Information Cards */}
-          <div className="space-y-5 flex flex-col">
-            
-            {/* MOST IMPORTANT: Loan / Trust Score */}
-            <LoanCard 
-              trustScore={data.trustScore} 
-              eligibility={data.eligibility} 
-              rating={data.rating} 
+          {/* RIGHT: Result cards */}
+          <div className="flex flex-col gap-5">
+            <LoanCard
+              trustScore={data.trustScore}
+              eligibility={data.eligibility}
+              rating={data.rating}
             />
 
-            {/* Disease Detection */}
-            <DiseaseCard 
-              disease={data.disease} 
-              confidence={data.confidence} 
+            <DiseaseCard
+              disease={data.disease}
+              confidence={data.confidence}
             />
 
-            {/* Risk & Yield: Side-by-side on mobile, or responsive */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-              <RiskCard 
-                riskLevel={data.riskLevel} 
-                riskScore={data.riskScore} 
-              />
+              <RiskCard riskLevel={data.riskLevel} riskScore={data.riskScore} />
               <RiskBreakdown
                 data={{
                   riskScore: data.riskScore ?? 0,
                   riskCategory: data.riskLevel ?? data.riskCategory,
                   confidence: data.riskConfidence ?? data.confidence ?? 0.75,
                   breakdown: data.riskBreakdown ?? data.breakdown ?? [],
-                  explanation: data.riskExplanation ?? data.explanation ?? ''
+                  explanation: data.riskExplanation ?? data.explanation ?? '',
                 }}
               />
-              <YieldCard 
-                projectedYield={data.projectedYield} 
-                estimatedLoss={data.estimatedLoss} 
-              />
+              <YieldCard projectedYield={data.projectedYield} estimatedLoss={data.estimatedLoss} />
             </div>
 
-            {/* Recommended Actions */}
-            <RecommendationBox 
-              recommendations={data.recommendations} 
+            <RecommendationBox recommendations={data.recommendations} />
+            <SustainabilityCard
+              sustainabilityScore={data.sustainabilityScore}
+              breakdown={data.sustainabilityBreakdown}
             />
-
-            {/* Sustainability */}
-            <SustainabilityCard 
-              sustainabilityScore={data.sustainabilityScore} 
-              breakdown={data.sustainabilityBreakdown} 
-            />
-
-            {/* Explainability AI Text */}
             <ExplainabilityBox
               disease={data.disease}
               confidence={data.confidence}
@@ -172,10 +140,9 @@ const Result = () => {
               riskScore={data.riskScore}
               explanationText={data.explainabilityText}
             />
-            
           </div>
         </div>
-        
+
       </div>
     </div>
   );

@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import UploadBox from '../components/upload/UploadBox';
 import ImagePreview from '../components/upload/ImagePreview';
@@ -104,13 +104,13 @@ const CropDiagnosis = () => {
 	};
 
 	return (
-		<div className="min-h-[calc(100vh-4rem)] bg-[#060e1a] text-slate-100">
-			<div className="mx-auto max-w-[1500px] px-4 pb-28 pt-8 md:px-8 lg:px-10">
+		<div className="page-wrapper">
+			<div className="page-inner">
 				<div>
-						<header className="mb-8 rounded-2xl border border-slate-700/70 bg-slate-800/50 p-6">
-							<p className="text-[11px] font-bold uppercase tracking-[0.15em] text-emerald-300/80">Crop Intelligence Engine</p>
-							<h1 className="mt-2 text-3xl font-black tracking-tight text-white md:text-4xl">Diagnosis & Recovery</h1>
-							<p className="mt-3 max-w-3xl text-sm text-slate-300 md:text-base">
+						<header className="card mb-2">
+							<p className="section-kicker">Crop Intelligence Engine</p>
+							<h1 className="mt-2 section-title">Diagnosis &amp; Recovery</h1>
+							<p className="section-subtitle">
 								Upload a leaf sample to run AI diagnosis and immediately review risk, yield impact,
 								trust-readiness, and treatment recommendations in one workflow.
 							</p>
@@ -237,7 +237,7 @@ const CropDiagnosis = () => {
 
 													<button
 														onClick={() => navigate(`/result/${analysisResult.id || Date.now()}`, { state: { analysisData: analysisResult } })}
-														className="mt-5 inline-flex items-center justify-center rounded-full bg-emerald-600 px-5 py-2.5 text-sm font-bold text-white hover:bg-emerald-500"
+														className="btn-saas-primary mt-5"
 													>
 														Open Full Report
 													</button>
@@ -269,14 +269,7 @@ const CropDiagnosis = () => {
 						</div>
 				</div>
 			</div>
-
-			<nav className="fixed bottom-0 left-0 z-40 flex w-full items-center justify-around border-t border-slate-800 bg-[#060e1a]/95 px-2 py-2 lg:hidden">
-				<Link to="/dashboard" className="rounded-xl px-3 py-2 text-[11px] font-bold uppercase tracking-[0.08em] text-slate-400">Home</Link>
-				<Link to="/upload" className="rounded-xl bg-emerald-600/20 px-3 py-2 text-[11px] font-bold uppercase tracking-[0.08em] text-emerald-300">Crops</Link>
-				<Link to="/analytics" className="rounded-xl px-3 py-2 text-[11px] font-bold uppercase tracking-[0.08em] text-slate-400">Finance</Link>
-				<Link to="/profile" className="rounded-xl px-3 py-2 text-[11px] font-bold uppercase tracking-[0.08em] text-slate-400">Profile</Link>
-			</nav>
-
+			</div>
 			<LoadingOverlay isVisible={loading} />
 		</div>
 	);

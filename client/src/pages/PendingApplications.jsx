@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { CheckCircle2, Search, XCircle } from 'lucide-react';
+import { CheckCircle2, Search, XCircle, ClipboardList, RefreshCw } from 'lucide-react';
 import {
   getLoanApplicationsRequest,
   updateLoanApplicationStatusRequest,
@@ -13,6 +13,18 @@ const STATUS_OPTIONS = [
   { value: 'approved', label: 'Approved' },
   { value: 'rejected', label: 'Rejected' },
 ];
+
+const RISK_PILL = {
+  low: 'bg-emerald-500/15 text-emerald-300 border border-emerald-500/20',
+  medium: 'bg-amber-500/15 text-amber-300 border border-amber-500/20',
+  high: 'bg-red-500/15 text-red-300 border border-red-500/20',
+};
+
+const STATUS_PILL = {
+  approved: 'bg-emerald-500/15 text-emerald-300',
+  rejected: 'bg-red-500/15 text-red-300',
+  pending: 'bg-amber-500/15 text-amber-300',
+};
 
 export default function PendingApplications() {
   const [items, setItems] = useState([]);
@@ -40,9 +52,7 @@ export default function PendingApplications() {
           search,
         });
 
-        if (!response.ok) {
-          throw new Error(`Failed to load applications: ${response.status}`);
-        }
+        if (!response.ok) throw new Error(`Failed to load applications: ${response.status}`);
 
         const payload = await response.json();
         const data = payload?.data || {};
@@ -61,24 +71,17 @@ export default function PendingApplications() {
     };
 
     load();
-    return () => {
-      active = false;
-    };
+    return () => { active = false; };
   }, [page, search, statusFilter]);
 
   const setStatus = async (applicationId, status) => {
     setUpdatingId(applicationId);
     try {
       const response = await updateLoanApplicationStatusRequest(applicationId, status);
-      if (!response.ok) {
-        throw new Error(`Failed to update status: ${response.status}`);
-      }
-
-      setItems((current) =>
-        current.map((item) =>
-          item.id === applicationId
-            ? { ...item, status, updatedAt: new Date().toISOString() }
-            : item
+      if (!response.ok) throw new Error(`Failed to update status: ${response.status}`);
+      setItems(current =>
+        current.map(item =>
+          item.id === applicationId ? { ...item, status, updatedAt: new Date().toISOString() } : item
         )
       );
     } catch (updateError) {
@@ -88,137 +91,162 @@ export default function PendingApplications() {
     }
   };
 
-  const riskPill = (riskCategory) => {
-    if (riskCategory === 'low') return 'bg-emerald-500/15 text-emerald-300';
-    if (riskCategory === 'medium') return 'bg-blue-500/15 text-blue-300';
-    return 'bg-amber-500/15 text-amber-300';
-  };
-
   return (
-    <div className="min-h-screen bg-surface text-on-surface">
-      <div className="mx-auto w-full max-w-7xl space-y-6 py-2">
-        <header className="rounded-[2rem] bg-surface-container-low p-8">
-          <p className="text-xs font-bold uppercase tracking-[0.14em] text-on-surface-variant">Loan Officer Workspace</p>
-          <h1 className="mt-2 text-4xl font-black leading-none tracking-tight">Pending Applications</h1>
-          <p className="mt-3 max-w-3xl text-sm leading-6 text-on-surface-variant">
+    <div className="page-wrapper">
+      <div className="page-inner">
+
+        {/* Page Header */}
+        <div className="card">
+          <div className="flex items-center gap-3 mb-2">
+            <ClipboardList className="h-5 w-5 text-emerald-400" />
+            <p className="section-kicker">Loan Officer Workspace</p>
+          </div>
+          <h1 className="section-title">Pending Applications</h1>
+          <p className="section-subtitle">
             Review incoming applications, search by farmer or location, and update workflow status directly.
           </p>
-        </header>
+        </div>
 
-        <section className="rounded-[2rem] bg-surface-container-high p-6">
-          <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+        {/* Filter + Search */}
+        <div className="card">
+          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+            {/* Search */}
             <div className="relative w-full md:max-w-sm">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-on-surface-variant" />
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
               <input
                 value={search}
-                onChange={(event) => {
-                  setPage(1);
-                  setSearch(event.target.value);
-                }}
+                onChange={(e) => { setPage(1); setSearch(e.target.value); }}
                 placeholder="Search farmer, crop, location..."
-                className="w-full rounded-full bg-surface-container-lowest py-2 pl-10 pr-4 text-sm"
+                className="w-full rounded-xl border border-slate-700 bg-slate-900/60 py-2.5 pl-10 pr-4 text-sm text-white placeholder-slate-500 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
               />
             </div>
 
+            {/* Status filters */}
             <div className="flex flex-wrap items-center gap-2">
-              {STATUS_OPTIONS.map((option) => (
+              {STATUS_OPTIONS.map((opt) => (
                 <button
-                  key={option.value}
-                  onClick={() => {
-                    setPage(1);
-                    setStatusFilter(option.value);
-                  }}
-                  className={`rounded-full px-4 py-2 text-xs font-bold uppercase tracking-[0.1em] ${
-                    statusFilter === option.value
-                      ? 'bg-primary text-white'
-                      : 'bg-surface-container-lowest text-on-surface-variant'
+                  key={opt.value}
+                  onClick={() => { setPage(1); setStatusFilter(opt.value); }}
+                  className={`rounded-xl px-4 py-2 text-xs font-bold uppercase tracking-[0.1em] transition-all ${
+                    statusFilter === opt.value
+                      ? 'bg-gradient-to-r from-emerald-500 to-green-600 text-white shadow-md shadow-emerald-900/30'
+                      : 'bg-slate-800/60 text-slate-400 border border-slate-700 hover:bg-slate-700/60 hover:text-slate-200'
                   }`}
                 >
-                  {option.label}
+                  {opt.label}
                 </button>
               ))}
             </div>
           </div>
 
-          {error ? (
-            <p className="mt-4 rounded-xl bg-red-500/10 px-4 py-3 text-sm text-red-700 dark:text-red-300">{error}</p>
-          ) : null}
-        </section>
+          {error && (
+            <p className="mt-4 rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-300">
+              {error}
+            </p>
+          )}
+        </div>
 
-        <section className="space-y-3">
+        {/* Application list */}
+        <div className="space-y-3">
           {loading ? (
-            <div className="rounded-2xl bg-surface-container-low px-6 py-10 text-sm text-on-surface-variant">Loading applications...</div>
-          ) : items.length === 0 ? (
-            <div className="rounded-2xl bg-surface-container-low px-6 py-10 text-sm text-on-surface-variant">No applications match your filters.</div>
-          ) : (
-            items.map((item) => (
-              <article key={item.id} className="rounded-xl bg-surface-container-lowest p-5 shadow-sm">
-                <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <h2 className="text-lg font-black">{item.name}</h2>
-                      <span className={`rounded px-2 py-0.5 text-[10px] font-bold uppercase ${riskPill(item.riskCategory)}`}>
-                        {item.riskCategory || 'medium'} risk
-                      </span>
+            // Skeleton loading
+            <div className="space-y-3">
+              {[0, 1, 2].map((i) => (
+                <div key={i} className="card">
+                  <div className="flex items-center gap-4">
+                    <div className="skeleton h-10 w-10 rounded-xl" />
+                    <div className="flex-1 space-y-2">
+                      <div className="skeleton h-4 w-40" />
+                      <div className="skeleton h-3 w-60" />
                     </div>
-                    <p className="mt-1 text-xs uppercase tracking-[0.12em] text-on-surface-variant">
-                      {item.crop} • {item.location}
-                    </p>
-                    <p className="mt-2 text-sm text-on-surface-variant">
-                      Trust Score: <strong className="text-on-surface">{item.trustScore || '--'}</strong>
-                      {'  '}|{'  '}
-                      Requested Amount: <strong className="text-on-surface">₹{Number(item.requestedAmount || 0).toLocaleString('en-IN')}</strong>
-                    </p>
-                  </div>
-
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span className="rounded-full bg-surface-container-high px-3 py-1 text-[10px] font-bold uppercase tracking-[0.12em] text-on-surface-variant">
-                      {item.status}
-                    </span>
-                    <button
-                      disabled={item.status === 'approved' || updatingId === item.id}
-                      onClick={() => setStatus(item.id, 'approved')}
-                      className="inline-flex items-center gap-1 rounded-full bg-emerald-600 px-3 py-1.5 text-xs font-bold uppercase text-white disabled:cursor-not-allowed disabled:opacity-50"
-                    >
-                      <CheckCircle2 className="h-3.5 w-3.5" />
-                      Approve
-                    </button>
-                    <button
-                      disabled={item.status === 'rejected' || updatingId === item.id}
-                      onClick={() => setStatus(item.id, 'rejected')}
-                      className="inline-flex items-center gap-1 rounded-full bg-red-600 px-3 py-1.5 text-xs font-bold uppercase text-white disabled:cursor-not-allowed disabled:opacity-50"
-                    >
-                      <XCircle className="h-3.5 w-3.5" />
-                      Reject
-                    </button>
+                    <div className="skeleton h-8 w-24 rounded-xl" />
                   </div>
                 </div>
-              </article>
-            ))
-          )}
-        </section>
+              ))}
+            </div>
+          ) : items.length === 0 ? (
+            <div className="card flex flex-col items-center py-16 text-center">
+              <ClipboardList className="h-12 w-12 text-slate-600 mb-4" />
+              <p className="text-base font-semibold text-slate-300">No applications found</p>
+              <p className="text-sm text-slate-500 mt-1">Try adjusting your filters or search query.</p>
+            </div>
+          ) : (
+            items.map((item) => {
+              const riskKey = (item.riskCategory || 'medium').toLowerCase();
+              const statusKey = (item.status || 'pending').toLowerCase();
+              return (
+                <article key={item.id} className="card hover:border-white/20">
+                  <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                    <div className="flex-1">
+                      <div className="flex flex-wrap items-center gap-2 mb-1">
+                        <h2 className="text-base font-bold text-white">{item.name}</h2>
+                        <span className={`rounded-lg px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.1em] ${RISK_PILL[riskKey] || RISK_PILL.medium}`}>
+                          {riskKey} risk
+                        </span>
+                        <span className={`rounded-lg px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.1em] ${STATUS_PILL[statusKey] || STATUS_PILL.pending}`}>
+                          {item.status}
+                        </span>
+                      </div>
+                      <p className="text-xs uppercase tracking-[0.12em] text-slate-500 mb-1">
+                        {item.crop} · {item.location}
+                      </p>
+                      <p className="text-sm text-slate-400">
+                        Trust Score:{' '}
+                        <strong className="text-white">{item.trustScore || '—'}</strong>
+                        {'  ·  '}
+                        Amount:{' '}
+                        <strong className="text-white">₹{Number(item.requestedAmount || 0).toLocaleString('en-IN')}</strong>
+                      </p>
+                    </div>
 
-        <footer className="flex items-center justify-between rounded-2xl bg-surface-container-high px-4 py-3">
-          <p className="text-xs font-bold uppercase tracking-[0.1em] text-on-surface-variant">
-            Showing page {page} of {totalPages} ({total} total)
+                    <div className="flex flex-wrap items-center gap-2 shrink-0">
+                      <button
+                        disabled={item.status === 'approved' || updatingId === item.id}
+                        onClick={() => setStatus(item.id, 'approved')}
+                        className="inline-flex items-center gap-1.5 rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-2 text-xs font-bold uppercase text-emerald-300 transition hover:bg-emerald-500/20 disabled:cursor-not-allowed disabled:opacity-40"
+                      >
+                        <CheckCircle2 className="h-3.5 w-3.5" />
+                        Approve
+                      </button>
+                      <button
+                        disabled={item.status === 'rejected' || updatingId === item.id}
+                        onClick={() => setStatus(item.id, 'rejected')}
+                        className="inline-flex items-center gap-1.5 rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-2 text-xs font-bold uppercase text-red-300 transition hover:bg-red-500/20 disabled:cursor-not-allowed disabled:opacity-40"
+                      >
+                        <XCircle className="h-3.5 w-3.5" />
+                        Reject
+                      </button>
+                    </div>
+                  </div>
+                </article>
+              );
+            })
+          )}
+        </div>
+
+        {/* Pagination footer */}
+        <div className="card flex items-center justify-between">
+          <p className="text-xs font-semibold text-slate-400 uppercase tracking-[0.1em]">
+            Page {page} of {totalPages} &nbsp;·&nbsp; {total} total
           </p>
           <div className="flex items-center gap-2">
             <button
-              onClick={() => setPage((prev) => Math.max(1, prev - 1))}
+              onClick={() => setPage(prev => Math.max(1, prev - 1))}
               disabled={page <= 1}
-              className="rounded-full bg-surface-container-lowest px-4 py-2 text-xs font-bold uppercase disabled:opacity-50"
+              className="btn-saas-secondary text-xs px-4 py-2"
             >
-              Prev
+              ← Prev
             </button>
             <button
-              onClick={() => setPage((prev) => Math.min(totalPages, prev + 1))}
+              onClick={() => setPage(prev => Math.min(totalPages, prev + 1))}
               disabled={page >= totalPages}
-              className="rounded-full bg-surface-container-lowest px-4 py-2 text-xs font-bold uppercase disabled:opacity-50"
+              className="btn-saas-secondary text-xs px-4 py-2"
             >
-              Next
+              Next →
             </button>
           </div>
-        </footer>
+        </div>
+
       </div>
     </div>
   );

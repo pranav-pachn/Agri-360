@@ -308,21 +308,20 @@ const Analytics = () => {
   };
 
   return (
-    <div className="min-h-[calc(100vh-4rem)] bg-[#060e1a] text-white p-6">
-      <div className="max-w-6xl mx-auto space-y-6">
+    <div className="page-wrapper">
+      <div className="page-inner">
 
-        {/* Header */}
-        <div className="border-b border-slate-800 pb-5">
-          <div className="flex items-center space-x-2 text-green-400 text-sm font-bold uppercase tracking-wider mb-2">
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-            </svg>
-            <span>Analytics</span>
+        {/* Page Header */}
+        <div className="card">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="section-kicker">Intelligence Layer</p>
+              <h1 className="mt-2 section-title">District Risk Intelligence</h1>
+              <p className="section-subtitle">
+                Real-time agricultural risk data aggregated across districts to support policy decisions and financial assessments.
+              </p>
+            </div>
           </div>
-          <h1 className="text-3xl font-extrabold tracking-tight">District Risk Intelligence</h1>
-          <p className="text-slate-400 mt-1 max-w-xl">
-            Real-time agricultural risk data aggregated across districts to support policy decisions and financial assessments.
-          </p>
         </div>
 
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
@@ -367,7 +366,7 @@ const Analytics = () => {
         </div>
 
         <div className="grid grid-cols-1 gap-6 xl:grid-cols-[1.2fr_0.8fr]">
-          <div className="rounded-xl border border-slate-700 bg-slate-800 p-5">
+          <div className="card">
             <h2 className="text-lg font-bold text-white">Model Performance</h2>
             <p className="mt-1 text-sm text-slate-400">Proof points recruiters and reviewers can inspect directly from the analytics engine.</p>
             <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -386,7 +385,7 @@ const Analytics = () => {
             </div>
           </div>
 
-          <div className="rounded-xl border border-violet-500/20 bg-slate-800 p-5">
+          <div className="card">
             <h2 className="text-lg font-bold text-white">Why This Model Works</h2>
             <p className="mt-3 text-sm leading-6 text-slate-300">
               This model combines crop health, yield trends, weather volatility, and market fluctuations to estimate agricultural risk and financial trust.
@@ -404,7 +403,7 @@ const Analytics = () => {
 
         <div className="grid grid-cols-1 gap-6 xl:grid-cols-[1fr_0.9fr]">
           <SamplePredictionsTable rows={analyticsSummary?.samplePredictions || []} />
-          <div className="rounded-xl border border-amber-500/20 bg-slate-800 p-5">
+          <div className="card">
             <h2 className="text-lg font-bold text-white">Explainability</h2>
             <p className="mt-1 text-sm text-slate-400">Dataset insights combined with the risk engine make the output defensible.</p>
             <div className="mt-4 rounded-xl border border-slate-700 bg-slate-900/60 p-4">
@@ -458,7 +457,7 @@ const Analytics = () => {
             <button
               onClick={handleRecompute}
               disabled={refreshing}
-              className="rounded-lg border border-green-500/40 bg-green-500/10 px-3 py-1.5 text-xs font-semibold text-green-300 transition hover:bg-green-500/20 disabled:cursor-not-allowed disabled:opacity-70"
+              className="btn-saas-primary text-xs px-3 py-1.5"
             >
               {refreshing ? 'Refreshing...' : 'Refresh Real Data'}
             </button>

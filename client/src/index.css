@@ -257,11 +257,79 @@ body {
 
 /* Generic Card Utilities for consistent spacing */
 .card {
-  @apply rounded-2xl border border-slate-700/70 bg-slate-800/70 p-6;
+  @apply rounded-2xl border border-white/10 bg-slate-800/80 backdrop-blur-md p-6 shadow-lg transition-all duration-300;
+}
+
+.card:hover {
+  @apply shadow-xl border-white/20;
 }
 
 .card-compact {
-  @apply rounded-xl border border-slate-600/60 bg-slate-900/50 p-3;
+  @apply rounded-xl border border-white/[0.08] bg-slate-900/60 backdrop-blur-sm p-3;
+}
+
+/* Page layout wrapper */
+.page-wrapper {
+  @apply min-h-[calc(100vh-4rem)] bg-[#060e1a] px-6 py-8 md:px-8 text-white;
+}
+
+.page-inner {
+  @apply mx-auto max-w-7xl space-y-8;
+}
+
+/* Section header */
+.section-kicker {
+  @apply text-xs font-bold uppercase tracking-[0.15em] text-emerald-400;
+}
+
+.section-title {
+  @apply text-4xl font-bold tracking-tight text-white;
+}
+
+.section-subtitle {
+  @apply text-sm text-slate-400 mt-2 max-w-2xl;
+}
+
+/* Metric card */
+.metric-card {
+  @apply rounded-2xl border border-white/10 bg-slate-800/80 backdrop-blur-md p-5 shadow-lg;
+}
+
+.metric-value {
+  @apply text-3xl font-bold text-white;
+}
+
+.metric-label {
+  @apply text-xs font-bold uppercase tracking-[0.12em] text-slate-400 mt-1;
+}
+
+/* Button system */
+.btn-saas-primary {
+  @apply inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-emerald-500 to-green-600 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-emerald-900/30 transition-all hover:brightness-110 hover:shadow-xl disabled:opacity-60 disabled:cursor-not-allowed;
+}
+
+.btn-saas-secondary {
+  @apply inline-flex items-center gap-2 rounded-xl border border-slate-700 bg-slate-800/80 px-5 py-2.5 text-sm font-semibold text-slate-200 transition-all hover:bg-slate-700/80 hover:border-slate-600;
+}
+
+.btn-saas-danger {
+  @apply inline-flex items-center gap-2 rounded-xl border border-red-500/30 bg-red-500/10 px-5 py-2.5 text-sm font-semibold text-red-400 transition-all hover:bg-red-500/20 hover:border-red-500/50;
+}
+
+/* Skeleton shimmer */
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.skeleton {
+  background: linear-gradient(90deg,
+    rgba(148,163,184,0.08) 0%,
+    rgba(148,163,184,0.16) 50%,
+    rgba(148,163,184,0.08) 100%);
+  background-size: 200% 100%;
+  animation: shimmer 1.6s ease-in-out infinite;
+  @apply rounded-xl;
 }
 
 .flex-center {
