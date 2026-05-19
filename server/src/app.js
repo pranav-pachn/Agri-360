@@ -12,9 +12,31 @@ const errorHandler = require('./middlewares/error.middleware');
 const logger = require('./utils/logger');
 
 const app = express();
-const clientDistPath = path.resolve(__dirname, '../../client/dist');
-const clientIndexPath = path.join(clientDistPath, 'index.html');
-const hasClientBuild = fs.existsSync(clientIndexPath);
+
+function resolveClientBuildPath() {
+  const distCandidates = [
+    // Monorepo run from repo root (common local/CI layout)
+    path.resolve(__dirname, '../../client/dist'),
+    // Render service started from repo root
+    path.resolve(process.cwd(), 'client/dist'),
+    // Render service started from /server
+    path.resolve(process.cwd(), '../client/dist'),
+    // Fallback for deployments that copy client under /server
+    path.resolve(__dirname, '../client/dist')
+  ];
+
+  for (const distPath of distCandidates) {
+    const indexPath = path.join(distPath, 'index.html');
+    if (fs.existsSync(indexPath)) {
+      return { distPath, indexPath };
+    }
+  }
+
+  return { distPath: null, indexPath: null };
+}
+
+const { distPath: clientDistPath, indexPath: clientIndexPath } = resolveClientBuildPath();
+const hasClientBuild = Boolean(clientDistPath && clientIndexPath);
 
 app.use(cors());
 app.use(express.json());
@@ -32,9 +54,13 @@ app.use('/api/v1/chat', chatRoutes);
 app.use('/api/v1/risk', riskRoutes);
 app.use('/api/v1/weather', weatherRoutes);
 
-// Root route - simple health response for Render/browser checks
+// Root route - serve SPA when available, otherwise keep API health response.
 app.get('/', (req, res) => {
-  res.send('AgriMitra API running 🚀');
+  if (hasClientBuild) {
+    return res.sendFile(clientIndexPath);
+  }
+
+  return res.send('AgriMitra API running 🚀');
 });
 
 app.get('/health', (req, res) => {
@@ -64,6 +90,8 @@ if (hasClientBuild) {
 
     return res.sendFile(clientIndexPath);
   });
+} else {
+  logger.warn('Client build not found. SPA routes (e.g. /auth/callback) will return 404 until client/dist is deployed.');
 }
 
 module.exports = app;

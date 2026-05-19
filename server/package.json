@@ -5,7 +5,10 @@
   "description": "",
   "main": "index.js",
   "scripts": {
+    "predeploy": "npm --prefix ../client install && npm --prefix ../client run build",
     "dev": "nodemon src/server.js",
+    "start": "node src/server.js",
+    "deploy": "npm run predeploy && npm run start",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
