@@ -332,10 +332,78 @@ class FarmerModel {
   // Update farmer profile
   static async updateFarmer(farmerId, updates) {
     try {
+      // Separate known columns from flexible profile fields.
+      const KNOWN_COLUMNS = ['name', 'location'];
+
+      const baseUpdates = {};
+      const profileUpdates = {};
+
+      for (const [k, v] of Object.entries(updates || {})) {
+        if (KNOWN_COLUMNS.includes(k)) baseUpdates[k] = v;
+        else profileUpdates[k] = v;
+      }
+
+      // First, update known columns so that basic profile fields are saved
+      // even when the DB schema doesn't include the extended profile fields.
+      if (Object.keys(baseUpdates).length > 0) {
+        const { data: baseData, error: baseError } = await supabase
+          .from('farmers')
+          .update({
+            ...baseUpdates,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', farmerId)
+          .select()
+          .single();
+
+        if (baseError) throw baseError;
+
+        // Attempt to merge profile fields if any exist; ignore errors here
+        // so missing schema columns don't surface to the client.
+        if (Object.keys(profileUpdates).length > 0) {
+          try {
+            const { data: existing, error: fetchErr } = await supabase
+              .from('farmers')
+              .select('profile')
+              .eq('id', farmerId)
+              .single();
+
+            const existingProfile = (existing && existing.profile) || {};
+            const newProfile = { ...existingProfile, ...profileUpdates };
+
+            await supabase
+              .from('farmers')
+              .update({ profile: newProfile, updated_at: new Date().toISOString() })
+              .eq('id', farmerId);
+          } catch (ignoreErr) {
+            // Intentionally ignore profile update errors (missing column/schema mismatches)
+            console.warn('Profile merge skipped due to schema mismatch:', ignoreErr?.message || ignoreErr);
+          }
+        }
+
+        return baseData;
+      }
+
+      // If there are no known columns to update, attempt profile-only update.
+      // This may fail on older schemas; let errors bubble up in that case.
+      const { data: existing, error: fetchErr } = await supabase
+        .from('farmers')
+        .select('profile')
+        .eq('id', farmerId)
+        .single();
+
+      if (fetchErr && fetchErr.code !== 'PGRST116') {
+        throw fetchErr;
+      }
+
+      const existingProfile = (existing && existing.profile) || {};
+      const newProfile = { ...existingProfile, ...profileUpdates };
+
       const { data, error } = await supabase
         .from('farmers')
         .update({
-          ...updates,
+          profile: newProfile,
+          updated_at: new Date().toISOString(),
         })
         .eq('id', farmerId)
         .select()

@@ -76,6 +76,7 @@ CREATE TABLE IF NOT EXISTS public.farmers (
     id TEXT PRIMARY KEY, -- Google Sub Auth ID is a string
     name TEXT NOT NULL,
     location TEXT,
+    profile JSONB DEFAULT '{}'::jsonb,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now())
 );
