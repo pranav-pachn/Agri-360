@@ -33,8 +33,12 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     const cleanupOAuthHash = () => {
       if (window.location.hash.includes('access_token=')) {
-        // Replace the URL with the app hash route so HashRouter works normally
-        window.location.replace(`${window.location.origin}/#/dashboard`);
+        if (import.meta.env.PROD) {
+          window.location.replace(`${window.location.origin}/dashboard`);
+        } else {
+          // Replace the URL with the app hash route so HashRouter works normally
+          window.location.replace(`${window.location.origin}/#/dashboard`);
+        }
       }
     };
 
@@ -108,11 +112,16 @@ export function AuthProvider({ children }) {
     signUp: signUpWithSync,
     signIn: signInWithSync,
     signInWithGoogle: () => {
-      // Redirect to app origin so Google returns to the app; Supabase will append the access_token fragment
+      // Use a real callback path in production so the browser router can own the callback route.
+      // Keep the bare origin in development so HashRouter continues to work locally.
+      const redirectTo = import.meta.env.PROD
+        ? `${window.location.origin}/auth/callback`
+        : window.location.origin;
+
       return supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: window.location.origin,
+          redirectTo,
         },
       });
     },

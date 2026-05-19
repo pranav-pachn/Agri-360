@@ -1,4 +1,4 @@
-import { HashRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, HashRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
 import ProtectedLayout from './components/layout/ProtectedLayout';
@@ -16,6 +16,8 @@ import Analytics from './pages/Analytics';
 import Architecture from './pages/Architecture';
 import Profile from './pages/Profile';
 import PendingApplications from './pages/PendingApplications';
+
+const Router = import.meta.env.PROD ? BrowserRouter : HashRouter;
 
 function AppRoutes() {
   const { user } = useAuth();
