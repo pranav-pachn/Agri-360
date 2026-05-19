@@ -57,7 +57,7 @@ app.use(errorHandler);
 if (hasClientBuild) {
   app.use(express.static(clientDistPath));
 
-  app.get('*', (req, res, next) => {
+  app.get(/^(?!\/api).*/, (req, res, next) => {
     if (req.path.startsWith('/api')) {
       return next();
     }
