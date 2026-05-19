@@ -104,7 +104,7 @@ const CropDiagnosis = () => {
 	};
 
 	return (
-		<div className="min-h-[calc(100vh-4rem)] bg-slate-900 text-slate-100">
+		<div className="min-h-[calc(100vh-4rem)] bg-[#060e1a] text-slate-100">
 			<div className="mx-auto max-w-[1500px] px-4 pb-28 pt-8 md:px-8 lg:px-10">
 				<div>
 						<header className="mb-8 rounded-2xl border border-slate-700/70 bg-slate-800/50 p-6">
@@ -270,7 +270,7 @@ const CropDiagnosis = () => {
 				</div>
 			</div>
 
-			<nav className="fixed bottom-0 left-0 z-40 flex w-full items-center justify-around border-t border-slate-700/70 bg-slate-950/95 px-2 py-2 lg:hidden">
+			<nav className="fixed bottom-0 left-0 z-40 flex w-full items-center justify-around border-t border-slate-800 bg-[#060e1a]/95 px-2 py-2 lg:hidden">
 				<Link to="/dashboard" className="rounded-xl px-3 py-2 text-[11px] font-bold uppercase tracking-[0.08em] text-slate-400">Home</Link>
 				<Link to="/upload" className="rounded-xl bg-emerald-600/20 px-3 py-2 text-[11px] font-bold uppercase tracking-[0.08em] text-emerald-300">Crops</Link>
 				<Link to="/analytics" className="rounded-xl px-3 py-2 text-[11px] font-bold uppercase tracking-[0.08em] text-slate-400">Finance</Link>

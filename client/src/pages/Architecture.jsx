@@ -54,7 +54,7 @@ const systemLayers = [
 
 export default function Architecture() {
   return (
-    <div className="min-h-screen bg-slate-900 px-6 py-10 text-white">
+    <div className="min-h-screen bg-[#060e1a] px-6 py-10 text-white">
       <div className="mx-auto max-w-7xl">
         <div className="rounded-[2rem] border border-slate-800 bg-[radial-gradient(circle_at_top_left,_rgba(14,165,233,0.16),_transparent_28%),radial-gradient(circle_at_bottom_right,_rgba(34,197,94,0.14),_transparent_30%),linear-gradient(180deg,_rgba(15,23,42,0.96),_rgba(15,23,42,0.88))] p-8 shadow-2xl shadow-slate-950/30">
           <div className="max-w-3xl">

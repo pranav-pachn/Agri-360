@@ -86,7 +86,7 @@ function Profile() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center">
+      <div className="min-h-screen bg-[#060e1a] flex items-center justify-center">
         <div className="text-center">
           <Leaf className="w-12 h-12 text-emerald-400 mx-auto mb-4 animate-spin" />
           <p className="text-slate-300">Loading your profile...</p>
@@ -96,7 +96,7 @@ function Profile() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-6">
+    <div className="min-h-screen bg-[#060e1a] p-6">
       <div className="max-w-2xl mx-auto">
         {/* Header */}
         <div className="mb-8">

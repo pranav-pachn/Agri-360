@@ -146,7 +146,7 @@ export default function TrustScore() {
 
 	if (loading) {
 		return (
-			<div className="min-h-[calc(100vh-4rem)] bg-slate-900 px-4 py-10 text-white sm:px-6 lg:px-8">
+			<div className="min-h-[calc(100vh-4rem)] bg-[#060e1a] px-4 py-10 text-white sm:px-6 lg:px-8">
 				<div className="mx-auto flex max-w-6xl flex-col items-center justify-center rounded-3xl border border-slate-800 bg-slate-900/70 py-20">
 					<div className="h-14 w-14 animate-spin rounded-full border-4 border-cyan-500/20 border-t-cyan-400" />
 					<p className="mt-5 text-sm uppercase tracking-[0.22em] text-cyan-300">Loading trust intelligence</p>
@@ -156,7 +156,7 @@ export default function TrustScore() {
 	}
 
 	return (
-		<div className="min-h-[calc(100vh-4rem)] bg-slate-900 px-4 py-8 text-white sm:px-6 lg:px-8">
+		<div className="min-h-[calc(100vh-4rem)] bg-[#060e1a] px-4 py-8 text-white sm:px-6 lg:px-8">
 			<div className="mx-auto max-w-7xl space-y-6">
 				<header className="rounded-3xl border border-cyan-400/20 bg-gradient-to-r from-slate-900 via-blue-950/70 to-slate-900 p-6 shadow-[0_25px_60px_-30px_rgba(14,116,144,0.7)] sm:p-8">
 					<div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">

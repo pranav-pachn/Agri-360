@@ -57,7 +57,7 @@ const Result = () => {
 
   if (!data) {
     return (
-      <div className="min-h-screen bg-slate-900 flex flex-col items-center justify-center">
+      <div className="min-h-screen bg-[#060e1a] flex flex-col items-center justify-center">
         <div className="w-16 h-16 border-4 border-indigo-500/20 border-t-indigo-500 rounded-full animate-spin"></div>
         <p className="mt-4 text-indigo-400 font-medium animate-pulse">Loading analysis report...</p>
       </div>
@@ -65,7 +65,7 @@ const Result = () => {
   }
 
   return (
-    <div className="min-h-[calc(100vh-4rem)] bg-slate-900 py-8 px-4 sm:px-6 lg:px-8 animate-in fade-in duration-500">
+    <div className="min-h-[calc(100vh-4rem)] bg-[#060e1a] py-8 px-4 sm:px-6 lg:px-8 animate-in fade-in duration-500">
       <div className="max-w-7xl mx-auto">
         
         {/* Header Section */}

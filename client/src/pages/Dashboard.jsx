@@ -306,7 +306,7 @@ export default function Dashboard() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-900 p-6 text-white">
+      <div className="min-h-screen bg-[#060e1a] p-6 text-white">
         <div className="mx-auto flex max-w-7xl items-center justify-center rounded-2xl bg-slate-800 p-12 shadow-md">
           <p className="text-lg font-semibold">Loading dashboard intelligence...</p>
         </div>
@@ -328,7 +328,7 @@ export default function Dashboard() {
   const riskDistribution = buildRiskDistribution(analyticsSnapshot, riskScore);
 
   return (
-    <div className="min-h-screen bg-slate-900 p-6 text-white">
+    <div className="min-h-screen bg-[#060e1a] p-6 text-white">
       <div className="mx-auto max-w-7xl space-y-6">
         <FarmerProfile
           name={farmerName}
