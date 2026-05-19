@@ -1,5 +1,6 @@
-export const buildMockDashboardData = (overrides = {}) => {
+export const buildMockDashboardData = (user = null) => {
   const now = new Date().toISOString();
+  const derivedName = user?.user_metadata?.name || user?.email?.split('@')[0] || 'Farmer';
 
   const base = {
     summary: {
@@ -48,55 +49,21 @@ export const buildMockDashboardData = (overrides = {}) => {
 
   return {
     ...base,
-    trustScore: 742,
-    riskScore: 0.35,
+    trustScore: 0,
+    riskScore: 0,
     riskLevel: 'Low Risk',
-    yieldValue: 2.8,
-    yieldDelta: -12,
-    explanation: 'Overall risk is Low Risk. The score reflects crop health, expected yield pressure, repayment strength, and current field volatility.',
-    latestReport: {
-      crop: 'Rice',
-      location: 'Guntur, Andhra Pradesh',
-      disease: 'Early Blight',
-      yield: 2.8,
-      risk: 0.35,
-      timestamp: now,
-    },
-    analyses: [
-      {
-        id: 'analysis-1001',
-        crop: 'Rice',
-        location: 'Guntur, Andhra Pradesh',
-        disease: 'Early Blight',
-        score: 742,
-        yield: 2.8,
-        risk: 0.35,
-        timestamp: now,
-      },
-    ],
+    yieldValue: 0,
+    yieldDelta: 0,
+    explanation: 'No analysis data yet. Run your first crop diagnosis to see personalized insights.',
+    latestReport: null,
+    analyses: [],
     dataMode: {
       source: 'dashboard-mock',
       fallbackUsed: true,
-      label: 'Showing baseline intelligence for Farmer',
+      label: `Showing baseline intelligence for ${derivedName}`,
     },
-    liveWeather: {
-      temperatureC: 32,
-      humidity: 65,
-      windSpeed: 4.2,
-      condition: 'Clear',
-      normalizedCondition: 'normal',
-      location: 'Guntur, Andhra Pradesh',
-      fetchedAt: now,
-      available: true,
-    },
-    weatherImpact: {
-      deltaPercent: 2,
-      deltaScore: 0.02,
-      direction: 'increase',
-      reason: 'Warm temperature slightly increased crop stress.',
-      contributors: ['Warm temperature slightly increased crop stress.'],
-    },
-    ...overrides,
+    liveWeather: null,
+    weatherImpact: null,
   };
 };
 

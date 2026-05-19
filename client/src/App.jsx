@@ -16,6 +16,7 @@ import Analytics from './pages/Analytics';
 import Architecture from './pages/Architecture';
 import Profile from './pages/Profile';
 import PendingApplications from './pages/PendingApplications';
+import FarmerSetup from './pages/FarmerSetup';
 
 const Router = import.meta.env.PROD ? BrowserRouter : HashRouter;
 
@@ -82,6 +83,12 @@ function AppRoutes() {
         <Route path="/applications" element={
           <ProtectedLayout>
             <PendingApplications />
+          </ProtectedLayout>
+        } />
+
+        <Route path="/setup" element={
+          <ProtectedLayout>
+            <FarmerSetup />
           </ProtectedLayout>
         } />
 

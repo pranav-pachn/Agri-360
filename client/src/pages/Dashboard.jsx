@@ -9,7 +9,7 @@ import WeatherImpactCard from '../components/dashboard/WeatherImpactCard';
 import Recommendations from '../components/dashboard/Recommendations';
 import AnalyticsSection from '../components/dashboard/AnalyticsSection';
 import { getDashboardData } from '../services/dashboardDataService';
-import { getPendingApplicationsRequest } from '../services/farmersApi';
+import { getFarmerProfileRequest, getPendingApplicationsRequest } from '../services/farmersApi';
 
 const buildAnalyticsSnapshot = (dashboardData = {}) => {
   const reports = Array.isArray(dashboardData.analyses) ? dashboardData.analyses : [];
@@ -215,6 +215,7 @@ export default function Dashboard() {
   const [liveWeather, setLiveWeather] = useState(null);
   const [weatherImpact, setWeatherImpact] = useState(null);
   const [analyticsSnapshot, setAnalyticsSnapshot] = useState({ states: [], districts: [] });
+  const [farmerProfile, setFarmerProfile] = useState(null);
   const loadRequestIdRef = useRef(0);
 
   useEffect(() => {
@@ -254,13 +255,26 @@ export default function Dashboard() {
     const requestId = ++loadRequestIdRef.current;
 
     try {
-      const [data] = await Promise.all([
+      // Fetch dashboard data AND farmer profile in parallel
+      const [data, profileResponse] = await Promise.all([
         getDashboardData({ farmerId, user }),
-        getPendingApplicationsRequest(42),
+        getFarmerProfileRequest(farmerId).catch(() => null),
+        getPendingApplicationsRequest(42).catch(() => null),
       ]);
 
-      if (requestId !== loadRequestIdRef.current) {
-        return;
+      if (requestId !== loadRequestIdRef.current) return;
+
+      // Extract profile — try the profile endpoint first, fall back to user_metadata
+      if (profileResponse?.ok) {
+        const profileJson = await profileResponse.json();
+        setFarmerProfile(profileJson.data || null);
+      } else {
+        // Construct a minimal profile from Supabase auth metadata so nothing is hardcoded
+        setFarmerProfile({
+          name: user?.user_metadata?.name || user?.email?.split('@')[0] || '',
+          location: user?.user_metadata?.location || '',
+          language: user?.user_metadata?.language || 'en',
+        });
       }
 
       setAnalyses(data.analyses);
@@ -273,30 +287,22 @@ export default function Dashboard() {
       setWeatherImpact(data.weatherImpact || null);
       setAnalyticsSnapshot(buildAnalyticsSnapshot(data));
     } catch (error) {
-      if (requestId !== loadRequestIdRef.current) {
-        return;
-      }
+      if (requestId !== loadRequestIdRef.current) return;
 
-      const fallback = {
-        analyses: [],
-        trustScore: 742,
-        riskScore: 0.35,
-        riskLevel: 'Medium Risk',
-        yieldValue: 12,
-        yieldDelta: -12,
-        liveWeather: null,
-        weatherImpact: null,
-      };
+      setFarmerProfile({
+        name: user?.user_metadata?.name || user?.email?.split('@')[0] || '',
+        location: user?.user_metadata?.location || '',
+      });
 
-      setAnalyses(fallback.analyses);
-      setTrustScore(fallback.trustScore);
-      setRiskScore(fallback.riskScore);
-      setRiskLevel(fallback.riskLevel);
-      setYieldData({ predictedYield: fallback.yieldValue });
-      setYieldDelta(fallback.yieldDelta);
-      setLiveWeather(fallback.liveWeather);
-      setWeatherImpact(fallback.weatherImpact);
-      setAnalyticsSnapshot(buildAnalyticsSnapshot({ analyses: fallback.analyses }));
+      setAnalyses([]);
+      setTrustScore(0);
+      setRiskScore(0);
+      setRiskLevel('Low Risk');
+      setYieldData({});
+      setYieldDelta(0);
+      setLiveWeather(null);
+      setWeatherImpact(null);
+      setAnalyticsSnapshot(buildAnalyticsSnapshot({ analyses: [] }));
     } finally {
       if (requestId === loadRequestIdRef.current) {
         setLoading(false);
@@ -352,12 +358,15 @@ export default function Dashboard() {
   }
 
   const latestReport = analyses?.[0] || {};
-  const farmerName = user?.user_metadata?.name || 'Ramesh Kumar';
-  const farmerLocation = user?.user_metadata?.location || latestReport?.location || 'Guntur, Andhra Pradesh';
-  const cropName = latestReport?.crop || 'Rice';
-  const diseaseName = latestReport?.disease || 'Early Blight';
+
+  // All personal details come from the fetched profile — nothing is hardcoded
+  const farmerName = farmerProfile?.name || user?.user_metadata?.name || user?.email?.split('@')[0] || 'Farmer';
+  const farmerLocation = farmerProfile?.location || user?.user_metadata?.location || latestReport?.location || '';
+  const cropName = latestReport?.crop || '';
+  const diseaseName = latestReport?.disease || '';
+
   const confidence = Math.round(78 + Math.max(0, Math.min(1, Number(riskScore) || 0)) * 18);
-  const yieldValue = Number(yieldData?.predictedYield || latestReport?.yield || 12);
+  const yieldValue = Number(yieldData?.predictedYield || latestReport?.yield || 0);
   const lossPercent = Math.abs(Number(yieldDelta) || 0);
   const riskData = buildRiskData({ riskScore, riskLevel, yieldDelta, latestReport, trustScore, weatherImpact });
   const recommendationItems = buildRecommendationItems({ latestReport, riskScore, yieldDelta });

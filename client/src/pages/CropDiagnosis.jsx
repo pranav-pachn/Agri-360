@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+﻿import React, { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import UploadBox from '../components/upload/UploadBox';
@@ -269,9 +269,8 @@ const CropDiagnosis = () => {
 						</div>
 				</div>
 			</div>
-			</div>
 			<LoadingOverlay isVisible={loading} />
-		</div >
+		</div>
 	);
 };
 

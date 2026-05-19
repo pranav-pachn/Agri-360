@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { useNavigate } from 'react-router-dom';
-import { Edit2, Check, X, MapPin, Globe, User, LogOut, ShieldAlert } from 'lucide-react';
+import { useNavigate, Link } from 'react-router-dom';
+import { Edit2, Check, X, MapPin, Globe, User, LogOut, ShieldAlert, ExternalLink } from 'lucide-react';
 import { getFarmerProfileRequest, updateFarmerProfileRequest } from '../services/farmersApi';
 
 const LANGUAGE_LABELS = {
@@ -99,6 +99,21 @@ function Profile() {
           <div className="rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-300">
             {error}
           </div>
+        )}
+
+        {/* Setup CTA — shown when profile fields are incomplete */}
+        {!profile?.primary_crop && (
+          <Link
+            to="/setup"
+            className="card flex items-center justify-between gap-4 border-emerald-500/20 bg-emerald-500/[0.04] hover:border-emerald-500/40 hover:bg-emerald-500/[0.08] transition-all group no-underline"
+          >
+            <div>
+              <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-emerald-400 mb-1">Action Required</p>
+              <p className="text-sm font-bold text-white">Complete your farm profile</p>
+              <p className="text-xs text-slate-400 mt-0.5">Add crop type, location, and farm details to unlock personalised insights.</p>
+            </div>
+            <ExternalLink className="h-5 w-5 text-emerald-400 shrink-0 group-hover:translate-x-1 transition-transform" />
+          </Link>
         )}
 
         {/* Profile Card */}

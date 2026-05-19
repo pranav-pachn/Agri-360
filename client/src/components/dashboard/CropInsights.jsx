@@ -1,34 +1,61 @@
 const CropInsights = ({
-  disease = 'Early Blight',
-  confidence = 87,
-  yieldValue = 12,
-  lossPercent = 40,
+  disease = '',
+  confidence = 0,
+  yieldValue = 0,
+  lossPercent = 0,
 }) => {
+  const hasData = Boolean(disease);
+  const displayDisease = disease || '—';
+  const displayYield = yieldValue > 0 ? `${yieldValue} t/ha` : '—';
+  const displayLoss = lossPercent > 0 ? `${lossPercent}%` : '—';
+  const displayConfidence = confidence > 0 ? `${confidence}%` : '—';
+
   return (
-    <div className="space-y-4 rounded-2xl bg-slate-800 p-5 shadow-md">
-      <h2 className="text-lg font-semibold text-white">🌱 Crop Insights</h2>
+    <div className="card space-y-4">
+      <div className="flex items-center justify-between">
+        <h2 className="text-sm font-bold uppercase tracking-[0.14em] text-slate-400">🌱 Crop Insights</h2>
+        {!hasData && (
+          <span className="rounded-lg bg-slate-700/60 px-2 py-1 text-[10px] font-bold uppercase tracking-[0.1em] text-slate-500">
+            No analysis yet
+          </span>
+        )}
+      </div>
 
       <div className="space-y-3 text-sm text-slate-200">
         <div className="flex items-center justify-between gap-4 rounded-xl bg-slate-700/60 px-4 py-3">
-          <span className="text-gray-400">Disease</span>
-          <span className="text-base font-semibold text-white">🧠 {disease}</span>
+          <span className="text-slate-400">Disease</span>
+          <span className={`text-base font-semibold ${hasData ? 'text-white' : 'text-slate-500'}`}>
+            {hasData ? `🧠 ${displayDisease}` : displayDisease}
+          </span>
         </div>
 
         <div className="flex items-center justify-between gap-4 rounded-xl bg-slate-700/60 px-4 py-3">
-          <span className="text-gray-400">Confidence</span>
-          <span className="text-base font-semibold text-emerald-400">📊 {confidence}%</span>
+          <span className="text-slate-400">Confidence</span>
+          <span className={`text-base font-semibold ${hasData ? 'text-emerald-400' : 'text-slate-500'}`}>
+            {hasData ? `📊 ${displayConfidence}` : displayConfidence}
+          </span>
         </div>
 
         <div className="flex items-center justify-between gap-4 rounded-xl bg-slate-700/60 px-4 py-3">
-          <span className="text-gray-400">Yield</span>
-          <span className="text-base font-semibold text-white">🌾 {yieldValue} tons/hectare</span>
+          <span className="text-slate-400">Yield</span>
+          <span className={`text-base font-semibold ${yieldValue > 0 ? 'text-white' : 'text-slate-500'}`}>
+            {yieldValue > 0 ? `🌾 ${displayYield}` : displayYield}
+          </span>
         </div>
 
         <div className="flex items-center justify-between gap-4 rounded-xl bg-slate-700/60 px-4 py-3">
-          <span className="text-gray-400">Projected Loss</span>
-          <span className="text-base font-semibold text-amber-400">📉 {lossPercent}%</span>
+          <span className="text-slate-400">Projected Loss</span>
+          <span className={`text-base font-semibold ${lossPercent > 0 ? 'text-amber-400' : 'text-slate-500'}`}>
+            {lossPercent > 0 ? `📉 ${displayLoss}` : displayLoss}
+          </span>
         </div>
       </div>
+
+      {!hasData && (
+        <p className="text-center text-xs text-slate-500">
+          Run a crop diagnosis to populate insights
+        </p>
+      )}
     </div>
   );
 };
