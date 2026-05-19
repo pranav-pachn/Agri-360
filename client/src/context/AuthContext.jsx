@@ -31,11 +31,18 @@ export function AuthProvider({ children }) {
   };
 
   useEffect(() => {
+    const cleanupOAuthHash = () => {
+      if (window.location.hash.includes('access_token=')) {
+        window.location.replace(`${window.location.origin}/#/dashboard`);
+      }
+    };
+
     // Check active sessions and sets the user
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null);
       if (session?.user) {
         syncFarmerProfile(session.user);
+        cleanupOAuthHash();
       }
       setLoading(false);
     });
@@ -45,6 +52,7 @@ export function AuthProvider({ children }) {
       setUser(session?.user ?? null);
       if (session?.user) {
         syncFarmerProfile(session.user);
+        cleanupOAuthHash();
       }
       setLoading(false);
     });
@@ -72,15 +80,10 @@ export function AuthProvider({ children }) {
     signUp: signUpWithSync,
     signIn: signInWithSync,
     signInWithGoogle: () => {
-      // Build the redirect URL - must match what's registered in Google OAuth AND Supabase Site URL
-      const currentOrigin = window.location.origin;
-      // Use hash path for client-side routing with HashRouter
-      const redirectUrl = `${currentOrigin}/#/auth/callback`;
-      
       return supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: redirectUrl,
+          redirectTo: window.location.origin,
         },
       });
     },
