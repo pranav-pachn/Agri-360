@@ -325,12 +325,26 @@ export default function FarmerSetup() {
     };
 
     try {
-      // Try update (PUT) first; if profile doesn't exist, sync (POST) creates it
+      // Try update (PUT) first. If it fails, the profile likely doesn't exist yet.
       let res = await updateFarmerProfileRequest(user.id, payload);
+      
       if (!res.ok) {
-        res = await syncFarmerProfileRequest({ farmer_id: user.id, ...payload });
+        // Create the base profile record
+        const syncRes = await syncFarmerProfileRequest({ 
+          userId: user.id, 
+          email: user.email,
+          name: payload.name,
+          location: payload.location
+        });
+        
+        if (!syncRes.ok) throw new Error(`Creation failed: ${syncRes.status}`);
+        
+        // Now that the record exists, run the update again to save the remaining fields
+        res = await updateFarmerProfileRequest(user.id, payload);
       }
+      
       if (!res.ok) throw new Error(`Save failed: ${res.status}`);
+      
       setDone(true);
       setTimeout(() => navigate('/dashboard'), 1800);
     } catch (err) {
