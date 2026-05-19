@@ -53,6 +53,7 @@ app.use((req, res, next) => {
 app.use('/api', analysisRoutes);
 app.use('/api/v1/analytics', analyticsRoutes);
 app.use('/api/v1/chat', chatRoutes);
+app.use('/api/v1/farmers', farmerRoutes);
 app.use('/api/v1/risk', riskRoutes);
 app.use('/api/v1/weather', weatherRoutes);
 
