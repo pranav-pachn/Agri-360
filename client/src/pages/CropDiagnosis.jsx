@@ -271,7 +271,7 @@ const CropDiagnosis = () => {
 			</div>
 			</div>
 			<LoadingOverlay isVisible={loading} />
-		</div>
+		</div >
 	);
 };
 

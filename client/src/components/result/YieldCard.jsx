@@ -11,7 +11,7 @@ const YieldCard = ({ projectedYield, estimatedLoss }) => {
         </div>
         <h3 className="min-w-0 break-words text-lg font-bold text-white">Yield Impact</h3>
       </div>
-      
+
       <div className="mt-2 grid grid-cols-1 gap-3 sm:grid-cols-2">
         <div className="flex min-w-0 flex-col">
           <p className="text-slate-400 text-xs mb-1 uppercase tracking-wider font-semibold">Projected</p>

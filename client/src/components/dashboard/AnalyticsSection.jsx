@@ -17,20 +17,20 @@ const AnalyticsSection = ({
   const safeYieldTrend = yieldTrend.length
     ? yieldTrend
     : [
-        { label: 'Jan', value: 8.6 },
-        { label: 'Feb', value: 9.4 },
-        { label: 'Mar', value: 10.1 },
-        { label: 'Apr', value: 11.2 },
-        { label: 'May', value: 12 },
-      ];
+      { label: 'Jan', value: 8.6 },
+      { label: 'Feb', value: 9.4 },
+      { label: 'Mar', value: 10.1 },
+      { label: 'Apr', value: 11.2 },
+      { label: 'May', value: 12 },
+    ];
 
   const safeRiskDistribution = riskDistribution.length
     ? riskDistribution
     : [
-        { label: 'Low', value: 32, tone: 'bg-emerald-400' },
-        { label: 'Medium', value: 44, tone: 'bg-amber-400' },
-        { label: 'High', value: 24, tone: 'bg-rose-400' },
-      ];
+      { label: 'Low', value: 32, tone: 'bg-emerald-400' },
+      { label: 'Medium', value: 44, tone: 'bg-amber-400' },
+      { label: 'High', value: 24, tone: 'bg-rose-400' },
+    ];
 
   const maxYield = Math.max(...safeYieldTrend.map((item) => item.value), 1);
   const maxRisk = Math.max(...safeRiskDistribution.map((item) => item.value), 1);

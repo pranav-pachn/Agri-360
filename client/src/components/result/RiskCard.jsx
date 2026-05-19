@@ -2,7 +2,7 @@ import React from 'react';
 
 const RiskCard = ({ riskLevel, riskScore }) => {
   const getRiskColor = (level) => {
-    switch(level?.toLowerCase()) {
+    switch (level?.toLowerCase()) {
       case 'low': return 'text-green-400 bg-green-400/10 border-green-500/30';
       case 'medium': return 'text-yellow-400 bg-yellow-400/10 border-yellow-500/30';
       case 'high': return 'text-red-400 bg-red-400/10 border-red-500/30';
@@ -27,7 +27,7 @@ const RiskCard = ({ riskLevel, riskScore }) => {
           {riskLevel?.toUpperCase()}
         </span>
       </div>
-      
+
       <div className="flex h-[calc(100%-4.25rem)] flex-col">
         <div className="flex justify-between items-end mb-2">
           <p className="text-slate-400 text-sm">Risk Score</p>
@@ -36,10 +36,10 @@ const RiskCard = ({ riskLevel, riskScore }) => {
             <span className="text-xs text-slate-500">/ 1.0</span>
           </div>
         </div>
-        
+
         {/* Simple Progress Bar */}
         <div className="w-full h-2 bg-slate-700/50 rounded-full overflow-hidden mt-1">
-          <div 
+          <div
             className={`h-full rounded-full ${colors.split(' ')[0].replace('text-', 'bg-')}`}
             style={{ width: `${Math.min(100, riskScore * 100)}%` }}
           ></div>

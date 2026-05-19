@@ -11,9 +11,9 @@ const ImagePanel = ({ imageUrl }) => {
           Analyzed Image
         </h3>
         <div className="overflow-hidden rounded-xl bg-slate-900 border border-slate-700/80">
-          <img 
-            src={imageUrl || "https://images.unsplash.com/photo-1592841200221-a6898f307baa?auto=format&fit=crop&q=80"} 
-            alt="Analyzed Crop" 
+          <img
+            src={imageUrl || "https://images.unsplash.com/photo-1592841200221-a6898f307baa?auto=format&fit=crop&q=80"}
+            alt="Analyzed Crop"
             className="w-full h-auto max-h-[500px] object-cover hover:scale-105 transition-transform duration-500"
           />
         </div>
