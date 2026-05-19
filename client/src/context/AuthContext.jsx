@@ -33,18 +33,46 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     const cleanupOAuthHash = () => {
       if (window.location.hash.includes('access_token=')) {
+        // Replace the URL with the app hash route so HashRouter works normally
         window.location.replace(`${window.location.origin}/#/dashboard`);
       }
     };
 
-    // Check active sessions and sets the user
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null);
-      if (session?.user) {
-        syncFarmerProfile(session.user);
-        cleanupOAuthHash();
+    const handleOAuthFromUrl = async () => {
+      if (window.location.hash.includes('access_token=')) {
+        console.debug('[Auth] OAuth fragment detected in URL, attempting to parse session');
+        try {
+          const { data, error } = await supabase.auth.getSessionFromUrl({ storeSession: true });
+          console.debug('[Auth] getSessionFromUrl returned', { data, error });
+          if (error) {
+            console.error('Error parsing session from URL:', error);
+          } else if (data?.session) {
+            const session = data.session;
+            setUser(session?.user ?? null);
+            if (session?.user) {
+              await syncFarmerProfile(session.user);
+            }
+          } else {
+            console.warn('[Auth] getSessionFromUrl returned no session object');
+          }
+        } catch (e) {
+          console.error('Exception parsing session from URL:', e);
+        } finally {
+          cleanupOAuthHash();
+        }
       }
-      setLoading(false);
+    };
+
+    // First handle any OAuth fragment in the URL
+    handleOAuthFromUrl().finally(() => {
+      // Then check active sessions and set the user as usual
+      supabase.auth.getSession().then(({ data: { session } }) => {
+        setUser(session?.user ?? null);
+        if (session?.user) {
+          syncFarmerProfile(session.user);
+        }
+        setLoading(false);
+      });
     });
 
     // Listen for changes on auth state (logged in, signed out, etc.)
@@ -80,6 +108,7 @@ export function AuthProvider({ children }) {
     signUp: signUpWithSync,
     signIn: signInWithSync,
     signInWithGoogle: () => {
+      // Redirect to app origin so Google returns to the app; Supabase will append the access_token fragment
       return supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
