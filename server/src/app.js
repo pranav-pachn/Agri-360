@@ -8,6 +8,7 @@ const chatRoutes = require('./routes/chat.routes');
 const farmerRoutes = require('./routes/farmer.routes');
 const riskRoutes = require('./routes/risk.routes');
 const weatherRoutes = require('./routes/weather.routes');
+const debugRoutes = require('./routes/debug.routes');
 const errorHandler = require('./middlewares/error.middleware');
 const logger = require('./utils/logger');
 
@@ -43,6 +44,16 @@ const hasClientBuild = serveClientBuild && Boolean(clientDistPath && clientIndex
 app.use(cors());
 app.use(express.json());
 
+// Startup environment validations
+if (!process.env.OPENWEATHER_API_KEY) {
+  logger.warn('OPENWEATHER_API_KEY is not set. Live weather lookups will return neutral or unavailable responses.');
+} else {
+  logger.info('OPENWEATHER_API_KEY detected');
+}
+
+const useTensorflow = String(process.env.USE_TENSORFLOW || '').toLowerCase() === 'true';
+logger.info(`USE_TENSORFLOW=${useTensorflow}`);
+
 // Basic request logging middleware
 app.use((req, res, next) => {
   logger.info(`${req.method} ${req.url}`);
@@ -56,6 +67,7 @@ app.use('/api/v1/chat', chatRoutes);
 app.use('/api/v1/farmers', farmerRoutes);
 app.use('/api/v1/risk', riskRoutes);
 app.use('/api/v1/weather', weatherRoutes);
+app.use('/api/v1/debug', debugRoutes);
 
 // Root route - serve SPA when available, otherwise keep API health response.
 app.get('/', (req, res) => {

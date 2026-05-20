@@ -48,6 +48,10 @@ class AIService {
                     location: location
                 })
             });
+
+            if (!response.ok) {
+                throw new Error(`External AI service returned ${response.status}`);
+            }
             
             const result = await response.json();
             logger.info('✅ Real AI service response received');
@@ -60,15 +64,46 @@ class AIService {
     }
     
     formatAIResponse(aiResult) {
+        const diagnosis = aiResult?.diagnosis || aiResult?.result?.diagnosis || {};
+        const yieldPrediction = aiResult?.yield_prediction || aiResult?.yield || aiResult?.result?.yield_prediction || aiResult?.result?.yield || {};
+        const locationAnalysis = aiResult?.location_analysis || aiResult?.location || aiResult?.result?.location_analysis || {};
+        const recommendations = Array.isArray(aiResult?.recommendations)
+            ? aiResult.recommendations
+            : Array.isArray(aiResult?.result?.recommendations)
+                ? aiResult.result.recommendations
+                : [];
+
         return {
-            diagnosis: aiResult.diagnosis,
-            yield_prediction: aiResult.yield,
-            sustainability_score: aiResult.sustainability,
-            risk_assessment: aiResult.risk,
-            recommendations: aiResult.recommendations,
-            health_trend: aiResult.health_trend,
-            location_analysis: aiResult.location_analysis,
-            metadata: aiResult.metadata
+            diagnosis: {
+                disease: diagnosis?.disease || diagnosis?.label || 'Detected Condition',
+                confidence: diagnosis?.confidence ?? diagnosis?.probability ?? 0,
+                severity: diagnosis?.severity || 'Unknown',
+                health_score: diagnosis?.health_score ?? diagnosis?.health ?? null,
+                advice: diagnosis?.advice || diagnosis?.recommendation || null,
+                treatment: diagnosis?.treatment || null,
+                tensorflow_prediction: diagnosis?.tensorflow_prediction || null,
+                tensorflow_confidence: diagnosis?.tensorflow_confidence ?? null,
+            },
+            yield_prediction: {
+                predicted_yield: yieldPrediction?.predicted_yield ?? yieldPrediction?.value ?? 0,
+                unit: yieldPrediction?.unit || 'tons/hectare',
+                confidence: yieldPrediction?.confidence ?? diagnosis?.confidence ?? 0,
+            },
+            sustainability_score: aiResult?.sustainability_score ?? aiResult?.sustainability ?? aiResult?.result?.sustainability_score ?? 0,
+            risk_assessment: aiResult?.risk_assessment || aiResult?.risk || aiResult?.result?.risk_assessment || null,
+            recommendations,
+            health_trend: aiResult?.health_trend || aiResult?.result?.health_trend || null,
+            location_analysis: {
+                ...locationAnalysis,
+                source: locationAnalysis?.source || 'external-ai',
+            },
+            decision_intelligence: aiResult?.decision_intelligence || aiResult?.result?.decision_intelligence || null,
+            pipeline: aiResult?.pipeline || aiResult?.result?.pipeline || null,
+            metadata: {
+                ...(aiResult?.metadata || aiResult?.result?.metadata || {}),
+                fallback_used: false,
+                source: 'external-ai',
+            }
         };
     }
     

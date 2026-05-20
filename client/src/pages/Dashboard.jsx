@@ -9,7 +9,7 @@ import WeatherImpactCard from '../components/dashboard/WeatherImpactCard';
 import Recommendations from '../components/dashboard/Recommendations';
 import AnalyticsSection from '../components/dashboard/AnalyticsSection';
 import { getDashboardData } from '../services/dashboardDataService';
-import { getFarmerProfileRequest, getPendingApplicationsRequest } from '../services/farmersApi';
+import { getFarmerProfileRequest } from '../services/farmersApi';
 
 const buildAnalyticsSnapshot = (dashboardData = {}) => {
   const reports = Array.isArray(dashboardData.analyses) ? dashboardData.analyses : [];
@@ -259,7 +259,6 @@ export default function Dashboard() {
       const [data, profileResponse] = await Promise.all([
         getDashboardData({ farmerId, user }),
         getFarmerProfileRequest(farmerId).catch(() => null),
-        getPendingApplicationsRequest(42).catch(() => null),
       ]);
 
       if (requestId !== loadRequestIdRef.current) return;
@@ -404,4 +403,3 @@ export default function Dashboard() {
     </div>
   );
 }
-

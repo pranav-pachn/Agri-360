@@ -2,6 +2,7 @@ const axios = require('axios');
 
 const OPENWEATHER_API_KEY = process.env.OPENWEATHER_API_KEY;
 const OPENWEATHER_BASE_URL = process.env.OPENWEATHER_BASE_URL || 'https://api.openweathermap.org/data/2.5';
+const OPENWEATHER_GEO_BASE_URL = process.env.OPENWEATHER_GEO_BASE_URL || 'https://api.openweathermap.org/geo/1.0';
 
 const WEATHER_CACHE = {};
 const CACHE_TTL = 3600; // seconds
@@ -94,7 +95,7 @@ const getCoordinatesFromLocation = async (location) => {
 
     for (const candidate of candidates) {
       try {
-        const response = await axios.get(`${OPENWEATHER_BASE_URL}/geo/1.0/direct`, {
+        const response = await axios.get(`${OPENWEATHER_GEO_BASE_URL}/direct`, {
           params: {
             q: candidate,
             limit: 1,

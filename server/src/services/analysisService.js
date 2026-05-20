@@ -15,6 +15,8 @@ const {
 const { calculateProjectedYield } = require('../../../ai/yield-prediction/yieldCalculator');
 const { BASE_YIELD } = require('../../../ai/yield-prediction/baseYieldConfig');
 
+const MISSING_COLUMN_CODES = new Set(['42703', 'PGRST204', 'PGRST205']);
+
 const normalizeConfidenceToDecimal = (confidence) => {
     const n = Number(confidence);
     if (!Number.isFinite(n)) return null;
@@ -138,18 +140,254 @@ const buildExplainabilityText = (analysis) => {
     const disease = analysis?.disease || 'Detected Condition';
     const confidence = toConfidencePercent(analysis?.confidence);
     const severity = analysis?.severity || 'Unknown';
-    const riskScore = Number(analysis?.risk || 0);
+    const riskScore = Number(analysis?.risk ?? analysis?.risk_score ?? 0);
 
     return `Detected ${disease} with ${confidence}% confidence. Severity is ${severity}, and the computed risk score is ${riskScore.toFixed(2)}. Yield and financing projections are generated from this risk profile and sustainability signals to keep farm-health and loan-readiness decisions aligned.`;
 };
 
+const normalizeSeverityForStorage = (severity) => {
+    const value = String(severity || '').trim().toLowerCase();
+    if (!value) return 'Low';
+    if (value === 'none' || value === 'healthy') return 'Low';
+    if (value === 'medium' || value === 'moderate') return 'Moderate';
+    if (value === 'critical') return 'Critical';
+    if (value === 'high') return 'High';
+    return 'Low';
+};
+
+const selectFirstFiniteNumber = (...values) => {
+    for (const value of values) {
+        const n = Number(value);
+        if (Number.isFinite(n)) return n;
+    }
+    return null;
+};
+
+const shouldRetryWithCompatibilityPayload = (error) => {
+    const code = String(error?.code || '').trim();
+    const message = String(error?.message || '').toLowerCase();
+    return MISSING_COLUMN_CODES.has(code)
+        || message.includes('column')
+        || message.includes('schema cache')
+        || message.includes('could not find');
+};
+
+const buildAnalysisInsertCandidates = ({
+    crop,
+    location,
+    imageUrl,
+    farmerId,
+    disease,
+    confidence,
+    storageSeverity,
+    health,
+    finalRiskScore,
+    adjustedYield,
+    sustainability,
+    scaledTrustScore,
+    finalCreditRating,
+}) => {
+    const createdAt = new Date().toISOString();
+    const normalizedHealth = Number.isFinite(Number(health)) ? Math.round(Number(health)) : null;
+    const normalizedRisk = Number(finalRiskScore.toFixed(4));
+
+    const legacyPayload = {
+        farmer_id: farmerId,
+        crop,
+        location,
+        health: normalizedHealth,
+        risk: normalizedRisk,
+        yield: adjustedYield,
+        trust_score: scaledTrustScore,
+        credit_rating: finalCreditRating,
+        image_url: imageUrl,
+        severity: storageSeverity,
+        sustainability_index: sustainability,
+        confidence,
+        created_at: createdAt,
+        disease,
+    };
+
+    const enhancedPayload = {
+        farmer_id: farmerId,
+        crop_type: crop,
+        disease,
+        confidence,
+        risk_score: normalizedRisk,
+        health_score: normalizedHealth,
+        yield_prediction: adjustedYield,
+        image_url: imageUrl,
+        severity: storageSeverity,
+        sustainability_index: sustainability,
+        created_at: createdAt,
+    };
+
+    return [
+        {
+            payload: {
+                ...legacyPayload,
+                ...enhancedPayload,
+            },
+            select: `
+                id,
+                farmer_id,
+                crop,
+                crop_type,
+                location,
+                disease,
+                confidence,
+                health,
+                health_score,
+                risk,
+                risk_score,
+                yield,
+                yield_prediction,
+                trust_score,
+                credit_rating,
+                image_url,
+                severity,
+                sustainability_index,
+                created_at
+            `,
+        },
+        {
+            payload: enhancedPayload,
+            select: `
+                id,
+                farmer_id,
+                crop_type,
+                disease,
+                confidence,
+                health_score,
+                risk_score,
+                yield_prediction,
+                image_url,
+                severity,
+                sustainability_index,
+                created_at
+            `,
+        },
+        {
+            payload: legacyPayload,
+            select: `
+                id,
+                farmer_id,
+                crop,
+                location,
+                disease,
+                confidence,
+                health,
+                risk,
+                yield,
+                trust_score,
+                credit_rating,
+                image_url,
+                severity,
+                sustainability_index,
+                created_at
+            `,
+        },
+    ];
+};
+
+const insertAnalysisRecord = async (candidates = []) => {
+    let lastError = null;
+
+    for (let index = 0; index < candidates.length; index += 1) {
+        const candidate = candidates[index];
+        const insertResult = await supabase
+            .from('crop_reports')
+            .insert([candidate.payload])
+            .select(candidate.select)
+            .single();
+
+        if (!insertResult.error) {
+            return insertResult.data;
+        }
+
+        lastError = insertResult.error;
+        if (!shouldRetryWithCompatibilityPayload(insertResult.error) || index === candidates.length - 1) {
+            throw new Error(`Supabase Error: ${insertResult.error.message}`);
+        }
+
+        logger.warn(`Retrying crop_reports insert with compatibility payload: ${insertResult.error.message}`);
+    }
+
+    throw new Error(`Supabase Error: ${lastError?.message || 'Unknown insert failure'}`);
+};
+
+const buildCreditUpsertCandidates = ({ farmerId, scaledTrustScore, finalCreditRating, finalRiskScore, loanEligible }) => ([
+    {
+        payload: {
+            farmer_id: farmerId,
+            trust_score: scaledTrustScore,
+            credit_grade: finalCreditRating,
+            rating: finalCreditRating,
+            score: scaledTrustScore,
+            risk_category: String(toRiskLevel(finalRiskScore) || 'low').toLowerCase(),
+            loan_eligibility: loanEligible,
+            created_at: new Date().toISOString(),
+        },
+    },
+    {
+        payload: {
+            farmer_id: farmerId,
+            trust_score: scaledTrustScore,
+            credit_grade: finalCreditRating,
+            risk_category: String(toRiskLevel(finalRiskScore) || 'low').toLowerCase(),
+            loan_eligibility: loanEligible,
+            created_at: new Date().toISOString(),
+        },
+    },
+    {
+        payload: {
+            farmer_id: farmerId,
+            score: scaledTrustScore,
+            rating: finalCreditRating,
+            created_at: new Date().toISOString(),
+        },
+    },
+]);
+
+const upsertCreditSnapshot = async (candidates = []) => {
+    let lastError = null;
+
+    for (let index = 0; index < candidates.length; index += 1) {
+        const candidate = candidates[index];
+        const result = await supabase
+            .from('credit_scores')
+            .upsert(candidate.payload, { onConflict: 'farmer_id' });
+
+        if (!result.error) {
+            return;
+        }
+
+        lastError = result.error;
+        if (!shouldRetryWithCompatibilityPayload(result.error) || index === candidates.length - 1) {
+            throw new Error(`Supabase Error: ${result.error.message}`);
+        }
+
+        logger.warn(`Retrying credit_scores upsert with compatibility payload: ${result.error.message}`);
+    }
+
+    throw new Error(`Supabase Error: ${lastError?.message || 'Unknown credit upsert failure'}`);
+};
+
 const buildResultPayload = (analysis, options = {}) => {
-    const trustScore = Number(analysis?.trust_score ?? analysis?.score ?? 0);
-    const riskScore = Number(analysis?.risk ?? analysis?.risk_score ?? 0);
-    const projectedYield = Number(analysis?.yield ?? analysis?.yield_prediction ?? 0);
+    const trustScore = selectFirstFiniteNumber(
+        analysis?.trust_score,
+        analysis?.score,
+        options?.creditScore?.trust_score,
+        options?.creditScore?.score,
+        0
+    );
+    const riskScore = selectFirstFiniteNumber(analysis?.risk, analysis?.risk_score, 0);
+    const projectedYield = selectFirstFiniteNumber(analysis?.yield, analysis?.yield_prediction, 0);
     const sustainabilityScore = Number(analysis?.sustainability_index ?? 64);
     const recommendations = buildRecommendationsFromAnalysis(analysis);
     const explainabilityText = buildExplainabilityText(analysis);
+    const resolvedLocation = analysis?.location || options?.location || options?.prediction?.location || null;
+    const resolvedRating = analysis?.credit_rating || options?.creditScore?.credit_grade || options?.creditScore?.rating;
 
     return {
         id: analysis?.id,
@@ -161,9 +399,9 @@ const buildResultPayload = (analysis, options = {}) => {
         riskScore,
         projectedYield: `${Number.isFinite(projectedYield) ? projectedYield : '?'} tons/ha`,
         estimatedLoss: toEstimatedLossPercent(riskScore),
-        trustScore: Number.isFinite(trustScore) ? trustScore : 0,
+        trustScore: Number.isFinite(Number(trustScore)) ? Number(trustScore) : 0,
         eligibility: toEligibility(trustScore) ? 'Eligible' : 'Not Eligible',
-        rating: toRating(trustScore, analysis?.credit_rating),
+        rating: toRating(trustScore, resolvedRating),
         sustainabilityScore: Number.isFinite(sustainabilityScore) ? sustainabilityScore : 64,
         sustainabilityBreakdown: buildSustainabilityBreakdown(sustainabilityScore, analysis?.sustainability_breakdown),
         recommendations,
@@ -174,7 +412,7 @@ const buildResultPayload = (analysis, options = {}) => {
         },
         raw: {
             crop: analysis?.crop || analysis?.crop_type || null,
-            location: analysis?.location || null,
+            location: resolvedLocation,
             timestamp: analysis?.created_at || null,
         },
     };
@@ -187,6 +425,7 @@ const generateAnalysis = async (crop, location, imageUrl = null, fertilizerLevel
     // 1. Enhanced AI integration
     const aiResults = await aiService.analyzeCropImage(imageUrl, crop, location);
     const severity = aiResults.diagnosis?.severity || 'Unknown';
+    const storageSeverity = normalizeSeverityForStorage(severity);
 
     const decisionIntelligence = aiResults.decision_intelligence || {
         risk_factor: null,
@@ -312,49 +551,31 @@ const generateAnalysis = async (crop, location, imageUrl = null, fertilizerLevel
 
     // 5. Enhanced analysis result with new database fields
     const analysisResult = {
-        farmer_id: farmerId,
-        crop_type: crop,
+        crop,
+        location,
+        imageUrl,
+        farmerId,
         disease: aiResults.diagnosis?.disease || null,
         confidence: normalizeConfidenceToDecimal(aiResults.diagnosis?.confidence),
-        risk_score: Number(finalRiskScore.toFixed(4)),
-        health_score: Number.isFinite(Number(health)) ? Math.round(Number(health)) : null,
-        yield_prediction: adjustedYield,
-        image_url: imageUrl,
-        severity,
-        sustainability_index: sustainability,
-        created_at: new Date().toISOString()
+        storageSeverity,
+        health,
+        finalRiskScore,
+        adjustedYield,
+        sustainability,
+        scaledTrustScore,
+        finalCreditRating,
     };
     
-    // 6. Store in enhanced crop_reports table
-    const insertResult = await supabase
-        .from('crop_reports')
-        .insert([analysisResult])
-        .select(`
-            id,
-            crop_type,
-            disease,
-            confidence,
-            health_score,
-            risk_score,
-            yield_prediction,
-            image_url,
-            severity,
-            sustainability_index,
-            created_at
-        `)
-        .single();
-    
-    if (insertResult.error) {
-        throw new Error(`Supabase Error: ${insertResult.error.message}`);
-    }
+    // 6. Store in crop_reports with compatibility for both deployed schemas.
+    const insertedAnalysis = await insertAnalysisRecord(buildAnalysisInsertCandidates(analysisResult));
 
     // 7. Store AI metadata for reliability tracking (judge-facing telemetry)
     const aiMetadata = {
-        crop_report_id: insertResult.data.id,
+        crop_report_id: insertedAnalysis.id,
         crop_type: crop,
         disease: aiResults.diagnosis?.disease || null,
         confidence: normalizeConfidenceToDecimal(aiResults.diagnosis?.confidence),
-        severity,
+        severity: storageSeverity,
         ai_source: deriveAISource(aiResults),
         fallback_used: Boolean(aiResults?.metadata?.fallback_used),
         raw_label: aiResults?.diagnosis?.tensorflow_prediction || aiResults?.pipeline?.raw_ai?.label || null,
@@ -384,22 +605,13 @@ const generateAnalysis = async (crop, location, imageUrl = null, fertilizerLevel
     // 8. Keep latest trust/credit snapshot aligned with new analysis results.
     if (farmerId) {
         try {
-            const creditPayload = {
-                farmer_id: farmerId,
-                trust_score: scaledTrustScore,
-                credit_grade: finalCreditRating,
-                risk_category: String(toRiskLevel(finalRiskScore) || 'low').toLowerCase(),
-                loan_eligibility: loanEligible,
-                created_at: new Date().toISOString(),
-            };
-
-            const creditUpsert = await supabase
-                .from('credit_scores')
-                .upsert(creditPayload, { onConflict: 'farmer_id' });
-
-            if (creditUpsert.error) {
-                logger.warn('Credit score upsert failed (continuing analysis response):', creditUpsert.error.message);
-            }
+            await upsertCreditSnapshot(buildCreditUpsertCandidates({
+                farmerId,
+                scaledTrustScore,
+                finalCreditRating,
+                finalRiskScore,
+                loanEligible,
+            }));
         } catch (creditError) {
             logger.warn('Credit score upsert threw error (continuing analysis response):', creditError.message);
         }
@@ -407,9 +619,9 @@ const generateAnalysis = async (crop, location, imageUrl = null, fertilizerLevel
 
     // 9. Enhanced response format for frontend compatibility
     return {
-        id: insertResult.data.id,
+        id: insertedAnalysis.id,
         prediction_id: predictionId,
-        crop: insertResult.data.crop_type,
+        crop: insertedAnalysis.crop_type || insertedAnalysis.crop || crop,
         disease: aiResults.diagnosis.disease,
         confidence: normalizeConfidenceToDecimal(aiResults.diagnosis.confidence),
         severity,
@@ -432,11 +644,11 @@ const generateAnalysis = async (crop, location, imageUrl = null, fertilizerLevel
             lossPercent: yieldResult.yieldLossPercent
         },
         location,
-        timestamp: insertResult.data.created_at,
+        timestamp: insertedAnalysis.created_at,
         score: finalTrustScore,
         scaled_trust_score: scaledTrustScore,
         credit_rating: finalCreditRating,
-        image_url: insertResult.data.image_url,
+        image_url: insertedAnalysis.image_url,
         diagnosis: {
             disease: aiResults.diagnosis.disease,
             confidence: aiResults.diagnosis.confidence,
@@ -525,25 +737,66 @@ const getAnalysisById = async (id) => {
 
     let sourceMode = 'backend-reconstructed';
     let fallbackUsed = false;
+    let predictionData = null;
+    let creditScore = null;
+    let resolvedLocation = analysis?.location || null;
 
     try {
-        const { data: predictionData } = await supabase
+        const { data } = await supabase
             .from('predictions')
-            .select('ai_source, fallback_used')
+            .select('ai_source, fallback_used, location')
             .eq('crop_report_id', id)
             .order('created_at', { ascending: false })
             .limit(1)
             .maybeSingle();
 
+        predictionData = data;
         if (predictionData?.ai_source) {
             sourceMode = predictionData.ai_source;
         }
         fallbackUsed = Boolean(predictionData?.fallback_used);
+        resolvedLocation = resolvedLocation || predictionData?.location || null;
     } catch (error) {
         logger.warn('Could not resolve prediction metadata for analysis payload:', error.message);
     }
 
-    return buildResultPayload(analysis, { sourceMode, fallbackUsed });
+    if (analysis?.farmer_id) {
+        try {
+            const { data } = await supabase
+                .from('credit_scores')
+                .select('*')
+                .eq('farmer_id', analysis.farmer_id)
+                .order('created_at', { ascending: false })
+                .limit(1)
+                .maybeSingle();
+
+            creditScore = data || null;
+        } catch (error) {
+            logger.warn('Could not resolve credit score metadata for analysis payload:', error.message);
+        }
+
+        if (!resolvedLocation) {
+            try {
+                const { data } = await supabase
+                    .from('farmers')
+                    .select('location')
+                    .eq('id', analysis.farmer_id)
+                    .maybeSingle();
+
+                resolvedLocation = data?.location || null;
+            } catch (error) {
+                logger.warn('Could not resolve farmer location for analysis payload:', error.message);
+            }
+        }
+    }
+
+    return buildResultPayload(analysis, {
+        sourceMode,
+        fallbackUsed,
+        prediction: predictionData,
+        creditScore,
+        location: resolvedLocation,
+    });
 };
 
 /**
@@ -566,16 +819,11 @@ const getAllAnalyses = async () => {
  * Explainability Analysis
  */
 const getExplainability = async (id) => {
-    const analysis = await getAnalysisRowById(id);
-    if (!analysis) return null;
-
-    const payload = buildResultPayload(analysis, {
-        sourceMode: 'backend-reconstructed',
-        fallbackUsed: false,
-    });
+    const payload = await getAnalysisById(id);
+    if (!payload) return null;
 
     return {
-        id: analysis.id,
+        id: payload.id,
         explainabilityText: payload.explainabilityText,
         recommendations: payload.recommendations,
         riskLevel: payload.riskLevel,

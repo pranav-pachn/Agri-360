@@ -29,6 +29,27 @@ const safeRequire = (moduleName) => {
     }
 };
 
+/**
+ * Resolve a runtime reference to the server weather service, falling back
+ * to a minimal stub when the server module is not available (e.g. when
+ * running AI tools in isolation).
+ */
+const getWeatherService = () => {
+    try {
+        // Resolve relative to project root from this AI module
+        const resolved = path.resolve(__dirname, '../../server/src/services/weather.service.js');
+        // Use native require to load the service
+        // eslint-disable-next-line global-require, import/no-dynamic-require
+        return require(resolved);
+    } catch (err) {
+        console.warn('Weather service not available to AI module, using stubbed weather responses:', err.message);
+        return {
+            getWeatherByLocation: async (loc) => 'normal',
+            getWeatherSnapshotByLocation: async (loc) => ({ normalizedCondition: 'normal', available: false, location: loc || 'Unknown location' })
+        };
+    }
+};
+
 const ensureTensorflowDependencies = () => {
     if (tf && mobilenet) return true;
     try {
