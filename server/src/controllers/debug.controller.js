@@ -1,4 +1,6 @@
 const logger = require('../utils/logger');
+const fs = require('fs');
+const path = require('path');
 
 // Try to require the server weather service; it should exist.
 let weatherService;
@@ -19,6 +21,17 @@ try {
   tfService = null;
 }
 
+const SAMPLE_IMAGE_PATH = path.resolve(__dirname, '../assets/smoke-sample-crop.svg');
+
+const loadSmokeImageBuffer = () => {
+  try {
+    return fs.readFileSync(SAMPLE_IMAGE_PATH);
+  } catch (err) {
+    logger.warn('Debug: smoke sample image not available:', err.message);
+    return null;
+  }
+};
+
 const smoke = async (req, res, next) => {
   try {
     const sampleLocation = 'Pune, Maharashtra';
@@ -29,8 +42,13 @@ const smoke = async (req, res, next) => {
 
     let inference = null;
     if (tfService && typeof tfService.analyzeCropImage === 'function') {
-      // Intentionally pass null imageUrl to trigger mock fallback if TF not loaded
-      inference = await tfService.analyzeCropImage(null, 'Wheat', sampleLocation).catch((err) => ({ error: err.message }));
+      const imageBuffer = loadSmokeImageBuffer();
+      if (imageBuffer) {
+        inference = await tfService.analyzeCropImage(null, 'Wheat', sampleLocation, { imageBuffer })
+          .catch((err) => ({ error: err.message }));
+      } else {
+        inference = { warning: 'smoke sample image unavailable', fallback: true };
+      }
     } else {
       inference = { warning: 'tensorflow-service unavailable', fallback: true };
     }

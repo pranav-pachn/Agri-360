@@ -191,23 +191,6 @@ const buildAnalysisInsertCandidates = ({
     const normalizedHealth = Number.isFinite(Number(health)) ? Math.round(Number(health)) : null;
     const normalizedRisk = Number(finalRiskScore.toFixed(4));
 
-    const legacyPayload = {
-        farmer_id: farmerId,
-        crop,
-        location,
-        health: normalizedHealth,
-        risk: normalizedRisk,
-        yield: adjustedYield,
-        trust_score: scaledTrustScore,
-        credit_rating: finalCreditRating,
-        image_url: imageUrl,
-        severity: storageSeverity,
-        sustainability_index: sustainability,
-        confidence,
-        created_at: createdAt,
-        disease,
-    };
-
     const enhancedPayload = {
         farmer_id: farmerId,
         crop_type: crop,
@@ -222,34 +205,30 @@ const buildAnalysisInsertCandidates = ({
         created_at: createdAt,
     };
 
+    const legacyPayload = {
+        farmer_id: farmerId,
+        crop,
+        location,
+        health: normalizedHealth,
+        risk: normalizedRisk,
+        yield: adjustedYield,
+        trust_score: scaledTrustScore,
+        credit_rating: finalCreditRating,
+        image_url: imageUrl,
+        severity: storageSeverity,
+        sustainability_index: sustainability,
+        confidence,
+        created_at: createdAt,
+    };
+
+    const ultraLegacyPayload = {
+        farmer_id: farmerId,
+        image_url: imageUrl,
+        confidence,
+        created_at: createdAt,
+    };
+
     return [
-        {
-            payload: {
-                ...legacyPayload,
-                ...enhancedPayload,
-            },
-            select: `
-                id,
-                farmer_id,
-                crop,
-                crop_type,
-                location,
-                disease,
-                confidence,
-                health,
-                health_score,
-                risk,
-                risk_score,
-                yield,
-                yield_prediction,
-                trust_score,
-                credit_rating,
-                image_url,
-                severity,
-                sustainability_index,
-                created_at
-            `,
-        },
         {
             payload: enhancedPayload,
             select: `
@@ -274,8 +253,6 @@ const buildAnalysisInsertCandidates = ({
                 farmer_id,
                 crop,
                 location,
-                disease,
-                confidence,
                 health,
                 risk,
                 yield,
@@ -284,6 +261,17 @@ const buildAnalysisInsertCandidates = ({
                 image_url,
                 severity,
                 sustainability_index,
+                confidence,
+                created_at
+            `,
+        },
+        {
+            payload: ultraLegacyPayload,
+            select: `
+                id,
+                farmer_id,
+                image_url,
+                confidence,
                 created_at
             `,
         },

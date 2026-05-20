@@ -70,6 +70,11 @@ const FALLBACK_ESTIMATED_LOSS_BY_SEVERITY = {
     Unknown: '10–20%'
 };
 
+const toSafeNumber = (value, fallback = 0) => {
+    const numeric = Number(value);
+    return Number.isFinite(numeric) ? numeric : fallback;
+};
+
 class TensorFlowService {
     constructor() {
         this.model = null;
@@ -212,8 +217,11 @@ class TensorFlowService {
         
         // Step 2 + 3: Agricultural AI + Decision AI
         const inferred = runInference(predictions, cropType, location);
+        const safeConfidence = toSafeNumber(inferred?.confidence, 0);
+        const safeHealthScore = toSafeNumber(inferred?.health_score, 0);
+        const safeRawProbability = toSafeNumber(rawAI?.probability || inferred?.raw_probability, 0);
 
-        console.log(`✅ Inference result: ${inferred.disease} (${(inferred.confidence * 100).toFixed(1)}%) — ${inferred.severity} severity`);
+        console.log(`✅ Inference result: ${inferred.disease} (${(safeConfidence * 100).toFixed(1)}%) — ${inferred.severity} severity`);
 
         // Fetch real weather data for the location
         const weatherService = getWeatherService();
@@ -226,21 +234,21 @@ class TensorFlowService {
         return {
             diagnosis: {
                 disease: inferred.disease,
-                confidence: Number(inferred.confidence.toFixed(4)),
+                confidence: Number(safeConfidence.toFixed(4)),
                 severity: inferred.severity,
-                health_score: inferred.health_score,
+                health_score: safeHealthScore,
                 tensorflow_prediction: rawAI.label || inferred.raw_label,
-                tensorflow_confidence: Number((rawAI.probability || inferred.raw_probability || 0).toFixed(4)),
+                tensorflow_confidence: Number(safeRawProbability.toFixed(4)),
                 advice: inferred.advice,
-                treatment: inferred.treatment
+                treatment: inferred.treatment,
             },
             yield_prediction: {
-                predicted_yield: this.calculateYieldFromHealth(inferred.health_score, actualCrop),
+                predicted_yield: this.calculateYieldFromHealth(safeHealthScore, actualCrop),
                 unit: 'tons/hectare',
-                confidence: Number(inferred.confidence.toFixed(4))
+                confidence: Number(safeConfidence.toFixed(4)),
             },
-            sustainability_score: this.calculateSustainability(inferred.health_score, location),
-            risk_assessment: this.calculateRisk(inferred.health_score),
+            sustainability_score: this.calculateSustainability(safeHealthScore, location),
+            risk_assessment: this.calculateRisk(safeHealthScore),
             recommendations: [
                 {
                     type: inferred.severity === 'None' ? 'Preventive' : 'Treatment',
@@ -249,16 +257,16 @@ class TensorFlowService {
                     treatment: inferred.treatment,
                     detected_by: 'TensorFlow + AI Inference Engine',
                     raw_label: inferred.raw_label,
-                    alternatives: inferred.alternatives
-                }
+                    alternatives: inferred.alternatives,
+                },
             ],
-            health_trend: this.generateHealthTrend(inferred.health_score),
+            health_trend: this.generateHealthTrend(safeHealthScore),
             location_analysis: {
                 location: location,
                 tensorflow_detected: rawAI.label || inferred.raw_label,
                 agricultural_interpretation: inferred.disease,
                 weather: weather || 'normal',
-                source: inferred.source
+                source: inferred.source,
             },
             decision_intelligence: {
                 severity: normalizedSeverity,
@@ -267,7 +275,7 @@ class TensorFlowService {
                 estimated_loss: estimatedLoss,
                 urgency: inferred.urgency || null,
                 crop_advisory: inferred.cropAdvisory || null,
-                recommended_action: inferred.recommendedAction || inferred.advice
+                recommended_action: inferred.recommendedAction || inferred.advice,
             },
             pipeline: inferred.pipeline,
             metadata: {
@@ -277,9 +285,9 @@ class TensorFlowService {
                 processing_time_ms: 0,
                 model_used: 'MobileNetV2',
                 fallback_used: false,
-                ai_source: "tensorflow",
-                pipeline_flow: 'Raw AI -> Agricultural AI -> Decision AI'
-            }
+                ai_source: 'tensorflow',
+                pipeline_flow: 'Raw AI -> Agricultural AI -> Decision AI',
+            },
         };
     }
 
