@@ -17,6 +17,7 @@ const { BASE_YIELD } = require('../../../ai/yield-prediction/baseYieldConfig');
 
 const MISSING_COLUMN_CODES = new Set(['42703', 'PGRST204', 'PGRST205']);
 const writeSupabase = supabase.admin || supabase;
+const canWritePredictionMetadata = Boolean(supabase.hasServiceRole);
 
 const normalizeConfidenceToDecimal = (confidence) => {
     const n = Number(confidence);
@@ -231,23 +232,6 @@ const buildAnalysisInsertCandidates = ({
 
     return [
         {
-            payload: enhancedPayload,
-            select: `
-                id,
-                farmer_id,
-                crop_type,
-                disease,
-                confidence,
-                health_score,
-                risk_score,
-                yield_prediction,
-                image_url,
-                severity,
-                sustainability_index,
-                created_at
-            `,
-        },
-        {
             payload: legacyPayload,
             select: `
                 id,
@@ -263,6 +247,23 @@ const buildAnalysisInsertCandidates = ({
                 severity,
                 sustainability_index,
                 confidence,
+                created_at
+            `,
+        },
+        {
+            payload: enhancedPayload,
+            select: `
+                id,
+                farmer_id,
+                crop_type,
+                disease,
+                confidence,
+                health_score,
+                risk_score,
+                yield_prediction,
+                image_url,
+                severity,
+                sustainability_index,
                 created_at
             `,
         },
@@ -573,20 +574,24 @@ const generateAnalysis = async (crop, location, imageUrl = null, fertilizerLevel
     };
 
     let predictionId = null;
-    try {
-        const predictionInsert = await writeSupabase
-            .from('predictions')
-            .insert([aiMetadata])
-            .select('id')
-            .single();
+    if (!canWritePredictionMetadata) {
+        logger.info('Skipping AI metadata insert: SUPABASE_SERVICE_ROLE_KEY is not configured.');
+    } else {
+        try {
+            const predictionInsert = await writeSupabase
+                .from('predictions')
+                .insert([aiMetadata])
+                .select('id')
+                .single();
 
-        if (predictionInsert.error) {
-            logger.warn('AI metadata insert failed (continuing analysis response):', predictionInsert.error.message);
-        } else {
-            predictionId = predictionInsert.data?.id || null;
+            if (predictionInsert.error) {
+                logger.warn('AI metadata insert failed (continuing analysis response):', predictionInsert.error.message);
+            } else {
+                predictionId = predictionInsert.data?.id || null;
+            }
+        } catch (metadataError) {
+            logger.warn('AI metadata insert threw error (continuing analysis response):', metadataError.message);
         }
-    } catch (metadataError) {
-        logger.warn('AI metadata insert threw error (continuing analysis response):', metadataError.message);
     }
 
     // 8. Keep latest trust/credit snapshot aligned with new analysis results.

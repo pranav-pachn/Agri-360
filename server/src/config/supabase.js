@@ -35,5 +35,6 @@ const supabaseAdmin = supabaseServiceRoleKey
   : supabase;
 
 supabase.admin = supabaseAdmin;
+supabase.hasServiceRole = Boolean(supabaseServiceRoleKey);
 
 module.exports = supabase;
