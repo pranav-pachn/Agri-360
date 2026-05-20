@@ -128,10 +128,10 @@ export function AuthProvider({ children }) {
     signIn: signInWithSync,
     signInWithGoogle: () => {
       // Use a real callback path in production so the browser router can own the callback route.
-      // Keep the bare origin in development so HashRouter continues to work locally.
+      // In development, use the hash-based callback route so HashRouter can resolve it.
       const redirectTo = import.meta.env.PROD
         ? `${window.location.origin}/auth/callback`
-        : window.location.origin;
+        : `${window.location.origin}/#/auth/callback`;
 
       return supabase.auth.signInWithOAuth({
         provider: 'google',

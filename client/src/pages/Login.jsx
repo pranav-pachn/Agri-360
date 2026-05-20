@@ -1,10 +1,11 @@
 import { useMemo, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { ArrowRight, Leaf, LogIn, ShieldCheck } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { SupabaseGoogleLogin } from '../components/GoogleLogin';
 
 export default function Login() {
+  const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState(null);
@@ -40,6 +41,8 @@ export default function Login() {
       const { error } = await signIn({ email, password });
         
       if (error) throw error;
+
+      navigate('/dashboard', { replace: true });
       
     } catch (err) {
       setError(err.message);
