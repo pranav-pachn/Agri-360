@@ -116,7 +116,8 @@ const buildFromFarmerDetails = async (details = {}, user = null) => {
   const estimatedLossPercent = Math.round(Math.max(0, Math.min(100, riskScore * 50)));
   const riskLevel = toRiskLevel(riskScore);
   const explanation = buildRiskExplanation({ riskLevel, riskScore, yieldValue, trustScore });
-  const resolvedLocation = details.location || latestReal?.location || latestCombined?.location || user?.user_metadata?.location || user?.location || 'Unknown location';
+  const profileLocation = [details.profile?.district, details.profile?.state].filter(Boolean).join(', ');
+  const resolvedLocation = details.location || profileLocation || latestReal?.location || latestCombined?.location || user?.user_metadata?.location || user?.location || 'Nagpur, Maharashtra';
   const liveWeatherResponse = await fetchLiveWeather(resolvedLocation);
 
   return {

@@ -361,7 +361,8 @@ export default function Dashboard() {
 
   // All personal details come from the fetched profile — nothing is hardcoded
   const farmerName = farmerProfile?.name || user?.user_metadata?.name || user?.email?.split('@')[0] || 'Farmer';
-  const farmerLocation = farmerProfile?.location || user?.user_metadata?.location || latestReport?.location || '';
+  const profileLocation = farmerProfile?.profile ? [farmerProfile.profile.district, farmerProfile.profile.state].filter(Boolean).join(', ') : '';
+  const farmerLocation = farmerProfile?.location || profileLocation || user?.user_metadata?.location || latestReport?.location || '';
   const cropName = latestReport?.crop || '';
   const diseaseName = latestReport?.disease || '';
 
