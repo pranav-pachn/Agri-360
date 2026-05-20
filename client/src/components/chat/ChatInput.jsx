@@ -106,7 +106,7 @@ const ChatInput = ({ onSend, disabled, language = 'en' }) => {
           className={`flex flex-shrink-0 items-center justify-center rounded-2xl p-3 transition-all duration-300 ${
             disabled || !inputText.trim()
               ? 'cursor-not-allowed bg-slate-800 text-slate-500'
-              : 'bg-gradient-to-r from-emerald-500 to-cyan-500 text-white shadow-lg shadow-emerald-900/20 hover:-translate-y-0.5 active:scale-95'
+              : 'bg-gradient-to-r from-emerald-500 to-cyan-500 !text-slate-950 shadow-lg shadow-emerald-900/20 hover:-translate-y-0.5 active:scale-95'
           }`}
         >
           <svg className="w-5 h-5 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">

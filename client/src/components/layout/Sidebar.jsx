@@ -69,7 +69,7 @@ export default function Sidebar() {
         </div>
         <Link
           to="/trust-score"
-          className="block w-full rounded-full bg-gradient-to-r from-emerald-500 to-green-600 py-3 text-center text-sm font-bold text-white shadow-md shadow-emerald-900/30 transition-all hover:shadow-lg hover:shadow-emerald-900/40 hover:brightness-110"
+          className="block w-full rounded-full bg-gradient-to-r from-emerald-500 to-green-600 py-3 text-center text-sm font-bold !text-white shadow-md shadow-emerald-900/30 transition-all hover:shadow-lg hover:shadow-emerald-900/40 hover:brightness-110"
         >
           Apply for Credit
         </Link>

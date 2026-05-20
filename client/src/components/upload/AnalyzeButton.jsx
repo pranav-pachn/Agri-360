@@ -12,7 +12,7 @@ const AnalyzeButton = ({ disabled, onClick }) => {
       className={`flex w-full items-center justify-center rounded-2xl py-4 text-lg font-black transition-all duration-300 ${
         disabled 
           ? 'cursor-not-allowed bg-slate-800/70 text-slate-500 opacity-70' 
-          : 'bg-gradient-to-r from-emerald-500 to-cyan-500 text-white shadow-2xl shadow-emerald-900/20 hover:-translate-y-0.5 hover:shadow-[0_0_32px_rgba(45,212,191,0.24)] active:scale-[0.99]'
+          : 'bg-gradient-to-r from-emerald-500 to-cyan-500 !text-slate-950 shadow-2xl shadow-emerald-900/20 hover:-translate-y-0.5 hover:shadow-[0_0_32px_rgba(45,212,191,0.24)] active:scale-[0.99]'
       }`}
     >
       <svg className="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
