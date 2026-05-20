@@ -106,7 +106,12 @@ const buildFromFarmerDetails = async (details = {}, user = null) => {
   );
 
   const mockPayload = buildMockDashboardData(user);
-  const combinedReports = mergeReports(mappedRealReports, mockPayload.analyses, TARGET_REPORT_COUNT);
+
+  // Prefer live reports only. If no live reports are available, fall back to mock dataset.
+  const combinedReports = (mappedRealReports && mappedRealReports.length)
+    ? mappedRealReports.slice(0, TARGET_REPORT_COUNT)
+    : mockPayload.analyses.slice(0, TARGET_REPORT_COUNT);
+
   const latestReal = mappedRealReports[0];
   const latestCombined = combinedReports[0];
 
@@ -135,10 +140,10 @@ const buildFromFarmerDetails = async (details = {}, user = null) => {
     weatherImpact: liveWeatherResponse.impact,
     analyses: combinedReports,
     dataMode: {
-      source: mappedRealReports.length ? 'dashboard-mixed' : 'dashboard-mock',
-      fallbackUsed: combinedReports.length > mappedRealReports.length,
+      source: mappedRealReports.length ? 'dashboard-live' : 'dashboard-mock',
+      fallbackUsed: mappedRealReports.length === 0,
       label: mappedRealReports.length
-        ? `Live + baseline data for ${user?.user_metadata?.name || user?.name || 'Farmer'}`
+        ? `Live data for ${user?.user_metadata?.name || user?.name || 'Farmer'}`
         : `Showing baseline intelligence for ${user?.user_metadata?.name || user?.name || 'Farmer'}`,
     },
   };
