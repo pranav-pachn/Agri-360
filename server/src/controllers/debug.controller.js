@@ -13,7 +13,7 @@ try {
 // and may fall back to the enhanced mock service when not present or not loaded.
 let tfService;
 try {
-  tfService = require('../../ai/crop-intelligence/tensorflow-service');
+  tfService = require('../../../ai/crop-intelligence/tensorflow-service');
 } catch (err) {
   logger.warn('Debug: tensorflow-service not available to debug endpoint:', err.message);
   tfService = null;
