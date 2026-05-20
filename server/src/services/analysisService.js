@@ -16,6 +16,7 @@ const { calculateProjectedYield } = require('../../../ai/yield-prediction/yieldC
 const { BASE_YIELD } = require('../../../ai/yield-prediction/baseYieldConfig');
 
 const MISSING_COLUMN_CODES = new Set(['42703', 'PGRST204', 'PGRST205']);
+const writeSupabase = supabase.admin || supabase;
 
 const normalizeConfidenceToDecimal = (confidence) => {
     const n = Number(confidence);
@@ -308,8 +309,14 @@ const buildCreditUpsertCandidates = ({ farmerId, scaledTrustScore, finalCreditRa
     {
         payload: {
             farmer_id: farmerId,
-            trust_score: scaledTrustScore,
-            credit_grade: finalCreditRating,
+            rating: finalCreditRating,
+            score: scaledTrustScore,
+            created_at: new Date().toISOString(),
+        },
+    },
+    {
+        payload: {
+            farmer_id: farmerId,
             rating: finalCreditRating,
             score: scaledTrustScore,
             risk_category: String(toRiskLevel(finalRiskScore) || 'low').toLowerCase(),
@@ -322,16 +329,8 @@ const buildCreditUpsertCandidates = ({ farmerId, scaledTrustScore, finalCreditRa
             farmer_id: farmerId,
             trust_score: scaledTrustScore,
             credit_grade: finalCreditRating,
-            risk_category: String(toRiskLevel(finalRiskScore) || 'low').toLowerCase(),
-            loan_eligibility: loanEligible,
-            created_at: new Date().toISOString(),
-        },
-    },
-    {
-        payload: {
-            farmer_id: farmerId,
-            score: scaledTrustScore,
             rating: finalCreditRating,
+            score: scaledTrustScore,
             created_at: new Date().toISOString(),
         },
     },
@@ -575,7 +574,7 @@ const generateAnalysis = async (crop, location, imageUrl = null, fertilizerLevel
 
     let predictionId = null;
     try {
-        const predictionInsert = await supabase
+        const predictionInsert = await writeSupabase
             .from('predictions')
             .insert([aiMetadata])
             .select('id')

@@ -75,6 +75,34 @@ const toSafeNumber = (value, fallback = 0) => {
     return Number.isFinite(numeric) ? numeric : fallback;
 };
 
+const getInferenceLabel = (inferred, rawAI, cropType) => inferred?.disease || rawAI?.label || cropType || 'Unclassified';
+
+const getInferenceSeverity = (inferred) => inferred?.severity || 'Unknown';
+
+const normalizeInferenceResult = (inferred, rawAI, cropType) => {
+    if (!inferred || !inferred.error) {
+        return inferred;
+    }
+
+    return {
+        ...inferred,
+        crop: inferred.crop || cropType || 'Unknown Crop',
+        disease: getInferenceLabel(inferred, rawAI, cropType),
+        confidence: Number.isFinite(Number(inferred.confidence))
+            ? Number(inferred.confidence)
+            : toSafeNumber(rawAI?.probability, 0),
+        severity: getInferenceSeverity(inferred),
+        health_score: Number.isFinite(Number(inferred.health_score)) ? Number(inferred.health_score) : null,
+        advice: inferred.message || inferred.advice || 'No predictions generated. Please upload a clearer image of the crop leaf or stem.',
+        treatment: inferred.treatment || null,
+        raw_label: inferred.raw_label || rawAI?.label || null,
+        raw_probability: Number.isFinite(Number(inferred.raw_probability))
+            ? Number(inferred.raw_probability)
+            : toSafeNumber(rawAI?.probability, 0),
+        alternatives: Array.isArray(inferred.alternatives) ? inferred.alternatives : (rawAI?.alternatives || []),
+    };
+};
+
 class TensorFlowService {
     constructor() {
         this.model = null;
@@ -216,26 +244,26 @@ class TensorFlowService {
         const rawAI = runTensorflow(predictions);
         
         // Step 2 + 3: Agricultural AI + Decision AI
-        const inferred = runInference(predictions, cropType, location);
-        const safeConfidence = toSafeNumber(inferred?.confidence, 0);
+        const inferred = normalizeInferenceResult(runInference(predictions, cropType, location), rawAI, cropType);
+        const safeConfidence = toSafeNumber(inferred?.confidence, toSafeNumber(rawAI?.probability, 0));
         const safeHealthScore = toSafeNumber(inferred?.health_score, 0);
         const safeRawProbability = toSafeNumber(rawAI?.probability || inferred?.raw_probability, 0);
 
-        console.log(`✅ Inference result: ${inferred.disease} (${(safeConfidence * 100).toFixed(1)}%) — ${inferred.severity} severity`);
+        console.log(`✅ Inference result: ${getInferenceLabel(inferred, rawAI, cropType)} (${(safeConfidence * 100).toFixed(1)}%) — ${getInferenceSeverity(inferred)} severity`);
 
         // Fetch real weather data for the location
         const weatherService = getWeatherService();
         const weather = await weatherService.getWeatherByLocation(location);
 
-        const actualCrop = inferred.crop;
-        const normalizedSeverity = inferred.severity || 'Unknown';
+        const actualCrop = inferred.crop || cropType || 'Unknown Crop';
+        const normalizedSeverity = getInferenceSeverity(inferred);
         const estimatedLoss = inferred.estimatedLoss || FALLBACK_ESTIMATED_LOSS_BY_SEVERITY[normalizedSeverity] || FALLBACK_ESTIMATED_LOSS_BY_SEVERITY.Unknown;
         
         return {
             diagnosis: {
-                disease: inferred.disease,
+            disease: getInferenceLabel(inferred, rawAI, cropType),
                 confidence: Number(safeConfidence.toFixed(4)),
-                severity: inferred.severity,
+            severity: normalizedSeverity,
                 health_score: safeHealthScore,
                 tensorflow_prediction: rawAI.label || inferred.raw_label,
                 tensorflow_confidence: Number(safeRawProbability.toFixed(4)),
@@ -251,9 +279,9 @@ class TensorFlowService {
             risk_assessment: this.calculateRisk(safeHealthScore),
             recommendations: [
                 {
-                    type: inferred.severity === 'None' ? 'Preventive' : 'Treatment',
+                    type: normalizedSeverity === 'None' ? 'Preventive' : 'Treatment',
                     action: inferred.advice,
-                    urgency: inferred.severity === 'Critical' ? 'Immediate' : inferred.severity === 'None' ? 'Low' : 'High',
+                    urgency: normalizedSeverity === 'Critical' ? 'Immediate' : normalizedSeverity === 'None' ? 'Low' : 'High',
                     treatment: inferred.treatment,
                     detected_by: 'TensorFlow + AI Inference Engine',
                     raw_label: inferred.raw_label,
