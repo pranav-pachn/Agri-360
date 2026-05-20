@@ -160,7 +160,7 @@ export default function Login() {
               onError={handleGoogleError}
             />
 
-            <Link to="/signup" className="flex items-center justify-center gap-2 rounded-xl border border-slate-700 bg-slate-800/40 py-3 text-sm font-semibold text-slate-300 transition-all hover:bg-slate-700/50 hover:text-white">
+            <Link to="/signup" className="flex items-center justify-center gap-2 rounded-xl border border-white/10 bg-slate-900/60 py-3 text-sm font-semibold text-white transition-all hover:bg-slate-700/50 hover:text-white">
               Create account
               <ArrowRight size={16} />
             </Link>

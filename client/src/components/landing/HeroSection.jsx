@@ -85,17 +85,17 @@ export default function HeroSection() {
             <motion.div {...fadeUp(0.45)} className="flex flex-wrap gap-4">
               <Link
                 to="/upload"
-                className="group inline-flex items-center gap-2.5 rounded-full bg-gradient-to-r from-emerald-500 to-cyan-500 px-7 py-3.5 text-sm font-black tracking-wide text-white shadow-2xl shadow-emerald-900/30 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_0_36px_rgba(45,212,191,0.28)]"
+                className="group inline-flex items-center gap-2.5 rounded-full bg-gradient-to-r from-emerald-400 to-cyan-500 px-7 py-3.5 text-sm font-black tracking-wide text-slate-950 shadow-2xl shadow-emerald-900/30 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_0_36px_rgba(45,212,191,0.28)]"
               >
                 Analyze Crop
                 <ArrowRight
                   size={16}
-                  className="group-hover:translate-x-0.5 transition-transform"
+                  className="text-slate-950 transition-transform group-hover:translate-x-0.5"
                 />
               </Link>
               <Link
                 to="/dashboard"
-                className="inline-flex items-center gap-2.5 rounded-full border border-white/10 bg-slate-900/60 px-7 py-3.5 text-sm font-semibold tracking-wide text-white backdrop-blur-md transition-all duration-300 hover:-translate-y-0.5 hover:border-white/20 hover:bg-slate-800/80"
+                className="inline-flex items-center gap-2.5 rounded-full border border-white/15 bg-slate-900/85 px-7 py-3.5 text-sm font-semibold tracking-wide text-white shadow-lg shadow-black/20 backdrop-blur-md transition-all duration-300 hover:-translate-y-0.5 hover:border-white/25 hover:bg-slate-800/95"
               >
                 View Dashboard
               </Link>
