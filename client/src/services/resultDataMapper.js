@@ -21,7 +21,7 @@ const normalizeRecommendations = (recommendations) => {
 
 const normalizeLegacyAnalysis = (analysis, options = {}) => {
   const trustScore = Number(analysis.trust_score ?? analysis.score ?? 0);
-  const riskScore = Number(analysis.risk ?? analysis.risk_score ?? analysis.risk?.score ?? 0);
+  const riskScore = Number(analysis.risk?.score ?? analysis.risk ?? analysis.risk_score ?? 0);
   const confidence = analysis.confidence ?? analysis.diagnosis?.confidence ?? 0;
   const disease = analysis.disease || analysis.diagnosis?.disease || 'Detected Condition';
   const severity = analysis.severity || analysis.diagnosis?.severity || 'Unknown';
@@ -40,6 +40,7 @@ const normalizeLegacyAnalysis = (analysis, options = {}) => {
     disease,
     confidence: toPercent(confidence),
     severity,
+    healthScore: Number(analysis.healthScore ?? analysis.diagnosis?.health_score ?? analysis.health_score ?? analysis.health ?? 0),
     riskLevel: analysis.riskLevel || analysis.risk?.level || (riskScore > 0.7 ? 'High' : riskScore > 0.4 ? 'Medium' : 'Low'),
     riskScore,
     projectedYield: `${Number.isFinite(projectedYieldNumeric) ? projectedYieldNumeric : '?'} tons/ha`,

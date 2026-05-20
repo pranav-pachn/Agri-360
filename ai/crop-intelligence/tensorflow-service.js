@@ -74,6 +74,7 @@ class TensorFlowService {
     constructor() {
         this.model = null;
         this.isLoaded = false;
+        this.tensorflowUnavailable = false;
         this.loadAttempts = 0;
         this.maxLoadAttempts = 3;
     }
@@ -82,10 +83,15 @@ class TensorFlowService {
      * Load MobileNet model for image classification (Iterative version)
      */
     async loadModel() {
+        if (this.tensorflowUnavailable) {
+            return false;
+        }
+
         try {
             ensureTensorflowDependencies();
         } catch (error) {
             console.warn('⚠️ TensorFlow dependencies unavailable, using enhanced mock service:', error.message);
+            this.tensorflowUnavailable = true;
             return false;
         }
 
@@ -103,25 +109,25 @@ class TensorFlowService {
         }
         
         console.log('⚠️ Falling back to enhanced mock service');
+        this.tensorflowUnavailable = true;
         return false;
     }
 
     /**
      * Download and process image into a tensor (Pure JS version, no native bindings needed)
      */
-    async loadImageAsTensor(imageUrl) {
-        console.log(`📥 Downloading image: ${imageUrl}`);
+    async loadImageAsTensor(imageUrl, imageBuffer = null) {
+        console.log(imageBuffer ? '📥 Processing uploaded image buffer' : `📥 Downloading image: ${imageUrl}`);
         try {
             ensureTensorflowDependencies();
                 const axios = safeRequire('axios');
                 const sharp = safeRequire('sharp');
 
-            // First, get the raw image buffer
-            const response = await axios.get(imageUrl, { responseType: 'arraybuffer' });
-            const imageBuffer = Buffer.from(response.data);
+            // Prefer the upload buffer. It avoids a second network hop to public storage.
+            const buffer = imageBuffer || Buffer.from((await axios.get(imageUrl, { responseType: 'arraybuffer' })).data);
 
             // Process with sharp: resize to 224x224 and extract RAW RGB pixel data
-            const { data, info } = await sharp(imageBuffer)
+            const { data, info } = await sharp(buffer)
                 .resize(224, 224)
                 .removeAlpha() // Ensure 3 channels (RGB), drop alpha
                 .raw()
@@ -142,7 +148,7 @@ class TensorFlowService {
     /**
      * Analyze crop image using TensorFlow.js
      */
-    async analyzeCropImage(imageUrl, cropType, location) {
+    async analyzeCropImage(imageUrl, cropType, location, options = {}) {
         console.log(`🌾 TensorFlow Analysis for ${cropType} in ${location}`);
         
         // Ensure model is loaded
@@ -151,7 +157,7 @@ class TensorFlowService {
             if (!modelLoaded) {
                 // Fallback to the production-safe hybrid heuristic engine.
                 const enhancedMockAI = require('./enhanced-mock-service');
-                return await enhancedMockAI.analyzeCropImage(imageUrl, cropType, location);
+                return await enhancedMockAI.analyzeCropImage(imageUrl, cropType, location, options);
             }
         }
 
@@ -160,12 +166,12 @@ class TensorFlowService {
         try {
             console.log('📸 Processing real image with TensorFlow & sharp...');
             
-            if (!imageUrl) {
-                throw new Error("No image URL provided");
+            if (!imageUrl && !options?.imageBuffer) {
+                throw new Error("No image URL or image buffer provided");
             }
 
             // Convert actual image to tensor
-            imageTensor = await this.loadImageAsTensor(imageUrl);
+            imageTensor = await this.loadImageAsTensor(imageUrl, options?.imageBuffer);
             
             // Get predictions from MobileNet
             const predictions = await this.model.classify(imageTensor);
@@ -185,7 +191,7 @@ class TensorFlowService {
 
             // Fallback to the production-safe hybrid heuristic engine.
             const enhancedMockAI = require('./enhanced-mock-service');
-            return await enhancedMockAI.analyzeCropImage(imageUrl, cropType, location);
+            return await enhancedMockAI.analyzeCropImage(imageUrl, cropType, location, options);
         } finally {
             // Clean up tensor memory guaranteed
             if (imageTensor) {

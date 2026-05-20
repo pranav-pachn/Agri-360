@@ -12,7 +12,7 @@ import LoanCard from '../components/result/LoanCard';
 import RecommendationBox from '../components/result/RecommendationBox';
 import SustainabilityCard from '../components/result/SustainabilityCard';
 import { api } from '../services/api';
-import { buildFallbackResultPayload, normalizeResultPayload } from '../services/resultDataMapper';
+import { normalizeResultPayload } from '../services/resultDataMapper';
 
 const CROP_OPTIONS = [
 	'Apple', 'Banana', 'Barley', 'Black Pepper', 'Cabbage',
@@ -63,6 +63,15 @@ const CropDiagnosis = () => {
 		return { label: 'Monitor Crop', className: 'text-amber-300' };
 	}, [analysisResult]);
 
+	const displayedHealthScore = useMemo(() => {
+		const directHealthScore = Number(analysisResult?.healthScore);
+		if (Number.isFinite(directHealthScore) && directHealthScore > 0) {
+			return Math.max(0, Math.min(100, Math.round(directHealthScore)));
+		}
+
+		return Math.max(0, 100 - Math.round((analysisResult?.riskScore || 0) * 100));
+	}, [analysisResult]);
+
 	const handleFileSelect = (file) => {
 		setImageFile(file);
 		const objectUrl = URL.createObjectURL(file);
@@ -92,25 +101,10 @@ const CropDiagnosis = () => {
 				formData.append('farmerId', user.id);
 			}
 
-			let normalized;
-			try {
-				const json = await api.post('/analyze', formData);
-				normalized = normalizeResultPayload(json.data, {
-					image: previewURL,
-				});
-			} catch (apiError) {
-				console.warn('Analyze API unavailable, using fallback:', apiError.message);
-				normalized = buildFallbackResultPayload({
-					id: `mock-${Date.now()}`,
-					image: previewURL,
-					crop: cropType,
-					location: farmLocation || 'Maharashtra',
-					dataMode: {
-						source: 'frontend-mock',
-						fallbackUsed: true,
-					},
-				});
-			}
+			const json = await api.post('/analyze', formData);
+			const normalized = normalizeResultPayload(json.data, {
+				image: previewURL,
+			});
 
 			setAnalysisResult(normalized);
 			window.dispatchEvent(new Event('agri:analysis-created'));
@@ -220,7 +214,7 @@ const CropDiagnosis = () => {
 											{analysisResult && (
 												<div className="absolute left-3 top-3 rounded-xl border border-slate-200/20 bg-slate-950/70 px-3 py-2">
 													<p className="text-[10px] font-bold uppercase tracking-[0.12em] text-slate-300">Health Score</p>
-													<p className="text-2xl font-black text-amber-300">{Math.max(0, 100 - Math.round((analysisResult.riskScore || 0) * 100))}</p>
+													<p className="text-2xl font-black text-amber-300">{displayedHealthScore}</p>
 												</div>
 											)}
 										</div>

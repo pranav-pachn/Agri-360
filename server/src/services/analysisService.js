@@ -421,9 +421,9 @@ const buildResultPayload = (analysis, options = {}) => {
 /**
  * Generate analysis for a crop and store it
  */
-const generateAnalysis = async (crop, location, imageUrl = null, fertilizerLevel = 'medium', farmerId = null) => {
+const generateAnalysis = async (crop, location, imageUrl = null, fertilizerLevel = 'medium', farmerId = null, inferenceContext = {}) => {
     // 1. Enhanced AI integration
-    const aiResults = await aiService.analyzeCropImage(imageUrl, crop, location);
+    const aiResults = await aiService.analyzeCropImage(imageUrl, crop, location, inferenceContext);
     const severity = aiResults.diagnosis?.severity || 'Unknown';
     const storageSeverity = normalizeSeverityForStorage(severity);
 
@@ -710,6 +710,10 @@ const generateAnalysis = async (crop, location, imageUrl = null, fertilizerLevel
             fallback_used: aiMetadata.fallback_used,
             raw_label: aiMetadata.raw_label,
             raw_probability: aiMetadata.raw_probability
+        },
+        dataMode: {
+            source: aiMetadata.ai_source,
+            fallbackUsed: aiMetadata.fallback_used,
         },
         pipeline
     };

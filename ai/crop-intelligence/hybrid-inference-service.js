@@ -180,7 +180,9 @@ const getLocationContext = (location) => {
   };
 };
 
-const getImageBuffer = async (imageUrl) => {
+const getImageBuffer = async (imageUrl, options = {}) => {
+  if (Buffer.isBuffer(options.imageBuffer)) return options.imageBuffer;
+  if (options.imageBuffer instanceof Uint8Array) return Buffer.from(options.imageBuffer);
   if (!imageUrl) return null;
 
   try {
@@ -264,8 +266,8 @@ const analyzeImageBuffer = async (imageBuffer) => {
   }
 };
 
-const getUrlSignals = (imageUrl = '') => {
-  const normalized = decodeURIComponent(String(imageUrl || '')).toLowerCase();
+const getUrlSignals = (imageUrl = '', options = {}) => {
+  const normalized = decodeURIComponent(`${String(imageUrl || '')} ${String(options.originalName || '')}`).toLowerCase();
   const has = (...terms) => terms.some((term) => normalized.includes(term));
 
   return {
@@ -307,13 +309,17 @@ const scoreProfiles = ({ features, urlSignals, weather, cropType, seed }) => {
   preferred.forEach((label, index) => add(label, 6 - index));
 
   if (features?.available) {
-    add('Healthy', features.greenRatio * 95);
-    add('Healthy', (1 - Math.abs(features.brightness - 0.52)) * 18);
-    add('Healthy', clamp(0.55 - features.brownRatio - features.yellowRatio - features.darkRatio, 0, 0.55) * 45);
+    const anomalyRatio = features.brownRatio + features.yellowRatio + features.darkRatio + features.rustRatio + features.whitePowderRatio;
+    const healthyPurity = clamp((0.08 - anomalyRatio) / 0.08, 0, 1);
 
-    add('Early Blight', features.brownRatio * 120 + features.contrast * 45 + features.darkRatio * 26);
-    add('Leaf Spot', features.brownRatio * 80 + features.contrast * 65 + features.darkRatio * 18);
-    add('Bacterial Wilt', features.yellowRatio * 65 + features.darkRatio * 22 + Math.max(0, 0.4 - features.greenRatio) * 28);
+    add('Healthy', features.greenRatio * healthyPurity * 78);
+    add('Healthy', (1 - Math.abs(features.brightness - 0.52)) * healthyPurity * 18);
+    add('Healthy', clamp(0.55 - anomalyRatio, 0, 0.55) * healthyPurity * 35);
+    add('Healthy', -(features.brownRatio * 180 + features.yellowRatio * 95 + features.darkRatio * 45 + features.rustRatio * 95 + features.contrast * 16));
+
+    add('Early Blight', features.brownRatio * 190 + features.contrast * 48 + features.darkRatio * 30 + features.yellowRatio * 18);
+    add('Leaf Spot', features.brownRatio * 145 + features.contrast * 72 + features.darkRatio * 20);
+    add('Bacterial Wilt', features.yellowRatio * 82 + features.darkRatio * 24 + Math.max(0, 0.4 - features.greenRatio) * 28);
     add('Powdery Mildew', (features.whitePowderRatio * 120) + (features.saturation < 0.22 ? 6 : 0));
     add('Rust Disease', features.rustRatio * 100 + features.yellowRatio * 35 + features.contrast * 20);
     add('Nutrient Deficiency', features.yellowRatio * 75 + Math.max(0, 0.36 - features.saturation) * 18);
@@ -424,12 +430,12 @@ const chooseProfile = ({ ranked, seed, features, urlSignals }) => {
   return top.profile;
 };
 
-const buildInferenceResponse = ({ selected, ranked, features, weather, cropType, location, imageUrl, seed }) => {
+const buildInferenceResponse = ({ selected, ranked, features, weather, cropType, location, imageUrl, urlSignals, seed }) => {
   const confidence = Number((selected.confidenceMin + noiseFor(seed, 'confidence', selected.confidenceMax - selected.confidenceMin)).toFixed(4));
   const healthScore = Math.round(selected.healthMin + noiseFor(seed, 'health', selected.healthMax - selected.healthMin));
   const riskScore = Number(clamp(selected.riskImpact + noiseFor(seed, 'risk', 0.08), 0.03, 0.92).toFixed(3));
   const yieldImpact = Number(clamp(selected.yieldImpact + noiseFor(seed, 'yield', 0.05), 0.01, 0.55).toFixed(3));
-  const reasoning = buildReasoning({ selected, features, weather, urlSignals: getUrlSignals(imageUrl) });
+  const reasoning = buildReasoning({ selected, features, weather, urlSignals });
   const locContext = getLocationContext(location);
   const alternatives = ranked
     .filter((item) => item.profile.label !== selected.label)
@@ -521,12 +527,12 @@ const buildInferenceResponse = ({ selected, ranked, features, weather, cropType,
   };
 };
 
-async function analyzeCropImage(imageUrl, cropType = 'unknown', location = 'unknown') {
-  const imageBuffer = await getImageBuffer(imageUrl);
+async function analyzeCropImage(imageUrl, cropType = 'unknown', location = 'unknown', options = {}) {
+  const imageBuffer = await getImageBuffer(imageUrl, options);
   const features = await analyzeImageBuffer(imageBuffer);
   const weather = await getWeatherSignals(location);
-  const urlSignals = getUrlSignals(imageUrl);
-  const seed = simpleHash(`${imageUrl || ''}:${cropType || ''}:${location || ''}:${features ? JSON.stringify(features) : 'no-pixels'}`);
+  const urlSignals = getUrlSignals(imageUrl, options);
+  const seed = simpleHash(`${imageUrl || ''}:${options.originalName || ''}:${options.size || ''}:${cropType || ''}:${location || ''}:${features ? JSON.stringify(features) : 'no-pixels'}`);
   const ranked = scoreProfiles({ features, urlSignals, weather, cropType, seed });
   const selected = chooseProfile({ ranked, seed, features, urlSignals });
 
@@ -538,6 +544,7 @@ async function analyzeCropImage(imageUrl, cropType = 'unknown', location = 'unkn
     cropType,
     location,
     imageUrl,
+    urlSignals,
     seed,
   });
 }

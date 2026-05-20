@@ -8,19 +8,20 @@ class AIService {
         this.tensorflowReady = false;
     }
 
-    async analyzeCropImage(imageUrl, cropType, location) {
+    async analyzeCropImage(imageUrl, cropType, location, options = {}) {
         logger.info(`🌾 AI Analysis for ${cropType} in ${location}`);
         
         // Check for real AI integration (future)
         if (process.env.AI_SERVICE_URL && imageUrl) {
-            return await this.callRealAI(imageUrl, cropType, location);
+            return await this.callRealAI(imageUrl, cropType, location, options);
         }
         
         // Try TensorFlow if enabled and available
         if (this.useTensorFlow) {
             try {
-                const result = await tensorflowService.analyzeCropImage(imageUrl, cropType, location);
-                logger.info('✅ TensorFlow analysis completed');
+                const result = await tensorflowService.analyzeCropImage(imageUrl, cropType, location, options);
+                const source = result?.location_analysis?.source || result?.metadata?.source || result?.metadata?.ai_source || 'tensorflow';
+                logger.info(source === 'tensorflow' ? '✅ TensorFlow analysis completed' : `✅ ${source} analysis completed`);
                 return result;
             } catch (error) {
                 logger.error('❌ TensorFlow analysis failed:', error);
@@ -29,10 +30,10 @@ class AIService {
         }
         
         // Use enhanced mock service
-        return await enhancedMockAI.analyzeCropImage(imageUrl, cropType, location);
+        return await enhancedMockAI.analyzeCropImage(imageUrl, cropType, location, options);
     }
     
-    async callRealAI(imageUrl, cropType, location) {
+    async callRealAI(imageUrl, cropType, location, options = {}) {
         // Integration with external AI service (future)
         try {
             logger.info(`🤖 Calling real AI service for ${cropType}`);
@@ -59,7 +60,7 @@ class AIService {
         } catch (error) {
             logger.error('❌ AI Service Error:', error);
             logger.info('🔄 Falling back to enhanced mock service');
-            return await enhancedMockAI.analyzeCropImage(imageUrl, cropType, location);
+            return await enhancedMockAI.analyzeCropImage(imageUrl, cropType, location, options);
         }
     }
     

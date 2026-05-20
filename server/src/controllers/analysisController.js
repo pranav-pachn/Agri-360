@@ -64,7 +64,12 @@ const analyzeCrop = async (req, res, next) => {
         }
         
         logger.info(`Analyzing crop: ${crop} in location: ${location} with fertilizer: ${fertilizerUsage || 'medium'}`);
-        const result = await analysisService.generateAnalysis(crop, location, imageUrl, fertilizerUsage, farmerId || null);
+        const result = await analysisService.generateAnalysis(crop, location, imageUrl, fertilizerUsage, farmerId || null, {
+            imageBuffer: req.file?.buffer || null,
+            originalName: req.file?.originalname || null,
+            mimeType: req.file?.mimetype || null,
+            size: req.file?.size || req.file?.buffer?.length || null,
+        });
         
         return res.status(201).json({
             success: true,
