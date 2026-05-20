@@ -69,7 +69,7 @@ const ChatInput = ({ onSend, disabled, language = 'en' }) => {
             key={idx}
             onClick={() => handleQuickMessage(msg)}
             disabled={disabled}
-            className="text-xs px-3 py-1.5 bg-slate-800/80 border border-slate-700 hover:border-green-500/40 hover:bg-slate-700 hover:text-green-400 text-slate-300 rounded-full transition-all duration-300 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed"
+            className="rounded-full border border-white/10 bg-slate-900/60 px-3 py-1.5 text-xs text-slate-300 transition-all duration-300 hover:-translate-y-0.5 hover:border-cyan-400/40 hover:bg-slate-800/80 hover:text-cyan-200 active:scale-95 disabled:cursor-not-allowed disabled:opacity-40"
           >
             {msg}
           </button>
@@ -77,7 +77,7 @@ const ChatInput = ({ onSend, disabled, language = 'en' }) => {
       </div>
 
       {/* Main input row */}
-      <div className="flex items-center space-x-2 bg-slate-800 p-2 rounded-2xl border border-slate-700 shadow-inner focus-within:border-slate-600 transition-colors">
+      <div className="flex items-center gap-2 rounded-3xl border border-white/10 bg-slate-900/70 p-2 shadow-xl shadow-black/20 transition-colors focus-within:border-cyan-400/40">
         <input
           type="text"
           value={inputText}
@@ -85,7 +85,7 @@ const ChatInput = ({ onSend, disabled, language = 'en' }) => {
           onKeyDown={handleKeyDown}
           disabled={disabled}
           placeholder={t('chatPlaceholder')}
-          className="flex-1 bg-transparent px-4 py-3 text-lg text-white placeholder-slate-400 focus:outline-none"
+          className="flex-1 bg-transparent px-4 py-3 text-sm text-white placeholder-slate-400 focus:outline-none md:text-base"
           autoComplete="off"
           aria-label={t('chatPlaceholder')}
         />
@@ -93,7 +93,7 @@ const ChatInput = ({ onSend, disabled, language = 'en' }) => {
           type="button"
           onClick={handleVoiceInput}
           disabled={disabled}
-          className="rounded-xl border border-slate-600 px-3 py-3 text-slate-200 transition hover:border-green-500/50 hover:text-green-300 disabled:cursor-not-allowed disabled:opacity-40"
+          className="rounded-2xl border border-white/10 px-3 py-3 text-slate-200 transition hover:border-cyan-400/40 hover:text-cyan-200 disabled:cursor-not-allowed disabled:opacity-40"
           aria-label={t('voiceInputLabel')}
           title={t('speak')}
         >
@@ -103,10 +103,10 @@ const ChatInput = ({ onSend, disabled, language = 'en' }) => {
           onClick={handleSend}
           disabled={disabled || !inputText.trim()}
           aria-label={t('sendMessageLabel')}
-          className={`p-3 rounded-xl transition-all duration-300 flex-shrink-0 flex items-center justify-center ${
+          className={`flex flex-shrink-0 items-center justify-center rounded-2xl p-3 transition-all duration-300 ${
             disabled || !inputText.trim()
-              ? 'bg-slate-700 text-slate-500 cursor-not-allowed'
-              : 'bg-green-600 text-white hover:bg-green-500 shadow-md hover:shadow-green-900/50 active:scale-95'
+              ? 'cursor-not-allowed bg-slate-800 text-slate-500'
+              : 'bg-gradient-to-r from-emerald-500 to-cyan-500 text-white shadow-lg shadow-emerald-900/20 hover:-translate-y-0.5 active:scale-95'
           }`}
         >
           <svg className="w-5 h-5 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">

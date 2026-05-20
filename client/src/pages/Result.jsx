@@ -47,9 +47,9 @@ const Result = () => {
 
   if (!data) {
     return (
-      <div className="min-h-screen bg-[#060e1a] flex flex-col items-center justify-center gap-4">
-        <div className="h-14 w-14 rounded-full border-4 border-emerald-500/20 border-t-emerald-400 animate-spin" />
-        <p className="text-sm font-semibold uppercase tracking-[0.15em] text-emerald-400 animate-pulse">
+      <div className="min-h-screen flex flex-col items-center justify-center gap-4 bg-slate-950">
+        <div className="h-14 w-14 rounded-full border-4 border-cyan-400/20 border-t-cyan-400 animate-spin" />
+        <p className="animate-pulse text-sm font-semibold uppercase tracking-[0.18em] text-cyan-300">
           Loading analysis report...
         </p>
       </div>
@@ -61,8 +61,10 @@ const Result = () => {
       <div className="page-inner">
 
         {/* Page Header Card */}
-        <div className="rounded-2xl border border-white/10 bg-slate-800/80 backdrop-blur-md p-6 shadow-lg">
-          <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+        <div className="hero-panel">
+          <div className="hero-glow -left-20 -top-20 h-56 w-56 bg-cyan-500" />
+          <div className="hero-glow right-0 top-0 h-64 w-64 bg-emerald-500" />
+          <div className="relative flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <div className="flex items-center gap-2 mb-3">
                 <CheckCircle className="h-4 w-4 text-emerald-400" />
@@ -87,7 +89,7 @@ const Result = () => {
         </div>
 
         {/* Main Content: two-column */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <div className="grid grid-cols-1 gap-8 xl:grid-cols-[1.02fr_1.24fr]">
 
           {/* LEFT: Image + context */}
           <div className="flex flex-col gap-6">
@@ -95,14 +97,14 @@ const Result = () => {
 
             <div className="card flex items-start gap-3">
               <AlertCircle className="h-5 w-5 text-slate-500 mt-0.5 shrink-0" />
-              <p className="text-sm text-slate-400 leading-relaxed">
+              <p className="text-sm leading-relaxed text-gray-400">
                 This report is generated using advanced AI analysis. Results are estimates and should be verified with local agricultural experts for critical decisions.
               </p>
             </div>
           </div>
 
           {/* RIGHT: Result cards */}
-          <div className="flex flex-col gap-5">
+          <div className="flex flex-col gap-6">
             <LoanCard
               trustScore={data.trustScore}
               eligibility={data.eligibility}
@@ -114,7 +116,7 @@ const Result = () => {
               confidence={data.confidence}
             />
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
               <RiskCard riskLevel={data.riskLevel} riskScore={data.riskScore} />
               <RiskBreakdown
                 data={{

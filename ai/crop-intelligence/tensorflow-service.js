@@ -153,11 +153,20 @@ class TensorFlowService {
         console.log(imageBuffer ? '📥 Processing uploaded image buffer' : `📥 Downloading image: ${imageUrl}`);
         try {
             ensureTensorflowDependencies();
-                const axios = safeRequire('axios');
-                const sharp = safeRequire('sharp');
+            const sharp = safeRequire('sharp');
 
             // Prefer the upload buffer. It avoids a second network hop to public storage.
-            const buffer = imageBuffer || Buffer.from((await axios.get(imageUrl, { responseType: 'arraybuffer' })).data);
+            let buffer;
+            if (imageBuffer) {
+                buffer = imageBuffer;
+            } else {
+                const response = await fetch(imageUrl, { signal: AbortSignal.timeout(10000) });
+                if (!response.ok) {
+                    throw new Error(`Failed to download image: status ${response.status}`);
+                }
+                const arrayBuffer = await response.arrayBuffer();
+                buffer = Buffer.from(arrayBuffer);
+            }
 
             // Process with sharp: resize to 224x224 and extract RAW RGB pixel data
             const { data, info } = await sharp(buffer)

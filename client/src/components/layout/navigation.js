@@ -13,7 +13,7 @@ export const protectedPrimaryNavItems = [
   { icon: TrendingUp, label: 'Credit Pulse', shortLabel: 'Finance', path: '/trust-score' },
   { icon: MessageCircle, label: 'AI Assistant', shortLabel: 'AI Chat', path: '/chat' },
   { icon: Map, label: 'Land Assets', shortLabel: 'Analytics', path: '/analytics' },
-  { icon: Settings, label: 'Settings', shortLabel: 'Profile', path: '/profile' },
+  { icon: Settings, label: 'Settings', shortLabel: 'Profile', path: '/settings' },
 ];
 
 export const protectedMobileMenuItems = protectedPrimaryNavItems;

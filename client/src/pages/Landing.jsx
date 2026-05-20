@@ -31,7 +31,7 @@ const mobileTabs = [
 
 export default function Landing() {
   return (
-    <div className="min-h-screen relative overflow-hidden bg-[#060e1a] text-slate-100">
+    <div className="min-h-screen relative overflow-hidden bg-slate-950 text-slate-100">
       {/* Background layers */}
       <div className="fixed inset-0 pointer-events-none z-0">
         {/* Grid overlay */}
@@ -52,15 +52,15 @@ export default function Landing() {
       </div>
 
       {/* === HEADER === */}
-      <header className="sticky top-0 z-50 border-b border-slate-700/30 bg-[#060e1a]/80 backdrop-blur-xl">
-        <div className="max-w-7xl mx-auto px-6 py-3.5 flex items-center justify-between gap-4">
+      <header className="sticky top-0 z-50 border-b border-white/10 bg-slate-950/80 backdrop-blur-xl">
+        <div className="max-w-7xl mx-auto px-6 md:px-8 py-3.5 flex items-center justify-between gap-4">
           {/* Brand */}
           <Link
             to="/"
-            className="inline-flex items-center gap-3 text-white font-extrabold text-xl tracking-tight no-underline hover:opacity-90 transition-opacity"
+            className="inline-flex items-center gap-3 text-white font-black text-xl tracking-tight no-underline hover:opacity-90 transition-opacity"
             aria-label="AgriMitra 360 home"
           >
-            <span className="w-9 h-9 rounded-xl inline-flex items-center justify-center border border-white/20 bg-gradient-to-br from-emerald-500/30 to-blue-500/30">
+            <span className="w-10 h-10 rounded-2xl inline-flex items-center justify-center border border-white/10 bg-gradient-to-br from-emerald-500/30 to-cyan-500/30 shadow-lg shadow-cyan-500/10">
               <Sprout size={16} />
             </span>
             <span>AgriMitra 360</span>
@@ -68,14 +68,14 @@ export default function Landing() {
 
           {/* Desktop nav */}
           <nav
-            className="hidden lg:inline-flex items-center gap-1 px-1.5 py-1 rounded-full bg-white/[0.05] border border-white/[0.08]"
+            className="hidden lg:inline-flex items-center gap-1 px-1.5 py-1 rounded-full bg-white/5 border border-white/10"
             aria-label="Primary navigation"
           >
             {topNavItems.map((item) => (
               <Link
                 key={item.label}
                 to={item.to}
-                className="text-slate-300 text-xs font-bold uppercase tracking-[0.08em] px-4 py-2 rounded-full no-underline hover:bg-white/10 hover:text-white transition-colors duration-200"
+                className="text-slate-300 text-xs font-bold uppercase tracking-[0.1em] px-4 py-2 rounded-full no-underline hover:bg-white/10 hover:text-white transition-all duration-200"
               >
                 {item.label}
               </Link>
@@ -92,7 +92,7 @@ export default function Landing() {
             </Link>
             <Link
               to="/signup"
-              className="inline-flex items-center gap-2 text-[#060e1a] bg-white no-underline font-bold text-xs uppercase tracking-[0.06em] px-5 py-2.5 rounded-full hover:bg-slate-100 transition-colors"
+              className="inline-flex items-center gap-2 text-slate-950 bg-white no-underline font-black text-xs uppercase tracking-[0.08em] px-5 py-2.5 rounded-full hover:bg-slate-100 transition-colors shadow-lg shadow-white/10"
             >
               Get Started
               <ArrowRight size={14} />
@@ -113,10 +113,10 @@ export default function Landing() {
       </main>
 
       {/* === FOOTER === */}
-      <footer className="relative z-10 border-t border-slate-700/30 mt-12">
-        <div className="max-w-7xl mx-auto px-6 py-12 pb-28 lg:pb-12 flex flex-col lg:flex-row justify-between gap-8">
+      <footer className="relative z-10 border-t border-white/10 mt-12">
+        <div className="max-w-7xl mx-auto px-6 md:px-8 py-12 pb-28 lg:pb-12 flex flex-col lg:flex-row justify-between gap-8">
           <div className="max-w-md">
-            <h3 className="text-xl font-extrabold text-white">AgriMitra 360</h3>
+            <h3 className="text-xl font-black text-white">AgriMitra 360</h3>
             <p className="mt-3 text-sm text-slate-400 leading-relaxed">
               Leading digital transformation in agriculture by combining
               trustworthy AI with credit-ready farm intelligence. Bridging
@@ -134,7 +134,7 @@ export default function Landing() {
               <Link
                 key={link.label}
                 to={link.to}
-                className="text-slate-400 text-xs font-bold uppercase tracking-[0.08em] no-underline px-3.5 py-2 rounded-full border border-slate-700/50 hover:text-white hover:border-slate-500 transition-colors duration-200"
+                className="text-slate-400 text-xs font-bold uppercase tracking-[0.1em] no-underline px-3.5 py-2 rounded-full border border-white/10 hover:text-white hover:border-white/20 transition-all duration-200"
               >
                 {link.label}
               </Link>
@@ -145,7 +145,7 @@ export default function Landing() {
 
       {/* === MOBILE NAV === */}
       <nav
-        className="fixed left-0 right-0 bottom-0 z-50 lg:hidden flex items-center justify-around border-t border-slate-700/30 bg-[#060e1a]/90 backdrop-blur-xl px-2 py-2.5"
+        className="fixed left-0 right-0 bottom-0 z-50 lg:hidden flex items-center justify-around border-t border-white/10 bg-slate-950/90 backdrop-blur-xl px-2 py-2.5"
         aria-label="Mobile quick navigation"
       >
         {mobileTabs.map((tab) => {
@@ -154,7 +154,7 @@ export default function Landing() {
             <Link
               key={tab.label}
               to={tab.to}
-              className="flex flex-col items-center gap-1 min-w-[64px] rounded-xl px-3 py-2 text-slate-400 no-underline text-[10px] font-bold uppercase tracking-[0.06em] hover:text-white hover:bg-white/10 transition-colors duration-200"
+              className="flex flex-col items-center gap-1 min-w-[64px] rounded-xl px-3 py-2 text-slate-400 no-underline text-[10px] font-bold uppercase tracking-[0.08em] hover:text-white hover:bg-white/10 transition-all duration-200"
             >
               <Icon size={16} />
               <span>{tab.label}</span>

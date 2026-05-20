@@ -1,4 +1,4 @@
-const axios = require('axios');
+// Using native fetch instead of axios to prevent IPv6/DNS hang issues
 
 const OPENWEATHER_API_KEY = process.env.OPENWEATHER_API_KEY;
 const OPENWEATHER_BASE_URL = process.env.OPENWEATHER_BASE_URL || 'https://api.openweathermap.org/data/2.5';
@@ -95,17 +95,20 @@ const getCoordinatesFromLocation = async (location) => {
 
     for (const candidate of candidates) {
       try {
-        const response = await axios.get(`${OPENWEATHER_GEO_BASE_URL}/direct`, {
-          params: {
-            q: candidate,
-            limit: 1,
-            appid: OPENWEATHER_API_KEY,
-          },
-          timeout: 5000,
-        });
+        const url = new URL(`${OPENWEATHER_GEO_BASE_URL}/direct`);
+        url.searchParams.set('q', candidate);
+        url.searchParams.set('limit', '1');
+        url.searchParams.set('appid', OPENWEATHER_API_KEY);
 
-        if (response.data && response.data.length > 0) {
-          const { lat, lon } = response.data[0];
+        const response = await fetch(url.toString(), { signal: AbortSignal.timeout(5000) });
+        if (!response.ok) {
+          console.error(`Geocoding API HTTP error for location "${candidate}": status ${response.status}`);
+          continue;
+        }
+
+        const data = await response.json();
+        if (data && data.length > 0) {
+          const { lat, lon } = data[0];
           return { lat, lon };
         }
       } catch (error) {
@@ -127,17 +130,19 @@ const fetchWeatherByCoordinates = async (lat, lon) => {
       return null;
     }
 
-    const response = await axios.get(`${OPENWEATHER_BASE_URL}/weather`, {
-      params: {
-        lat,
-        lon,
-        appid: OPENWEATHER_API_KEY,
-        units: 'metric',
-      },
-      timeout: 5000,
-    });
+    const url = new URL(`${OPENWEATHER_BASE_URL}/weather`);
+    url.searchParams.set('lat', String(lat));
+    url.searchParams.set('lon', String(lon));
+    url.searchParams.set('appid', OPENWEATHER_API_KEY);
+    url.searchParams.set('units', 'metric');
 
-    return response.data;
+    const response = await fetch(url.toString(), { signal: AbortSignal.timeout(5000) });
+    if (!response.ok) {
+      console.error(`Weather API HTTP error for coordinates (${lat}, ${lon}): status ${response.status}`);
+      return null;
+    }
+
+    return await response.json();
   } catch (error) {
     console.error(`Weather API error for coordinates (${lat}, ${lon}):`, error.message);
     return null;

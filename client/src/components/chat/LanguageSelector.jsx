@@ -6,7 +6,7 @@ const LanguageSelector = ({
   selected,
   onSelect,
   className = '',
-  selectClassName = 'appearance-none rounded-lg border border-slate-700 bg-slate-800 py-1.5 pl-3 pr-8 text-sm text-slate-200 shadow-sm transition-colors hover:bg-slate-700 focus:outline-none focus:ring-1 focus:ring-green-500/50',
+  selectClassName = 'appearance-none rounded-full border border-white/10 bg-slate-900/70 py-2 pl-4 pr-9 text-sm text-slate-200 shadow-sm transition-all hover:border-cyan-400/40 hover:bg-slate-800/80 focus:outline-none focus:ring-1 focus:ring-cyan-500/50',
   iconClassName = 'text-slate-400',
 }) => {
   const { t } = useTranslation();

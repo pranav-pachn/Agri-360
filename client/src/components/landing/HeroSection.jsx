@@ -39,18 +39,18 @@ const floatAnimationFast = {
 
 export default function HeroSection() {
   return (
-    <section className="relative py-20 md:py-28 overflow-hidden">
+    <section className="relative overflow-hidden py-24 md:py-32">
       {/* Background gradient blobs */}
-      <div className="absolute top-0 left-1/4 w-[600px] h-[600px] rounded-full bg-emerald-500/10 blur-[120px] pointer-events-none" />
-      <div className="absolute bottom-0 right-1/4 w-[500px] h-[500px] rounded-full bg-blue-500/8 blur-[100px] pointer-events-none" />
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] rounded-full bg-cyan-400/5 blur-[80px] pointer-events-none" />
+      <div className="absolute top-0 left-1/4 h-[680px] w-[680px] rounded-full bg-cyan-500/10 blur-[150px] pointer-events-none" />
+      <div className="absolute bottom-0 right-1/4 h-[540px] w-[540px] rounded-full bg-emerald-500/10 blur-[140px] pointer-events-none" />
+      <div className="absolute top-1/2 left-1/2 h-[420px] w-[420px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-purple-500/6 blur-[120px] pointer-events-none" />
 
-      <div className="max-w-7xl mx-auto px-6">
-        <div className="grid lg:grid-cols-2 gap-16 lg:gap-20 items-center">
+      <div className="max-w-7xl mx-auto px-6 md:px-8">
+        <div className="grid items-center gap-16 lg:grid-cols-2 lg:gap-20">
           {/* Left — Copy */}
           <div className="space-y-8">
             <motion.div {...fadeUp(0.1)}>
-              <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-emerald-400/30 bg-emerald-500/10 text-emerald-300 text-xs font-bold tracking-widest uppercase">
+              <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs font-bold uppercase tracking-[0.18em] text-emerald-300 backdrop-blur-md">
                 <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
                 AI-Powered Platform
               </span>
@@ -58,7 +58,7 @@ export default function HeroSection() {
 
             <motion.h1
               {...fadeUp(0.2)}
-              className="text-4xl sm:text-5xl lg:text-6xl xl:text-[4.25rem] font-extrabold leading-[1.05] tracking-tight text-white"
+              className="text-5xl font-black leading-tight tracking-tight text-white md:text-6xl xl:text-[4.9rem]"
             >
               AI-Powered Agricultural
               <br />
@@ -75,7 +75,7 @@ export default function HeroSection() {
 
             <motion.p
               {...fadeUp(0.35)}
-              className="text-lg text-slate-400 leading-relaxed max-w-xl"
+              className="max-w-xl text-sm leading-relaxed text-gray-400 md:text-lg"
             >
               Transform crop intelligence into actionable financial and risk
               insights. From disease detection to trust scoring — one platform
@@ -85,7 +85,7 @@ export default function HeroSection() {
             <motion.div {...fadeUp(0.45)} className="flex flex-wrap gap-4">
               <Link
                 to="/upload"
-                className="group inline-flex items-center gap-2.5 px-7 py-3.5 rounded-full bg-gradient-to-r from-emerald-500 to-green-600 text-white font-bold text-sm tracking-wide hover:shadow-[0_0_30px_rgba(52,211,153,0.3)] hover:-translate-y-0.5 transition-all duration-300"
+                className="group inline-flex items-center gap-2.5 rounded-full bg-gradient-to-r from-emerald-500 to-cyan-500 px-7 py-3.5 text-sm font-black tracking-wide text-white shadow-2xl shadow-emerald-900/30 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_0_36px_rgba(45,212,191,0.28)]"
               >
                 Analyze Crop
                 <ArrowRight
@@ -95,7 +95,7 @@ export default function HeroSection() {
               </Link>
               <Link
                 to="/dashboard"
-                className="inline-flex items-center gap-2.5 px-7 py-3.5 rounded-full border border-slate-600 bg-slate-800/60 text-white font-semibold text-sm tracking-wide hover:bg-slate-700/80 hover:border-slate-500 hover:-translate-y-0.5 transition-all duration-300"
+                className="inline-flex items-center gap-2.5 rounded-full border border-white/10 bg-slate-900/60 px-7 py-3.5 text-sm font-semibold tracking-wide text-white backdrop-blur-md transition-all duration-300 hover:-translate-y-0.5 hover:border-white/20 hover:bg-slate-800/80"
               >
                 View Dashboard
               </Link>
@@ -110,7 +110,7 @@ export default function HeroSection() {
               ].map((text) => (
                 <span
                   key={text}
-                  className="inline-flex items-center px-3.5 py-1.5 rounded-lg border border-slate-700/60 bg-slate-800/40 text-slate-400 text-xs font-medium"
+                  className="inline-flex items-center rounded-full border border-white/10 bg-white/5 px-3.5 py-1.5 text-xs font-medium text-gray-400 backdrop-blur-md"
                 >
                   {text}
                 </span>
@@ -126,10 +126,10 @@ export default function HeroSection() {
             className="relative hidden lg:block"
           >
             {/* Glow behind the card */}
-            <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/20 via-transparent to-blue-500/20 rounded-3xl blur-2xl scale-105" />
+            <div className="absolute inset-0 scale-105 rounded-3xl bg-gradient-to-br from-emerald-500/20 via-transparent to-cyan-500/20 blur-2xl" />
 
             {/* Main dashboard preview card */}
-            <div className="relative rounded-2xl border border-slate-700/50 bg-gradient-to-br from-slate-800/80 via-slate-900/90 to-slate-800/80 backdrop-blur-xl p-6 shadow-2xl">
+            <div className="relative rounded-3xl border border-white/10 bg-gradient-to-br from-slate-800/80 via-slate-900/90 to-slate-950/90 p-6 shadow-2xl backdrop-blur-xl">
               {/* Mock top bar */}
               <div className="flex items-center gap-2 mb-5">
                 <div className="w-3 h-3 rounded-full bg-red-400/80" />
@@ -140,7 +140,7 @@ export default function HeroSection() {
 
               {/* Mock grid of mini-cards */}
               <div className="grid grid-cols-3 gap-3 mb-4">
-                <div className="rounded-xl bg-slate-700/40 border border-slate-600/30 p-4">
+                <div className="rounded-2xl border border-white/10 bg-slate-900/50 p-4">
                   <div className="flex items-center gap-2 mb-2">
                     <Leaf size={14} className="text-emerald-400" />
                     <span className="text-[10px] text-slate-400 uppercase tracking-wider font-semibold">
@@ -150,7 +150,7 @@ export default function HeroSection() {
                   <p className="text-xl font-bold text-white">94%</p>
                   <p className="text-[10px] text-emerald-400 mt-1">▲ +3.2%</p>
                 </div>
-                <div className="rounded-xl bg-slate-700/40 border border-slate-600/30 p-4">
+                <div className="rounded-2xl border border-white/10 bg-slate-900/50 p-4">
                   <div className="flex items-center gap-2 mb-2">
                     <TrendingUp size={14} className="text-blue-400" />
                     <span className="text-[10px] text-slate-400 uppercase tracking-wider font-semibold">
@@ -160,7 +160,7 @@ export default function HeroSection() {
                   <p className="text-xl font-bold text-white">4.2T</p>
                   <p className="text-[10px] text-blue-400 mt-1">per hectare</p>
                 </div>
-                <div className="rounded-xl bg-slate-700/40 border border-slate-600/30 p-4">
+                <div className="rounded-2xl border border-white/10 bg-slate-900/50 p-4">
                   <div className="flex items-center gap-2 mb-2">
                     <BarChart3 size={14} className="text-amber-400" />
                     <span className="text-[10px] text-slate-400 uppercase tracking-wider font-semibold">
@@ -173,7 +173,7 @@ export default function HeroSection() {
               </div>
 
               {/* Mock chart */}
-              <div className="rounded-xl bg-slate-700/30 border border-slate-600/20 p-4 h-36">
+              <div className="h-36 rounded-2xl border border-white/10 bg-slate-900/40 p-4">
                 <div className="flex items-center justify-between mb-3">
                   <span className="text-xs text-slate-400 font-medium">
                     Yield Trend — 12 Months
@@ -215,10 +215,7 @@ export default function HeroSection() {
             </div>
 
             {/* Floating cards */}
-            <motion.div
-              {...floatAnimation}
-              className="absolute -top-4 -right-6 z-10 flex items-center gap-3 px-4 py-3 rounded-xl border border-emerald-500/30 bg-slate-900/90 backdrop-blur-lg shadow-lg shadow-emerald-500/10"
-            >
+            <motion.div {...floatAnimation} className="absolute -top-4 -right-6 z-10 flex items-center gap-3 rounded-2xl border border-white/10 bg-slate-950/90 px-4 py-3 shadow-lg shadow-emerald-500/10 backdrop-blur-lg">
               <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-emerald-500 to-green-600 flex items-center justify-center">
                 <ShieldCheck size={16} className="text-white" />
               </div>
@@ -230,10 +227,7 @@ export default function HeroSection() {
               </div>
             </motion.div>
 
-            <motion.div
-              {...floatAnimationSlow}
-              className="absolute top-1/2 -left-10 z-10 flex items-center gap-3 px-4 py-3 rounded-xl border border-blue-500/30 bg-slate-900/90 backdrop-blur-lg shadow-lg shadow-blue-500/10"
-            >
+            <motion.div {...floatAnimationSlow} className="absolute top-1/2 -left-10 z-10 flex items-center gap-3 rounded-2xl border border-white/10 bg-slate-950/90 px-4 py-3 shadow-lg shadow-blue-500/10 backdrop-blur-lg">
               <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-blue-500 to-cyan-600 flex items-center justify-center">
                 <CloudSun size={16} className="text-white" />
               </div>
@@ -245,10 +239,7 @@ export default function HeroSection() {
               </div>
             </motion.div>
 
-            <motion.div
-              {...floatAnimationFast}
-              className="absolute -bottom-3 right-8 z-10 flex items-center gap-3 px-4 py-3 rounded-xl border border-amber-500/30 bg-slate-900/90 backdrop-blur-lg shadow-lg shadow-amber-500/10"
-            >
+            <motion.div {...floatAnimationFast} className="absolute -bottom-3 right-8 z-10 flex items-center gap-3 rounded-2xl border border-white/10 bg-slate-950/90 px-4 py-3 shadow-lg shadow-amber-500/10 backdrop-blur-lg">
               <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center">
                 <AlertTriangle size={16} className="text-white" />
               </div>

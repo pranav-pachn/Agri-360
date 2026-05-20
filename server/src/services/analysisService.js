@@ -193,6 +193,27 @@ const buildAnalysisInsertCandidates = ({
     const normalizedHealth = Number.isFinite(Number(health)) ? Math.round(Number(health)) : null;
     const normalizedRisk = Number(finalRiskScore.toFixed(4));
 
+    const unifiedPayload = {
+        farmer_id: farmerId,
+        crop,
+        location,
+        health: normalizedHealth,
+        risk: normalizedRisk,
+        yield: adjustedYield,
+        trust_score: scaledTrustScore,
+        credit_rating: finalCreditRating,
+        crop_type: crop,
+        disease,
+        risk_score: normalizedRisk,
+        health_score: normalizedHealth,
+        yield_prediction: adjustedYield,
+        image_url: imageUrl,
+        severity: storageSeverity,
+        sustainability_index: sustainability,
+        confidence,
+        created_at: createdAt,
+    };
+
     const enhancedPayload = {
         farmer_id: farmerId,
         crop_type: crop,
@@ -231,6 +252,30 @@ const buildAnalysisInsertCandidates = ({
     };
 
     return [
+        {
+            payload: unifiedPayload,
+            select: `
+                id,
+                farmer_id,
+                crop,
+                location,
+                health,
+                risk,
+                yield,
+                trust_score,
+                credit_rating,
+                crop_type,
+                disease,
+                risk_score,
+                health_score,
+                yield_prediction,
+                image_url,
+                severity,
+                sustainability_index,
+                confidence,
+                created_at
+            `,
+        },
         {
             payload: legacyPayload,
             select: `

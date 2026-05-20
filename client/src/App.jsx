@@ -15,6 +15,7 @@ import Chatbot from './pages/Chatbot';
 import Analytics from './pages/Analytics';
 import Architecture from './pages/Architecture';
 import Profile from './pages/Profile';
+import Settings from './pages/Settings';
 import PendingApplications from './pages/PendingApplications';
 import FarmerSetup from './pages/FarmerSetup';
 
@@ -77,6 +78,12 @@ function AppRoutes() {
         <Route path="/profile" element={
           <ProtectedLayout>
             <Profile />
+          </ProtectedLayout>
+        } />
+
+        <Route path="/settings" element={
+          <ProtectedLayout>
+            <Settings />
           </ProtectedLayout>
         } />
 

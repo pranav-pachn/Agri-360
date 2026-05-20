@@ -21,9 +21,9 @@ const riskBandMeta = {
 const YieldComparisonChart = ({ series = [] }) => {
   if (!series.length) {
     return (
-      <div className="rounded-xl border border-slate-700 bg-slate-800 p-5">
-        <h2 className="text-lg font-bold text-white">Predicted vs Actual Yield</h2>
-        <p className="mt-4 text-sm text-slate-400">Yield comparison data is unavailable.</p>
+      <div className="card">
+        <h2 className="text-2xl font-semibold tracking-tight text-white">Predicted vs Actual Yield</h2>
+        <p className="mt-4 text-sm text-gray-400">Yield comparison data is unavailable.</p>
       </div>
     );
   }
@@ -52,11 +52,11 @@ const YieldComparisonChart = ({ series = [] }) => {
   }).join(' ');
 
   return (
-    <div className="rounded-xl border border-slate-700 bg-slate-800 p-5">
+    <div className="card">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h2 className="text-lg font-bold text-white">Predicted vs Actual Yield</h2>
-          <p className="mt-1 text-sm text-slate-400">Line comparison across sample farm records to show model credibility.</p>
+          <h2 className="text-2xl font-semibold tracking-tight text-white">Predicted vs Actual Yield</h2>
+          <p className="mt-1 text-sm leading-relaxed text-gray-400">Line comparison across sample farm records to show model credibility.</p>
         </div>
         <div className="flex flex-wrap gap-3 text-xs text-slate-300">
           <span className="flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-full bg-emerald-400" />Predicted</span>
@@ -119,9 +119,9 @@ const RiskDistributionCard = ({ distribution = {} }) => {
   });
 
   return (
-    <div className="rounded-xl border border-slate-700 bg-slate-800 p-5">
-      <h2 className="text-lg font-bold text-white">Risk Distribution</h2>
-      <p className="mt-1 text-sm text-slate-400">Pie view of high, medium, and low agricultural risk records.</p>
+    <div className="card">
+      <h2 className="text-2xl font-semibold tracking-tight text-white">Risk Distribution</h2>
+      <p className="mt-1 text-sm leading-relaxed text-gray-400">Pie view of high, medium, and low agricultural risk records.</p>
       <div className="mt-4 flex flex-col items-center gap-4 sm:flex-row sm:items-start">
         <svg viewBox="0 0 100 100" className="h-40 w-40">
           {slices.map((slice) => (
@@ -131,7 +131,7 @@ const RiskDistributionCard = ({ distribution = {} }) => {
         </svg>
         <div className="w-full space-y-3">
           {entries.map((entry) => (
-            <div key={entry.key} className="flex items-center justify-between rounded-lg border border-slate-700 bg-slate-900/50 px-3 py-2">
+            <div key={entry.key} className="flex items-center justify-between rounded-2xl border border-white/10 bg-slate-900/60 px-4 py-3">
               <span className="flex items-center gap-2 text-sm text-slate-200">
                 <span className="h-3 w-3 rounded-full" style={{ backgroundColor: entry.color }} />
                 {entry.label}
@@ -146,19 +146,19 @@ const RiskDistributionCard = ({ distribution = {} }) => {
 };
 
 const SamplePredictionsTable = ({ rows = [] }) => (
-  <div className="rounded-xl border border-slate-700 bg-slate-800 p-5 shadow-md">
+  <div className="card">
     <div className="flex items-start justify-between gap-4">
       <div>
-        <h2 className="text-lg font-bold text-white">Sample Predictions</h2>
-        <p className="mt-1 text-sm text-slate-400">District-level proof table showing predicted vs actual yields and assigned risk.</p>
+        <h2 className="text-2xl font-semibold tracking-tight text-white">Sample Predictions</h2>
+        <p className="mt-1 text-sm leading-relaxed text-gray-400">District-level proof table showing predicted vs actual yields and assigned risk.</p>
       </div>
-      <span className="rounded-full border border-slate-700 bg-slate-900/70 px-3 py-1 text-xs text-slate-300">
+      <span className="rounded-full border border-white/10 bg-slate-900/70 px-3 py-1 text-xs text-slate-300">
         {rows.length} records shown
       </span>
     </div>
     <div className="mt-4 overflow-x-auto">
       <table className="min-w-full text-sm">
-        <thead className="border-b border-slate-700 text-left text-slate-400">
+        <thead className="border-b border-white/10 text-left text-slate-400">
           <tr>
             <th className="px-3 py-3 font-semibold uppercase tracking-wider">District</th>
             <th className="px-3 py-3 font-semibold uppercase tracking-wider">Crop</th>
@@ -167,7 +167,7 @@ const SamplePredictionsTable = ({ rows = [] }) => (
             <th className="px-3 py-3 font-semibold uppercase tracking-wider">Risk</th>
           </tr>
         </thead>
-        <tbody className="divide-y divide-slate-700/40">
+        <tbody className="divide-y divide-white/5">
           {rows.map((row, index) => (
             <tr key={`${row.district}-${row.crop}-${index}`} className="text-slate-200">
               <td className="px-3 py-3 font-medium text-white">{row.district}</td>
@@ -312,54 +312,54 @@ const Analytics = () => {
       <div className="page-inner">
 
         {/* Page Header */}
-        <div className="card">
+        <div className="hero-panel">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <p className="section-kicker">Intelligence Layer</p>
               <h1 className="mt-2 page-title">District Risk Intelligence</h1>
-              <p className="section-subtitle">
+              <p className="section-subtitle text-base">
                 Real-time agricultural risk data aggregated across districts to support policy decisions and financial assessments.
               </p>
             </div>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-          <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/5 p-5 lg:col-span-2">
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+          <div className="card lg:col-span-2">
             <p className="text-xs font-bold uppercase tracking-[0.18em] text-emerald-300">Dataset Foundation</p>
-            <h2 className="mt-2 text-xl font-bold text-white">Synthetic dataset modeled on real agricultural patterns</h2>
-            <p className="mt-2 text-sm text-slate-300">
+            <h2 className="mt-2 text-2xl font-semibold tracking-tight text-white">Synthetic dataset modeled on real agricultural patterns</h2>
+            <p className="mt-2 text-sm leading-relaxed text-gray-400">
               Crop yield, plant health, weather volatility, and market fluctuation signals are combined into a professional baseline dataset for analytics benchmarking.
             </p>
             <div className="mt-4 flex flex-wrap gap-3 text-xs text-slate-300">
-              <span className="rounded-full border border-slate-700 bg-slate-900/70 px-3 py-1.5">
+              <span className="rounded-full border border-white/10 bg-slate-900/70 px-3 py-1.5">
                 {loadingSummary ? 'Loading records...' : `${analyticsSummary?.totalRecords || 0} records`}
               </span>
-              <span className="rounded-full border border-slate-700 bg-slate-900/70 px-3 py-1.5">
+              <span className="rounded-full border border-white/10 bg-slate-900/70 px-3 py-1.5">
                 {loadingSummary ? 'Loading districts...' : `${analyticsSummary?.districtsCovered || 0} districts`}
               </span>
-              <span className="rounded-full border border-slate-700 bg-slate-900/70 px-3 py-1.5">
+              <span className="rounded-full border border-white/10 bg-slate-900/70 px-3 py-1.5">
                 {loadingSummary ? 'Loading crops...' : `${analyticsSummary?.cropsCovered || 0} crop profiles`}
               </span>
             </div>
           </div>
 
-          <div className="rounded-xl border border-sky-500/20 bg-sky-500/5 p-5">
-            <p className="text-xs font-bold uppercase tracking-[0.18em] text-sky-300">Model Quality</p>
+          <div className="card">
+            <p className="text-xs font-bold uppercase tracking-[0.18em] text-cyan-300">Model Quality</p>
             <div className="mt-3 space-y-3">
               <div>
-                <p className="text-sm text-slate-400">Yield prediction accuracy</p>
-                <p className="text-2xl font-black text-white">
+                <p className="text-sm text-gray-400">Yield prediction accuracy</p>
+                <p className="text-4xl font-bold text-white">
                   {loadingSummary ? '--' : `${analyticsSummary?.mae?.toFixed?.(2) ?? '0.00'} t/ha`}
                 </p>
-                <p className="text-xs text-slate-400">Mean Absolute Error (MAE)</p>
+                <p className="text-xs text-gray-400">Mean Absolute Error (MAE)</p>
               </div>
               <div>
-                <p className="text-sm text-slate-400">Risk classification accuracy</p>
-                <p className="text-2xl font-black text-white">
+                <p className="text-sm text-gray-400">Risk classification accuracy</p>
+                <p className="text-4xl font-bold text-white">
                   {loadingSummary ? '--' : `${analyticsSummary?.riskAccuracyPercent ?? 0}%`}
                 </p>
-                <p className="text-xs text-slate-400">Yield-derived validation proxy</p>
+                <p className="text-xs text-gray-400">Yield-derived validation proxy</p>
               </div>
             </div>
           </div>
@@ -367,18 +367,18 @@ const Analytics = () => {
 
         <div className="grid grid-cols-1 gap-6 xl:grid-cols-[1.2fr_0.8fr]">
           <div className="card">
-            <h2 className="text-lg font-bold text-white">Model Performance</h2>
-            <p className="mt-1 text-sm text-slate-400">Proof points recruiters and reviewers can inspect directly from the analytics engine.</p>
+            <h2 className="text-2xl font-semibold tracking-tight text-white">Model Performance</h2>
+            <p className="mt-1 text-sm leading-relaxed text-gray-400">Proof points recruiters and reviewers can inspect directly from the analytics engine.</p>
             <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <div className="rounded-xl border border-emerald-500/20 bg-slate-900/60 p-4">
-                <p className="text-sm text-slate-400">MAE</p>
-                <p className="mt-1 text-2xl font-black text-white">
+              <div className="rounded-2xl border border-white/10 bg-slate-900/60 p-4">
+                <p className="text-sm text-gray-400">MAE</p>
+                <p className="mt-1 text-4xl font-bold text-white">
                   {loadingSummary ? '--' : `${analyticsSummary?.mae?.toFixed?.(2) ?? '0.00'} tons/hectare`}
                 </p>
               </div>
-              <div className="rounded-xl border border-sky-500/20 bg-slate-900/60 p-4">
-                <p className="text-sm text-slate-400">Risk Accuracy</p>
-                <p className="mt-1 text-2xl font-black text-white">
+              <div className="rounded-2xl border border-white/10 bg-slate-900/60 p-4">
+                <p className="text-sm text-gray-400">Risk Accuracy</p>
+                <p className="mt-1 text-4xl font-bold text-white">
                   {loadingSummary ? '--' : `${analyticsSummary?.riskAccuracyPercent ?? 0}%`}
                 </p>
               </div>
@@ -386,11 +386,11 @@ const Analytics = () => {
           </div>
 
           <div className="card">
-            <h2 className="text-lg font-bold text-white">Why This Model Works</h2>
-            <p className="mt-3 text-sm leading-6 text-slate-300">
+            <h2 className="text-2xl font-semibold tracking-tight text-white">Why This Model Works</h2>
+            <p className="mt-3 text-sm leading-6 text-gray-300">
               This model combines crop health, yield trends, weather volatility, and market fluctuations to estimate agricultural risk and financial trust.
             </p>
-            <p className="mt-3 text-sm leading-6 text-slate-400">
+            <p className="mt-3 text-sm leading-6 text-gray-400">
               Validated on 150+ simulated farm records derived from a synthetic dataset modeled on real agricultural patterns.
             </p>
           </div>

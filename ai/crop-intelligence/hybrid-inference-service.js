@@ -186,13 +186,11 @@ const getImageBuffer = async (imageUrl, options = {}) => {
   if (!imageUrl) return null;
 
   try {
-    const response = await getAxios().get(imageUrl, {
-      responseType: 'arraybuffer',
-      timeout: 6000,
-      maxContentLength: 6 * 1024 * 1024,
-    });
+    const response = await fetch(imageUrl, { signal: AbortSignal.timeout(6000) });
+    if (!response.ok) return null;
 
-    return Buffer.from(response.data);
+    const arrayBuffer = await response.arrayBuffer();
+    return Buffer.from(arrayBuffer);
   } catch (error) {
     return null;
   }
