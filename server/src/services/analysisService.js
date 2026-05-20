@@ -648,12 +648,14 @@ const generateAnalysis = async (crop, location, imageUrl = null, fertilizerLevel
         score: finalTrustScore,
         scaled_trust_score: scaledTrustScore,
         credit_rating: finalCreditRating,
+        explainabilityText: aiResults?.explanation?.summary || null,
         image_url: insertedAnalysis.image_url,
         diagnosis: {
             disease: aiResults.diagnosis.disease,
             confidence: aiResults.diagnosis.confidence,
             severity,
-            health_score: health
+            health_score: health,
+            action_label: aiResults.diagnosis.action_label || decisionIntelligence.action_label || null
         },
         yield_prediction: {
             predicted_yield: adjustedYield,

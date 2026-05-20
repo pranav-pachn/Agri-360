@@ -44,6 +44,25 @@ const CropDiagnosis = () => {
 		return 'Low';
 	}, [analysisResult]);
 
+	const actionState = useMemo(() => {
+		const disease = String(analysisResult?.disease || '').toLowerCase();
+		const severity = String(analysisResult?.severity || '').toLowerCase();
+
+		if (!analysisResult) {
+			return { label: 'Awaiting Diagnosis', className: 'text-slate-400' };
+		}
+
+		if (disease.includes('healthy') || severity === 'none') {
+			return { label: 'No Immediate Action', className: 'text-emerald-300' };
+		}
+
+		if (severity === 'high' || severity === 'critical') {
+			return { label: 'Immediate Treatment Recommended', className: 'text-rose-300' };
+		}
+
+		return { label: 'Monitor Crop', className: 'text-amber-300' };
+	}, [analysisResult]);
+
 	const handleFileSelect = (file) => {
 		setImageFile(file);
 		const objectUrl = URL.createObjectURL(file);
@@ -217,7 +236,7 @@ const CropDiagnosis = () => {
 												</div>
 											) : (
 												<>
-													<p className="text-[11px] font-bold uppercase tracking-[0.14em] text-rose-300">Action Required</p>
+													<p className={`text-[11px] font-bold uppercase tracking-[0.14em] ${actionState.className}`}>{actionState.label}</p>
 													<h2 className="mt-1 text-3xl font-black text-white">{analysisResult.disease}</h2>
 													<div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
 														<div className="card-compact">

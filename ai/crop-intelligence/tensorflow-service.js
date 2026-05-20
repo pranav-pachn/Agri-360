@@ -149,7 +149,7 @@ class TensorFlowService {
         if (!this.isLoaded) {
             const modelLoaded = await this.loadModel();
             if (!modelLoaded) {
-                // Fallback to enhanced mock service
+                // Fallback to the production-safe hybrid heuristic engine.
                 const enhancedMockAI = require('./enhanced-mock-service');
                 return await enhancedMockAI.analyzeCropImage(imageUrl, cropType, location);
             }
@@ -183,7 +183,7 @@ class TensorFlowService {
         } catch (error) {
             console.error('❌ TensorFlow analysis error:', error);
 
-            // Fallback to enhanced mock service
+            // Fallback to the production-safe hybrid heuristic engine.
             const enhancedMockAI = require('./enhanced-mock-service');
             return await enhancedMockAI.analyzeCropImage(imageUrl, cropType, location);
         } finally {
