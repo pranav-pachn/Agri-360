@@ -4,8 +4,8 @@
 -- Create chat_logs table
 CREATE TABLE IF NOT EXISTS chat_logs (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    conversation_id UUID NOT NULL,
-    farmer_id UUID NOT NULL REFERENCES farmers(id) ON DELETE CASCADE,
+    conversation_id TEXT NOT NULL,
+    farmer_id TEXT NOT NULL REFERENCES farmers(id) ON DELETE CASCADE,
     message_type TEXT NOT NULL CHECK (message_type IN ('user', 'ai')),
     message TEXT NOT NULL,
     metadata JSONB,  -- Store model info, latency, tokens, etc.
@@ -25,7 +25,7 @@ CREATE INDEX IF NOT EXISTS idx_chat_metadata ON chat_logs USING GIN(metadata);
 
 -- Add comments for documentation
 COMMENT ON TABLE chat_logs IS 'AI assistant conversation logs with threading and metadata';
-COMMENT ON COLUMN chat_logs.conversation_id IS 'UUID for grouping messages into conversations';
+COMMENT ON COLUMN chat_logs.conversation_id IS 'Text conversation identifier for grouping messages into conversations';
 COMMENT ON COLUMN chat_logs.message_type IS 'Message type: user or ai';
 COMMENT ON COLUMN chat_logs.message IS 'Message content from user or AI response';
 COMMENT ON COLUMN chat_logs.metadata IS 'JSON metadata: model info, latency, tokens, etc.';

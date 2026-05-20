@@ -1,6 +1,12 @@
 -- Migration 005: Insert sample data for testing and demonstration
 -- Provides realistic data for all enhanced tables
 
+-- Seed the farmers referenced by the sample chat logs and updates
+INSERT INTO farmers (id, name, location) VALUES
+    ('550e8400-e29b-41d4-a716-446655440000', 'Demo Farmer', 'Punjab, India'),
+    ('550e8400-e29b-41d4-a716-446655440001', 'Test Farmer', 'Gujarat, India')
+ON CONFLICT DO NOTHING;
+
 -- Sample analytics data (multi-level)
 INSERT INTO analytics (level, district, state, avg_risk_score, total_reports, healthy_reports, avg_trust_score, avg_health_score) VALUES
     ('district', 'Punjab', 'Punjab', 0.34, 150, 120, 725, 68.5),

@@ -11,6 +11,7 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 \i 003_enhance_credit_scores.sql
 \i 004_create_chat_logs.sql
 \i 006_create_predictions.sql
+\i 008_fix_schema_compatibility.sql
 \i 005_sample_data.sql
 
 -- Verify tables were created
