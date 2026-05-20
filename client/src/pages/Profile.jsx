@@ -90,7 +90,7 @@ function Profile() {
         {/* Page Header */}
         <div>
           <p className="section-kicker">Account</p>
-          <h1 className="mt-2 section-title">Your Profile</h1>
+          <h1 className="mt-2 page-title">Your Profile</h1>
           <p className="section-subtitle">Manage your farmer account, preferences, and identity</p>
         </div>
 

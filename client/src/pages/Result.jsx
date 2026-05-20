@@ -71,7 +71,7 @@ const Result = () => {
                   {data?.dataMode?.fallbackUsed ? 'Fallback Data' : 'Live Data'}
                 </span>
               </div>
-              <h1 className="section-title">Crop Assessment Report</h1>
+              <h1 className="page-title">Crop Assessment Report</h1>
               <p className="section-subtitle">
                 Comprehensive breakdown of crop health, risk factors, and financial eligibility based on your recent scan.
               </p>

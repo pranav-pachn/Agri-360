@@ -1,9 +1,9 @@
 const AnalyticsCard = ({ title, subtitle, children }) => {
   return (
-    <div className="rounded-xl bg-slate-700 p-4">
+    <div className="rounded-3xl border border-white/10 bg-slate-900/60 p-5 shadow-xl backdrop-blur-md">
       <div className="mb-4">
-        <p className="text-sm font-semibold text-white">{title}</p>
-        <p className="text-xs text-slate-400">{subtitle}</p>
+        <p className="text-lg font-semibold tracking-tight text-white">{title}</p>
+        <p className="text-sm text-gray-400">{subtitle}</p>
       </div>
       {children}
     </div>
@@ -36,10 +36,13 @@ const AnalyticsSection = ({
   const maxRisk = Math.max(...safeRiskDistribution.map((item) => item.value), 1);
 
   return (
-    <div className="rounded-2xl bg-slate-800 p-5 shadow-md">
-      <h2 className="text-lg font-semibold text-white">📈 Analytics</h2>
+    <div className="card space-y-6">
+      <div>
+        <h2 className="text-2xl font-semibold tracking-tight text-white">📈 Analytics</h2>
+        <p className="mt-1 text-sm text-gray-400">Season-level intelligence and portfolio risk mix.</p>
+      </div>
 
-      <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
         <AnalyticsCard title="📊 Yield Trends" subtitle="Season-level production outlook">
           <div className="flex h-44 items-end gap-3">
             {safeYieldTrend.map((item) => (

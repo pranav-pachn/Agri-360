@@ -122,7 +122,7 @@ const CropDiagnosis = () => {
 				<div>
 						<header className="card mb-2">
 							<p className="section-kicker">Crop Intelligence Engine</p>
-							<h1 className="mt-2 section-title">Diagnosis &amp; Recovery</h1>
+							<h1 className="mt-2 page-title">Diagnosis &amp; Recovery</h1>
 							<p className="section-subtitle">
 								Upload a leaf sample to run AI diagnosis and immediately review risk, yield impact,
 								trust-readiness, and treatment recommendations in one workflow.

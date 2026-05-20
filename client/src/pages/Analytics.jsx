@@ -316,7 +316,7 @@ const Analytics = () => {
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <p className="section-kicker">Intelligence Layer</p>
-              <h1 className="mt-2 section-title">District Risk Intelligence</h1>
+              <h1 className="mt-2 page-title">District Risk Intelligence</h1>
               <p className="section-subtitle">
                 Real-time agricultural risk data aggregated across districts to support policy decisions and financial assessments.
               </p>

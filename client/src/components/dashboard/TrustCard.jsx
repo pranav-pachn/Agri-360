@@ -41,9 +41,10 @@ const TrustCard = ({ score = 742 }) => {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.45, ease: 'easeOut' }}
       whileHover={{ scale: 1.01 }}
-      className="relative overflow-hidden rounded-3xl border border-emerald-300/20 bg-gradient-to-br from-emerald-700/90 via-green-700/85 to-blue-800/85 p-8 shadow-[0_24px_55px_-20px_rgba(16,185,129,0.55)]"
+      className="relative overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-br from-emerald-500 via-cyan-500 to-slate-900 p-8 shadow-2xl"
     >
-      <div className="pointer-events-none absolute -right-20 -top-16 h-48 w-48 rounded-full bg-emerald-300/20 blur-3xl" />
+      <div className="pointer-events-none absolute -left-24 -top-24 h-64 w-64 rounded-full bg-cyan-400/20 blur-3xl" />
+      <div className="pointer-events-none absolute -right-20 -bottom-20 h-56 w-56 rounded-full bg-emerald-300/20 blur-3xl" />
 
       <div className="relative flex flex-col gap-8 xl:flex-row xl:items-center xl:justify-between">
         <div>
@@ -53,14 +54,14 @@ const TrustCard = ({ score = 742 }) => {
           </div>
 
           <div className="mt-4 flex items-end gap-4">
-            <div className="text-6xl font-black leading-none text-white">{clampedScore}</div>
+            <div className="text-7xl font-black leading-none text-white">{clampedScore}</div>
             <div className={`mb-1 inline-flex items-center gap-1 rounded-full border px-3 py-1 text-sm font-semibold ${getGradeTheme()}`}>
               <BadgeCheck className="h-4 w-4" />
               Grade {getGrade()}
             </div>
           </div>
 
-          <div className="mt-4 rounded-2xl border border-white/20 bg-slate-900/30 px-4 py-3">
+          <div className="mt-4 rounded-2xl border border-white/15 bg-slate-950/30 px-4 py-4 backdrop-blur-md">
             <p className="text-xs uppercase tracking-[0.16em] text-emerald-100/80">Loan Eligibility</p>
             <p className="mt-1 text-xl font-semibold text-white">Eligible for {getLoanAmount()} Loan</p>
             <p className="mt-1 text-sm text-emerald-100/80">Strong repayment confidence and resilient farm profile detected.</p>

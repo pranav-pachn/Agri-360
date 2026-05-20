@@ -101,7 +101,7 @@ export default function PendingApplications() {
             <ClipboardList className="h-5 w-5 text-emerald-400" />
             <p className="section-kicker">Loan Officer Workspace</p>
           </div>
-          <h1 className="section-title">Pending Applications</h1>
+          <h1 className="page-title">Pending Applications</h1>
           <p className="section-subtitle">
             Review incoming applications, search by farmer or location, and update workflow status directly.
           </p>

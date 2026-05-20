@@ -1,0 +1,97 @@
+.page-wrapper {
+  background: #020617;
+}
+
+.page-inner {
+  max-width: 80rem;
+  margin-left: auto;
+  margin-right: auto;
+  padding: 2rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.card,
+.metric-card,
+.hero-panel {
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 1.5rem;
+  background: rgba(30, 41, 59, 0.8);
+  backdrop-filter: blur(16px);
+  box-shadow: 0 20px 50px rgba(2, 6, 23, 0.35);
+}
+
+.card {
+  padding: 1.5rem;
+}
+
+.metric-card {
+  padding: 1.5rem;
+}
+
+.hero-panel {
+  position: relative;
+  overflow: hidden;
+  padding: 2rem;
+}
+
+.hero-glow {
+  pointer-events: none;
+  position: absolute;
+  border-radius: 9999px;
+  filter: blur(64px);
+  opacity: 0.2;
+}
+
+.section-title {
+  font-size: 1.5rem;
+  line-height: 1.2;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: #fff;
+}
+
+.page-title {
+  font-size: clamp(2.75rem, 5vw, 4.25rem);
+  line-height: 1.05;
+  font-weight: 700;
+  letter-spacing: -0.04em;
+  color: #fff;
+}
+
+.metric-value {
+  font-size: 2.5rem;
+  line-height: 1;
+  font-weight: 700;
+  color: #fff;
+}
+
+.metric-label,
+.section-subtitle,
+.text-description {
+  color: #94a3b8;
+}
+
+.bg-slate-900,
+.bg-slate-950 {
+  background-color: #020617;
+}
+
+.bg-slate-800\/80 {
+  background-color: rgba(30, 41, 59, 0.8);
+}
+
+.gap-6 {
+  gap: 1.5rem;
+}
+
+.space-y-8 > :not([hidden]) ~ :not([hidden]) {
+  margin-top: 2rem;
+}
+
+.text-gray-400,
+.text-slate-400,
+.text-slate-500 {
+  color: #94a3b8;
+}

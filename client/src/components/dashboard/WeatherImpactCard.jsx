@@ -24,38 +24,38 @@ const WeatherImpactCard = ({ weather, impact }) => {
   const isAvailable = safeWeather.available !== false;
 
   return (
-    <div className="space-y-4 rounded-2xl bg-slate-800 p-5 shadow-md">
+    <div className="card space-y-6">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h2 className="text-lg font-semibold text-white">🌦 Weather Impact</h2>
-          <p className="mt-1 text-sm text-slate-400">{location}</p>
+          <h2 className="text-2xl font-semibold tracking-tight text-white">🌦 Weather Impact</h2>
+          <p className="mt-1 text-sm text-gray-400">{location}</p>
         </div>
-        <div className="rounded-full border border-slate-600 bg-slate-700/70 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-slate-200">
+        <div className="rounded-full border border-white/10 bg-slate-900/60 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-slate-200 backdrop-blur-md">
           {isAvailable ? safeWeather.condition || 'Live' : 'Unavailable'}
         </div>
       </div>
 
-      <div className="grid grid-cols-3 gap-3 text-sm text-slate-200">
-        <div className="rounded-xl bg-slate-700/60 px-4 py-3">
+      <div className="grid grid-cols-3 gap-4 text-sm text-slate-200">
+        <div className="rounded-2xl border border-white/10 bg-slate-900/60 px-4 py-4">
           <p className="text-xs uppercase tracking-[0.18em] text-slate-400">Temp</p>
-          <p className="mt-2 text-lg font-semibold text-white">{formatValue(safeWeather.temperatureC, '°C')}</p>
+          <p className="mt-2 text-2xl font-semibold text-white">{formatValue(safeWeather.temperatureC, '°C')}</p>
         </div>
-        <div className="rounded-xl bg-slate-700/60 px-4 py-3">
+        <div className="rounded-2xl border border-white/10 bg-slate-900/60 px-4 py-4">
           <p className="text-xs uppercase tracking-[0.18em] text-slate-400">Humidity</p>
-          <p className="mt-2 text-lg font-semibold text-white">{formatValue(safeWeather.humidity, '%')}</p>
+          <p className="mt-2 text-2xl font-semibold text-white">{formatValue(safeWeather.humidity, '%')}</p>
         </div>
-        <div className="rounded-xl bg-slate-700/60 px-4 py-3">
+        <div className="rounded-2xl border border-white/10 bg-slate-900/60 px-4 py-4">
           <p className="text-xs uppercase tracking-[0.18em] text-slate-400">Wind</p>
-          <p className="mt-2 text-lg font-semibold text-white">{formatValue(safeWeather.windSpeed, ' m/s')}</p>
+          <p className="mt-2 text-2xl font-semibold text-white">{formatValue(safeWeather.windSpeed, ' m/s')}</p>
         </div>
       </div>
 
-      <div className="rounded-xl bg-slate-700/60 px-4 py-3">
+      <div className="rounded-2xl border border-white/10 bg-slate-900/60 px-4 py-4">
         <p className="text-xs uppercase tracking-[0.18em] text-slate-400">Impact On Risk</p>
-        <p className={`mt-2 text-2xl font-bold ${impactTone(safeImpact.direction)}`}>
+        <p className={`mt-2 text-4xl font-bold ${impactTone(safeImpact.direction)}`}>
           {Number.isFinite(deltaPercent) ? `${impactPrefix(safeImpact.direction, deltaPercent)}${deltaPercent}%` : '--'}
         </p>
-        <p className="mt-2 text-sm text-slate-300">{safeImpact.reason || 'Current weather conditions are contributing a neutral risk impact.'}</p>
+        <p className="mt-2 text-sm text-gray-300">{safeImpact.reason || 'Current weather conditions are contributing a neutral risk impact.'}</p>
       </div>
     </div>
   );
