@@ -6,6 +6,40 @@ const OPENWEATHER_BASE_URL = process.env.OPENWEATHER_BASE_URL || 'https://api.op
 const WEATHER_CACHE = {};
 const CACHE_TTL = 3600; // seconds
 
+const uniqueStrings = (values = []) => Array.from(
+  new Set(
+    values
+      .map((value) => String(value || '').trim())
+      .filter(Boolean)
+  )
+);
+
+const buildWeatherLocationCandidates = (location) => {
+  const rawLocation = String(location || '').trim();
+  if (!rawLocation) return [];
+
+  const parts = rawLocation.split(',').map((part) => part.trim()).filter(Boolean);
+
+  const candidates = [rawLocation];
+
+  if (parts.length >= 2) {
+    const district = parts[0];
+    const state = parts[1];
+    const combined = [district, state].filter(Boolean).join(', ');
+
+    candidates.push(combined);
+    candidates.push(`${combined}, India`);
+    candidates.push(`${combined}, IN`);
+    candidates.push([state, 'India'].filter(Boolean).join(', '));
+    candidates.push([state, 'IN'].filter(Boolean).join(', '));
+  } else {
+    candidates.push(`${rawLocation}, India`);
+    candidates.push(`${rawLocation}, IN`);
+  }
+
+  return uniqueStrings(candidates);
+};
+
 const buildUnavailableWeatherSnapshot = (location = '') => ({
   temperatureC: null,
   humidity: null,
@@ -56,18 +90,26 @@ const getCoordinatesFromLocation = async (location) => {
       return null;
     }
 
-    const response = await axios.get(`${OPENWEATHER_BASE_URL}/geo/1.0/direct`, {
-      params: {
-        q: location,
-        limit: 1,
-        appid: OPENWEATHER_API_KEY,
-      },
-      timeout: 5000,
-    });
+    const candidates = buildWeatherLocationCandidates(location);
 
-    if (response.data && response.data.length > 0) {
-      const { lat, lon } = response.data[0];
-      return { lat, lon };
+    for (const candidate of candidates) {
+      try {
+        const response = await axios.get(`${OPENWEATHER_BASE_URL}/geo/1.0/direct`, {
+          params: {
+            q: candidate,
+            limit: 1,
+            appid: OPENWEATHER_API_KEY,
+          },
+          timeout: 5000,
+        });
+
+        if (response.data && response.data.length > 0) {
+          const { lat, lon } = response.data[0];
+          return { lat, lon };
+        }
+      } catch (error) {
+        console.error(`Geocoding API error for location "${candidate}":`, error.message);
+      }
     }
 
     return null;
@@ -165,7 +207,9 @@ const getWeatherSnapshotByLocation = async (location) => {
     }
 
     const snapshot = await getWeatherSnapshotByCoordinates(coords.lat, coords.lon, location);
-    writeCache(locationKey, snapshot);
+    if (snapshot?.available) {
+      writeCache(locationKey, snapshot);
+    }
     return snapshot;
   } catch (error) {
     console.error(`Error getting weather snapshot for location "${location}":`, error.message);
