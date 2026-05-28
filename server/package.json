@@ -10,7 +10,7 @@
     "prestart": "npm run predeploy",
     "start": "node src/server.js",
     "deploy": "npm run predeploy && npm run start",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "jest"
   },
   "keywords": [],
   "author": "",
@@ -30,6 +30,7 @@
     "uuid": "^9.0.1"
   },
   "devDependencies": {
+    "jest": "^30.4.2",
     "nodemon": "^3.1.14",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",

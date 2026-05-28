@@ -7,13 +7,13 @@
 [![Weather](https://img.shields.io/badge/live%20weather-OpenWeather-ffb703)](#live-weather-overlay)
 [![Database](https://img.shields.io/badge/data-Supabase-3ecf8e)](#tech-stack)
 
-AI-powered crop diagnostics, explainable agricultural risk scoring, and finance-ready trust intelligence for smallholder farmers.
+Full-stack agricultural intelligence prototype, transparent agricultural risk scoring, and finance-ready trust intelligence for smallholder farmers.
 
 One-line pitch: Turn a crop image and farm context into lender-ready insights and recommendations.
 
 ## 🚀 Key Highlights
 
-- Explainable AI Risk Engine — interpretable breakdowns for every score.
+- Transparent Risk Breakdown — interpretable breakdowns for every score.
 - Real-time Weather Integration — live weather affects risk and recommendations.
 - Finance-ready Trust Score — lender-focused signals and eligibility framing.
 - Multilingual AI Assistant — English, Hindi, and Telugu support for field teams.
@@ -21,8 +21,8 @@ One-line pitch: Turn a crop image and farm context into lender-ready insights an
 ## At A Glance
 | Area | What It Does |
 | --- | --- |
-| Crop Intelligence | Upload a crop image and generate disease, severity, health, and recovery guidance |
-| Risk Engine | Compute explainable agricultural risk using model confidence, severity, and live weather context |
+| Image Classification | Upload a crop image and generate disease mapping, severity, health, and recovery guidance |
+| Risk Formula | Compute weighted agricultural risk using model confidence, severity, and live weather context |
 | Yield Projection | Estimate yield and expected loss from risk-aware crop logic |
 | Trust Intelligence | Convert farm performance into finance-ready trust and eligibility signals |
 | Dashboard | Surface live risk, weather impact, trends, and recommendations in one workspace |
@@ -47,8 +47,8 @@ The most recruiter-facing visuals are shown below — priority order: Dashboard,
 
 ## Why This Project Stands Out
 
-- **Crop diagnosis workflow, not just classification**: image upload feeds disease detection, severity, health scoring, recovery guidance, and a full result page.
-- **Explainable risk + trust logic**: outputs are structured so users and reviewers can see why a score moved, not just the final number.
+- **Crop image classification workflow**: image upload feeds disease mapping, severity, health scoring, recovery guidance, and a full result page.
+- **Transparent risk + trust logic**: outputs are structured so users and reviewers can see why a score moved, not just the final number.
 - **Live weather integration**: OpenWeather data can influence risk during analysis and also appears as a live dashboard overlay.
 - **Finance-facing product layer**: trust score, eligibility state, pending applications, and analytics push the project beyond a pure ML showcase.
 - **Multilingual AI assistant**: the chat experience is grounded in live farm context and supports English, Hindi, and Telugu UI flows.
@@ -56,9 +56,8 @@ The most recruiter-facing visuals are shown below — priority order: Dashboard,
 
 ## 📊 Model Performance & Validation
 
-- Dataset size: **150+ farm records**
-- Yield Prediction MAE: **0.21 tons/hectare**
-- Risk Classification Accuracy: **82%**
+- Dataset scope: **Synthetic benchmark dataset for 10 districts × 6 crops**
+- Evaluation: **Rule-based risk scoring validated against 151 synthetic farm profiles.**
 
 ### Observations
 - Weather volatility significantly impacts high-risk predictions.
@@ -85,9 +84,9 @@ Below are recruiter-facing proof charts showing model outputs vs observed data.
 - Generate disease, confidence, severity, health, and recovery guidance.
 - Open a full result report with risk, yield, sustainability, and loan-readiness signals.
 
-### 2. Risk Engine
+### 2. Weighted Risk Formula
 - Combines disease confidence, severity, and weather context.
-- Supports explainable risk outputs and live weather impact reasoning.
+- Supports transparent risk outputs and live weather impact reasoning.
 - Returns both user-facing summaries and structured backend payloads.
 
 ### Example Risk Breakdown
