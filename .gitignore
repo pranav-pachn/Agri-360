@@ -35,3 +35,6 @@ ai/data/PlantVillage/
 # Model outputs (except what is needed for deployment if any)
 models/gradcam/*.png
 # Note: models/*.keras is NOT ignored because it's required for FastAPI deployment
+
+# Hugging Face deployment repo
+agri360_ai_service/
