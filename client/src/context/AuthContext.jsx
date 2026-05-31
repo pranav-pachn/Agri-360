@@ -146,7 +146,20 @@ export function AuthProvider({ children }) {
 
   return (
     <AuthContext.Provider value={value}>
-      {!loading && children}
+      {loading ? (
+        <div className="min-h-screen bg-[#060e1a] flex flex-col items-center justify-center p-4 relative overflow-hidden">
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] bg-emerald-500/[0.05] blur-[80px] rounded-full pointer-events-none" />
+          <div className="relative z-10 flex flex-col items-center">
+            <div className="animate-spin h-12 w-12 border-4 border-emerald-500 border-t-transparent rounded-full mb-6 shadow-[0_0_15px_rgba(16,185,129,0.3)]"></div>
+            <h2 className="text-xl font-bold text-white mb-2 tracking-tight">Initializing Session</h2>
+            <p className="text-slate-400 text-sm text-center max-w-xs leading-relaxed">
+              Establishing secure connection to AgriMitra 360 servers...
+            </p>
+          </div>
+        </div>
+      ) : (
+        children
+      )}
     </AuthContext.Provider>
   );
 }

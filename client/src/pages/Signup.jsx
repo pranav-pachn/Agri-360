@@ -161,6 +161,17 @@ export default function Signup() {
         <Leaf size={14} />
         AgriMitra 360
       </div>
+
+      {/* Full-screen Loading Overlay */}
+      {loading && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#060e1a]/80 backdrop-blur-md animate-in fade-in duration-200">
+          <div className="flex flex-col items-center bg-slate-900 border border-slate-700/50 p-8 rounded-2xl shadow-2xl">
+            <div className="animate-spin h-10 w-10 border-4 border-emerald-500 border-t-transparent rounded-full mb-5"></div>
+            <h2 className="text-lg font-bold text-white mb-2">Creating Account</h2>
+            <p className="text-slate-400 text-xs">Setting up your secure workspace...</p>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
