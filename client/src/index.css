@@ -41,7 +41,19 @@
   --danger: #D32F2F;
   --info: #1565C0;
 
-  /* Auth Divider */
+  /* Spacing & Borders */
+  --radius-lg: 16px;
+  --radius-md: 12px;
+  --radius-sm: 8px;
+  --radius-full: 9999px;
+  
+  /* Shadows */
+  --shadow-glow: 0 0 20px rgba(46, 125, 50, 0.2);
+  --shadow-secondary-glow: 0 0 20px rgba(21, 101, 192, 0.2);
+  --shadow-card: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+/* Auth Divider */
 .auth-divider {
   display: flex;
   align-items: center;
@@ -120,18 +132,6 @@
 @keyframes spin {
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
-}
-
-/* Spacing & Borders */
-  --radius-lg: 16px;
-  --radius-md: 12px;
-  --radius-sm: 8px;
-  --radius-full: 9999px;
-  
-  /* Shadows */
-  --shadow-glow: 0 0 20px rgba(46, 125, 50, 0.2);
-  --shadow-secondary-glow: 0 0 20px rgba(21, 101, 192, 0.2);
-  --shadow-card: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
 }
 
 * {

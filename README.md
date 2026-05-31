@@ -56,8 +56,7 @@ The most recruiter-facing visuals are shown below — priority order: Dashboard,
 
 ## 📊 Model Performance & Validation
 
-- Dataset scope: **Synthetic benchmark dataset for 10 districts × 6 crops**
-- Evaluation: **Rule-based risk scoring validated against 151 synthetic farm profiles.**
+- Evaluation: **Rule-based risk scoring and trust logic validated against synthetic farm profiles.**
 
 ### Observations
 - Weather volatility significantly impacts high-risk predictions.
@@ -169,8 +168,8 @@ This explainability layer is one of the project’s strongest product features b
 - UUID
 
 ### AI / Decision Layer
-- TensorFlow.js
-- MobileNet
+- TensorFlow (Python)
+- FastAPI Inference Service
 - Rule-based risk engine
 - Rule-based yield logic
 - Trust / credit scoring logic
@@ -211,7 +210,7 @@ AgriMitra 360 follows a modular flow:
           v                v                v
  +----------------+ +----------------+ +------------------+
  | AI Inference   | | Risk / Yield   | | Weather Service  |
- | TensorFlow.js  | | Trust Engines  | | OpenWeather API  |
+ | TensorFlow/HF  | | Trust Engines  | | OpenWeather API  |
  +----------------+ +----------------+ +------------------+
           |                |                |
           +----------------+----------------+
@@ -232,7 +231,7 @@ AgriMitra 360 follows a modular flow:
 - `server/src/services/analyticsService.js` supports aggregated analytics views.
 
 ### AI Modules
-- `ai/crop-intelligence/` contains inference and TensorFlow-facing logic.
+- `agri360_ai_service/` contains the FastAPI inference server and TensorFlow logic.
 - `ai/risk-engine/` contains explainable risk logic.
 - `ai/yield-prediction/` contains rule-based yield estimation.
 - `ai/trust-engine/` contains trust / finance logic.
@@ -269,7 +268,8 @@ The backend currently exposes routes across analysis, analytics, chat, farmers, 
 
 ```text
 agri-360/
-├─ ai/                  # crop intelligence, risk, trust, yield logic
+├─ agri360_ai_service/  # Python FastAPI ML inference service
+├─ ai/                  # risk, trust, yield logic
 ├─ client/              # React + Vite frontend
 ├─ server/              # Express backend
 ├─ database/            # schema, migrations, setup docs
@@ -306,8 +306,8 @@ Use `docs/screenshots/README.md` for capture guidance and future asset refresh n
 ### 1. Clone and install
 
 ```bash
-git clone https://github.com/your-username/agrimitra-360.git
-cd agri-360
+git clone https://github.com/pranav-pachn/Agri-360.git
+cd Agri-360
 npm install
 cd client && npm install
 cd ../server && npm install
