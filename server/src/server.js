@@ -14,9 +14,9 @@ const analyticsService = require('./services/analyticsService');
 
 const healthRoutes = require('./routes/health.routes');
 const analyticsRoutes = require('./routes/analytics.routes');
-const analysisRoutes = require('./routes/analysis.routes');
+const analysisRoutes = require('./routes/analysisRoutes'); // Changed from analysis.routes
 const chatRoutes = require('./routes/chat.routes');
-const farmersRoutes = require('./routes/farmers.routes');
+const farmersRoutes = require('./routes/farmer.routes'); // Changed from farmers.routes
 const mlopsRoutes = require('./routes/mlops.routes');
 
 app.use('/api/v1/health', healthRoutes);
