@@ -9,6 +9,13 @@ const exactTranslations = {
     'High Risk': 'उच्च जोखिम',
     'Medium Risk': 'मध्यम जोखिम',
     'Low Risk': 'कम जोखिम',
+    'Recommended action: Apply chlorothalonil-based fungicide. Remove infected leaves immediately. Monitor for spread every 48 hours.': 'अनुशंसित कार्रवाई: क्लोरोथालोनिल-आधारित कवकनाशी लगाएं। संक्रमित पत्तों को तुरंत हटा दें। हर 48 घंटे में फैलने की निगरानी करें।',
+    'Recommended action: Apply copper-based bactericide. Avoid overhead watering to prevent bacterial spread.': 'अनुशंसित कार्रवाई: कॉपर-आधारित जीवाणुनाशक लगाएं। जीवाणु प्रसार को रोकने के लिए ऊपर से पानी देने से बचें।',
+    'Recommended action: Viral infections cannot be cured. Remove and destroy infected plants immediately to prevent spread. Control insect vectors.': 'अनुशंसित कार्रवाई: वायरल संक्रमण को ठीक नहीं किया जा सकता है। प्रसार को रोकने के लिए संक्रमित पौधों को तुरंत हटा दें और नष्ट कर दें। कीट वैक्टर को नियंत्रित करें।',
+    'Recommended action: Improve air circulation, reduce humidity, and apply appropriate fungicide if condition worsens.': 'अनुशंसित कार्रवाई: वायु परिसंचरण में सुधार करें, आर्द्रता कम करें, और स्थिति बिगड़ने पर उचित कवकनाशी लगाएं।',
+    'Recommended action: Apply neem oil or insecticidal soap. Introduce predatory mites if possible.': 'अनुशंसित कार्रवाई: नीम का तेल या कीटनाशक साबुन लगाएं। यदि संभव हो तो शिकारी घुन का परिचय दें।',
+    'Your crop looks healthy. Continue standard maintenance and regular monitoring.': 'आपकी फसल स्वस्थ दिखती है। मानक रखरखाव और नियमित निगरानी जारी रखें।',
+    'Please consult a local agricultural extension for specific treatment.': 'विशिष्ट उपचार के लिए कृपया स्थानीय कृषि विस्तार से परामर्श लें।'
   },
   te: {
     'Please ask about risk, yield, trust score, or loan eligibility.':
@@ -20,6 +27,13 @@ const exactTranslations = {
     'High Risk': 'అధిక ప్రమాదం',
     'Medium Risk': 'మధ్యస్థ ప్రమాదం',
     'Low Risk': 'తక్కువ ప్రమాదం',
+    'Recommended action: Apply chlorothalonil-based fungicide. Remove infected leaves immediately. Monitor for spread every 48 hours.': 'సిఫార్సు చేసిన చర్య: క్లోరోథలోనిల్ ఆధారిత ఫంగిసైడ్ వర్తించండి. సోకిన ఆకులను వెంటనే తొలగించండి. ప్రతి 48 గంటలకు వ్యాప్తి కోసం పర్యవేక్షించండి.',
+    'Recommended action: Apply copper-based bactericide. Avoid overhead watering to prevent bacterial spread.': 'సిఫార్సు చేసిన చర్య: రాగి ఆధారిత బాక్టీరిసైడ్ వర్తించండి. బ్యాక్టీరియా వ్యాప్తి చెందకుండా నిరోధించడానికి పైనుండి నీరు పోయడం నివారించండి.',
+    'Recommended action: Viral infections cannot be cured. Remove and destroy infected plants immediately to prevent spread. Control insect vectors.': 'సిఫార్సు చేసిన చర్య: వైరల్ ఇన్ఫెక్షన్లను నయం చేయలేము. వ్యాప్తిని నిరోధించడానికి సోకిన మొక్కలను వెంటనే తీసివేసి నాశనం చేయండి. కీటక వాహకాలను నియంత్రించండి.',
+    'Recommended action: Improve air circulation, reduce humidity, and apply appropriate fungicide if condition worsens.': 'సిఫార్సు చేసిన చర్య: గాలి ప్రసరణను మెరుగుపరచండి, తేమను తగ్గించండి మరియు పరిస్థితి తీవ్రమైతే తగిన ఫంగిసైడ్ వర్తించండి.',
+    'Recommended action: Apply neem oil or insecticidal soap. Introduce predatory mites if possible.': 'సిఫార్సు చేసిన చర్య: వేప నూనె లేదా క్రిమిసంహారక సబ్బును వర్తించండి. వీలైతే ప్రిడేటరీ మైట్స్ ప్రవేశపెట్టండి.',
+    'Your crop looks healthy. Continue standard maintenance and regular monitoring.': 'మీ పంట ఆరోగ్యంగా కనిపిస్తోంది. ప్రామాణిక నిర్వహణ మరియు క్రమం తప్పకుండా పర్యవేక్షించడం కొనసాగించండి.',
+    'Please consult a local agricultural extension for specific treatment.': 'నిర్దిష్ట చికిత్స కోసం దయచేసి స్థానిక వ్యవసాయ విస్తరణను సంప్రదించండి.'
   },
 };
 
@@ -101,8 +115,8 @@ const patternTranslators = {
       translate: ([, reason]) => `कारण यह है: ${translateExplanation(reason, 'hi')}`,
     },
     {
-      pattern: /^The latest crop diagnosis indicates (.+) for (.+)\.$/,
-      translate: ([, disease, crop]) => `नवीनतम फसल निदान ${crop} के लिए ${disease} दर्शाता है।`,
+      pattern: /^The latest crop diagnosis indicates (.+) for ([^.]+)\. (.+)$/,
+      translate: ([, disease, crop, advice]) => `नवीनतम फसल निदान ${crop} के लिए ${disease} दर्शाता है। ${exactTranslations.hi[advice] || advice}`,
     },
   ],
   te: [
@@ -135,8 +149,8 @@ const patternTranslators = {
       translate: ([, reason]) => `కారణం ఇది: ${translateExplanation(reason, 'te')}`,
     },
     {
-      pattern: /^The latest crop diagnosis indicates (.+) for (.+)\.$/,
-      translate: ([, disease, crop]) => `తాజా పంట నిర్ధారణ ${crop} కోసం ${disease}ని సూచిస్తోంది.`,
+      pattern: /^The latest crop diagnosis indicates (.+) for ([^.]+)\. (.+)$/,
+      translate: ([, disease, crop, advice]) => `తాజా పంట నిర్ధారణ ${crop} కోసం ${disease}ని సూచిస్తోంది. ${exactTranslations.te[advice] || advice}`,
     },
   ],
 };

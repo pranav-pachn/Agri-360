@@ -1,6 +1,6 @@
 import React from 'react';
 
-const ExplainabilityBox = ({ disease, confidence, severity, riskScore, explanationText }) => {
+const ExplainabilityBox = ({ disease, confidence, severity, riskScore, explanationText, heatmapBase64 }) => {
   const getExplanation = () => {
     if (typeof explanationText === 'string' && explanationText.trim().length > 0) {
       return explanationText;
@@ -30,9 +30,25 @@ const ExplainabilityBox = ({ disease, confidence, severity, riskScore, explanati
         <h3 className="text-base font-bold text-white">Explainable AI</h3>
         <span className="ml-auto text-xs font-medium px-2 py-0.5 rounded-full bg-purple-500/10 text-purple-400 border border-purple-500/20">How we decided</span>
       </div>
-      <p className="text-slate-300 text-sm leading-relaxed italic">
+      <p className="text-slate-300 text-sm leading-relaxed italic mb-4">
         "{getExplanation()}"
       </p>
+
+      {heatmapBase64 && (
+        <div className="mt-4 border-t border-purple-500/20 pt-4">
+          <p className="text-xs font-bold uppercase tracking-[0.12em] text-slate-400 mb-2">Grad-CAM Activation Heatmap</p>
+          <div className="rounded-xl overflow-hidden border border-slate-700 bg-slate-900">
+            <img 
+              src={`data:image/jpeg;base64,${heatmapBase64}`} 
+              alt="Grad-CAM Heatmap" 
+              className="w-full h-auto object-cover max-h-[300px]"
+            />
+          </div>
+          <p className="text-[10px] text-slate-500 mt-2">
+            The heatmap shows which parts of the image the neural network focused on to make its prediction. Red areas indicate high attention.
+          </p>
+        </div>
+      )}
     </div>
   );
 };

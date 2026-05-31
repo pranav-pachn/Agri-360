@@ -12,6 +12,20 @@ const app = require('./app');
 const aiService = require('./services/ai.service');
 const analyticsService = require('./services/analyticsService');
 
+const healthRoutes = require('./routes/health.routes');
+const analyticsRoutes = require('./routes/analytics.routes');
+const analysisRoutes = require('./routes/analysis.routes');
+const chatRoutes = require('./routes/chat.routes');
+const farmersRoutes = require('./routes/farmers.routes');
+const mlopsRoutes = require('./routes/mlops.routes');
+
+app.use('/api/v1/health', healthRoutes);
+app.use('/api/v1/analytics', analyticsRoutes);
+app.use('/api/v1/analysis', analysisRoutes);
+app.use('/api/v1/chat', chatRoutes);
+app.use('/api/v1/farmers', farmersRoutes);
+app.use('/api/v1/mlops', mlopsRoutes);
+
 // Conditionally require TensorFlow only if enabled
 let tensorflowService = null;
 if (process.env.USE_TENSORFLOW === 'true') {

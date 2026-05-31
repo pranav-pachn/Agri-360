@@ -1,8 +1,37 @@
+# Dependencies
 node_modules/
+venv/
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Build output
 dist/
+build/
+client/dist/
+server/dist/
+.DS_Store
+
+# Environment files
 .env
-<<<<<<< HEAD
-.env.example
-=======
-.env.example
->>>>>>> 6e172ab (first commit)
+.env.*
+!.env.example
+
+# Datasets and large images
+data/**/*.jpg
+data/**/*.jpeg
+data/**/*.png
+data/**/*.gif
+data/**/*.webp
+ai/data/
+ai/data/PlantVillage/
+
+# Model outputs (except what is needed for deployment if any)
+models/gradcam/*.png
+# Note: models/*.keras is NOT ignored because it's required for FastAPI deployment

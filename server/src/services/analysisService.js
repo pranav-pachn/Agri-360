@@ -476,7 +476,8 @@ const generateAnalysis = async (crop, location, imageUrl = null, fertilizerLevel
     const baseRiskComputation = calculateRisk({
         confidence: aiResults?.diagnosis?.confidence,
         severity,
-        weather: weatherLabel
+        weather: weatherLabel,
+        disease: aiResults.diagnosis?.disease
     });
     const finalRiskScore = Math.max(
         0,

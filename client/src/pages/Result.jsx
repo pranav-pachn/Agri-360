@@ -10,6 +10,7 @@ import LoanCard from '../components/result/LoanCard';
 import RecommendationBox from '../components/result/RecommendationBox';
 import ExplainabilityBox from '../components/result/ExplainabilityBox';
 import SustainabilityCard from '../components/result/SustainabilityCard';
+import PredictionFeedback from '../components/result/PredictionFeedback';
 import { api } from '../services/api';
 import { buildFallbackResultPayload, normalizeResultPayload } from '../services/resultDataMapper';
 
@@ -141,6 +142,12 @@ const Result = () => {
               severity={data.severity}
               riskScore={data.riskScore}
               explanationText={data.explainabilityText}
+              heatmapBase64={data.heatmapBase64}
+            />
+            
+            <PredictionFeedback 
+              predictionId={data.id} 
+              predictedDisease={data.disease} 
             />
           </div>
         </div>

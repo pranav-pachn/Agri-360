@@ -5,6 +5,7 @@
 
 const { SEVERITY_WEIGHTS } = require('./severityWeights');
 const { getWeatherFactor } = require('./weatherFactor');
+const { getDiseaseSeverity } = require('./diseaseSeverity');
 
 const getRiskLevel = (riskScore) => {
   if (riskScore > 0.7) return 'High Risk';
@@ -21,10 +22,12 @@ const normalizeConfidence = (confidence) => {
 const calculateRisk = ({
   confidence,
   severity,
-  weather
+  weather,
+  disease
 }) => {
+  const resolvedSeverity = (!severity || severity === 'Unknown') ? getDiseaseSeverity(disease) : severity;
   const normalizedConfidence = normalizeConfidence(confidence);
-  const severityWeight = SEVERITY_WEIGHTS[severity] || 0.3;
+  const severityWeight = SEVERITY_WEIGHTS[resolvedSeverity] || 0.3;
   const weatherFactor = getWeatherFactor(weather);
 
   const riskScore = Math.min(normalizedConfidence * severityWeight * weatherFactor, 1.0);

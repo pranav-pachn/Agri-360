@@ -2,7 +2,10 @@
   "name": "agrimitra-360-monorepo",
   "private": true,
   "scripts": {
-    "validate:result-contract": "node result-contract-validation.js"
+    "validate:result-contract": "node result-contract-validation.js",
+    "install:all": "npm install --prefix client && npm install --prefix server",
+    "build": "npm run build --prefix client",
+    "start": "npm start --prefix server"
   },
   "dependencies": {
     "@tensorflow-models/mobilenet": "^2.1.1",

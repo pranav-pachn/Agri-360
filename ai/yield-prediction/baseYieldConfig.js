@@ -7,7 +7,8 @@ const BASE_YIELD = {
   wheat: 18,
   maize: 15,
   tomato: 25,
-  potato: 22
+  potato: 22,
+  pepper: 20
 };
 
 module.exports = {

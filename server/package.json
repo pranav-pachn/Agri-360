@@ -5,11 +5,10 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "predeploy": "(npm --prefix ./client install && npm --prefix ./client run build) || (npm --prefix ../client install && npm --prefix ../client run build)",
+    "build:client": "npm --prefix ../client install && npm --prefix ../client run build",
     "dev": "nodemon src/server.js",
-    "prestart": "npm run predeploy",
     "start": "node src/server.js",
-    "deploy": "npm run predeploy && npm run start",
+    "deploy": "npm run build:client && npm run start",
     "test": "jest"
   },
   "keywords": [],
@@ -25,6 +24,7 @@
     "csv-parser": "^3.2.1",
     "dotenv": "^17.3.1",
     "express": "^5.2.1",
+    "form-data": "^4.0.5",
     "multer": "^2.1.1",
     "sharp": "^0.34.5",
     "uuid": "^9.0.1"

@@ -1,6 +1,7 @@
 const logger = require('../utils/logger');
 const enhancedMockAI = require('../../../ai/crop-intelligence/enhanced-mock-service');
 const tensorflowService = require('../../../ai/crop-intelligence/tensorflow-service');
+const mlService = require('./ml.service');
 
 class AIService {
     constructor() {
@@ -11,7 +12,18 @@ class AIService {
     async analyzeCropImage(imageUrl, cropType, location, options = {}) {
         logger.info(`🌾 AI Analysis for ${cropType} in ${location}`);
         
-        // Check for real AI integration (future)
+        // 1. Try Custom ML Service (FastAPI) first
+        if (imageUrl) {
+            // request with explanation (GradCAM) if possible
+            const mlResult = await mlService.predict(imageUrl, true);
+            if (mlResult && mlResult.disease) {
+                logger.info('✅ Custom ML service analysis completed');
+                return this.formatMLServiceResponse(mlResult, location);
+            }
+            logger.info('🔄 ML Service unavailable or failed, falling back to next provider...');
+        }
+        
+        // 2. Check for real AI integration (future)
         if (process.env.AI_SERVICE_URL && imageUrl) {
             return await this.callRealAI(imageUrl, cropType, location, options);
         }
@@ -108,6 +120,54 @@ class AIService {
         };
     }
     
+    formatMLServiceResponse(mlResult, location) {
+        const explainabilityText = mlResult.heatmap_base64 
+            ? "Grad-CAM visual explanation generated successfully." 
+            : null;
+            
+        // Calculate a mock health score based on if it's healthy or not
+        const isHealthy = mlResult.disease.toLowerCase().includes('healthy');
+        const healthScore = isHealthy ? 95 : 65;
+
+        return {
+            diagnosis: {
+                disease: mlResult.disease,
+                confidence: mlResult.confidence,
+                health_score: healthScore,
+                advice: `Monitor for ${mlResult.disease.replace(/_/g, ' ')} progression.`,
+                tensorflow_prediction: mlResult.disease,
+                tensorflow_confidence: mlResult.confidence,
+            },
+            yield_prediction: {
+                predicted_yield: 0,
+                unit: 'tons/hectare',
+                confidence: mlResult.confidence,
+            },
+            sustainability_score: 70,
+            location_analysis: {
+                location,
+                source: 'ml-service',
+            },
+            metadata: {
+                ai_source: 'ml-service',
+                fallback_used: false,
+                source: 'ml-service',
+            },
+            explanation: {
+                summary: explainabilityText,
+                heatmap_base64: mlResult.heatmap_base64 || null
+            },
+            pipeline: {
+                raw_ai: {
+                    label: mlResult.disease,
+                    probability: mlResult.confidence,
+                    source: 'ml-service',
+                    alternatives: mlResult.top_predictions || []
+                }
+            }
+        };
+    }
+
     // Batch analysis for multiple images
     async analyzeBatch(imageUrls, cropType, location) {
         logger.info(`🔄 Batch analysis for ${imageUrls.length} images`);

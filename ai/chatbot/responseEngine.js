@@ -34,6 +34,29 @@ const normalizeExplanation = (context = {}) => {
   return `Overall risk is ${riskLevel} for ${crop}${location}. The score reflects crop health, expected yield pressure, repayment strength, and current field volatility.`;
 };
 
+const getDiseaseAdvice = (disease) => {
+  const d = String(disease || '').toLowerCase();
+  if (d.includes('early_blight') || d.includes('late_blight')) {
+    return 'Recommended action: Apply chlorothalonil-based fungicide. Remove infected leaves immediately. Monitor for spread every 48 hours.';
+  }
+  if (d.includes('bacterial_spot')) {
+    return 'Recommended action: Apply copper-based bactericide. Avoid overhead watering to prevent bacterial spread.';
+  }
+  if (d.includes('virus')) {
+    return 'Recommended action: Viral infections cannot be cured. Remove and destroy infected plants immediately to prevent spread. Control insect vectors.';
+  }
+  if (d.includes('leaf_mold') || d.includes('septoria') || d.includes('target_spot')) {
+    return 'Recommended action: Improve air circulation, reduce humidity, and apply appropriate fungicide if condition worsens.';
+  }
+  if (d.includes('spider_mites')) {
+    return 'Recommended action: Apply neem oil or insecticidal soap. Introduce predatory mites if possible.';
+  }
+  if (d.includes('healthy')) {
+    return 'Your crop looks healthy. Continue standard maintenance and regular monitoring.';
+  }
+  return 'Please consult a local agricultural extension for specific treatment.';
+};
+
 const getChatResponse = (message, context = {}) => {
   const text = String(message || '').toLowerCase();
   const disease = context.disease || 'Unknown';
@@ -77,7 +100,8 @@ const getChatResponse = (message, context = {}) => {
   }
 
   if (hasDiseaseIntent) {
-    return `The latest crop diagnosis indicates ${disease} for ${crop}.`;
+    const advice = getDiseaseAdvice(disease);
+    return `The latest crop diagnosis indicates ${disease} for ${crop}. ${advice}`;
   }
 
   return 'Please ask about risk, yield, trust score, or loan eligibility.';

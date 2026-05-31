@@ -22,6 +22,13 @@ const getRating = (score) => {
   return 'High Risk';
 };
 
+const getLetterGrade = (score) => {
+  if (score >= 80) return 'A';
+  if (score >= 65) return 'B';
+  if (score >= 50) return 'C';
+  return 'D';
+};
+
 const calculateTrustScore = ({
   yieldStability,
   riskTrend,
@@ -42,6 +49,7 @@ const calculateTrustScore = ({
   return {
     trustScore: Math.round(score),
     rating: getRating(score),
+    grade: getLetterGrade(score),
     inputs: { ys, rt, su, co },
     weighted: {
       yield_stability: Number((0.3 * ys).toFixed(2)),
@@ -60,6 +68,7 @@ const scaleTrustScoreToCreditBand = (trustScore0to100) => {
 module.exports = {
   clamp,
   getRating,
+  getLetterGrade,
   calculateTrustScore,
   scaleTrustScoreToCreditBand
 };

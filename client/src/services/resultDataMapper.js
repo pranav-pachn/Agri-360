@@ -62,6 +62,7 @@ const normalizeLegacyAnalysis = (analysis, options = {}) => {
           'Monitor crop condition over the next 3-5 days and rescan if symptoms increase.',
         ],
     explainabilityText: analysis.explainabilityText || null,
+    heatmapBase64: analysis.heatmap_base64 || analysis.heatmapBase64 || null,
     dataMode: {
       source: analysis.dataMode?.source || 'backend-legacy',
       fallbackUsed: Boolean(analysis.dataMode?.fallbackUsed),
